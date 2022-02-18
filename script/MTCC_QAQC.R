@@ -360,7 +360,8 @@ MohonkWeeklyProfilesMetric_export<-MohonkWeeklyProfilesMetric%>%
 
 #Remove unneccessary data frames
 rm(find.errors2)
-rm(MohonkDailyWeather.upload)
+rm(MohonkDailyWeather.upload) #Can remove beause MohonkDailyWeatherFull.upload includes data back to 1930s
+rm(MohonkDailyWeather) #Can remove beause MohonkDailyWeatherFull includes data back to 1930s
 rm(MohonkIce.upload)
 rm(MohonkWeeklyProfilesSensor)
 rm(MohonkWeeklyProfiles)
