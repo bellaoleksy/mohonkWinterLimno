@@ -37,3 +37,23 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+#Exclude any data
+/data
+
+#Exclude any data
+/data_export
+
+#Exclude rsconnect
+/rsconnect
+
+#Exclude reports
+/reports
+
+#Produced htmls from .Rmd docs
+# produced vignettes
+*.html
+*.pdf
+
+#Ignore DS_Store!
+.DS_Store
