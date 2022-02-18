@@ -505,28 +505,27 @@ AnnualData$MixingAction.OpenWater_gigaJday<-AnnualData$AUC.Stability.openwater_J
 
 # NAO dataframe 1950-present ----------------------------------------------
 
-NAO_full<- NAO_daily %>%
+NAO_summary<- NAO_daily %>%
   mutate(
     season= 
-      ifelse(Month %in% c(10, 11, 12, 1, 2), "winter", 
-             ifelse(Month %in% c(3, 4), "spring", 
-                    ifelse(Month %in% c(5, 6, 7, 8), "summer", "fall"))),
+      ifelse(Month %in% c(12, 1, 2), "winter", 
+             ifelse(Month %in% c(3, 4, 5), "spring", 
+                    ifelse(Month %in% c(6, 7, 8), "summer",
+                           ifelse(Month %in% c(9, 10, 11), "fall", "error")))),
     water_year = ifelse(season%in%c("winter","spring") &
                           Month %in% c("10","11","12","1","2","3","4"),
                         Year-1, 
                         Year)) %>% #this water_year term is only relevent for winter
-                                    #metrics. We want 1 Oct-30 April to all correspond to the same water year
+  #metrics. We want 1 Oct-30 April to all correspond to the same water year
   group_by(water_year, season) %>%
   summarize(NAO_index=mean(NAO_index)) %>%
-  filter(season%in%c("winter","spring")) %>% #where winter is [1oct-28feb]  & spring is [1march-30april] 
+  # filter(season%in%c("winter","spring")) %>% #where winter is [1oct-28feb]  & spring is [1march-30april] 
   pivot_wider(names_from="season",
               names_sep="_",
+              names_prefix ="NAO_index_",
               values_from = "NAO_index") %>%
-  rename(NAO_index_spring=spring,
-         NAO_index_winter=winter) %>%
   ungroup() %>%
   mutate(Year=water_year+1)
-  
 
 #**Seasonal ENSO indices ----------------------------------------------------
 
@@ -580,55 +579,28 @@ AnnualData<-left_join(AnnualData,NAO_summary,by=c("Year"))
 # * summer mean (july + august + sept)
 # * winter mean (oct-march) 
 
+ENSO_MEI_summary<- ENSO_MEI_monthly %>%
+  mutate(
+    season= 
+      ifelse(month %in% c(12, 1, 2), "winter", 
+             ifelse(month %in% c(3, 4, 5), "spring", 
+                    ifelse(month %in% c(6, 7, 8), "summer",
+                           ifelse(month %in% c(9, 10, 11), "fall", "error")))),
+    water_year = ifelse(season%in%c("winter","spring") &
+                          month %in% c("10","11","12","1","2","3","4"),
+                        year-1, 
+                        year)) %>% #this water_year term is only relevent for winter
+  #metrics. We want 1 Oct-30 April to all correspond to the same water year
+  group_by(water_year, season) %>%
+  summarize(ENSO_index=mean(ENSO_MEI)) %>%
+  # filter(season%in%c("winter","spring")) %>% #where winter is [1oct-28feb]  & spring is [1march-30april] 
+  pivot_wider(names_from="season",
+              names_sep="_",
+              names_prefix ="ENSO_index_",
+              values_from = "ENSO_index") %>%
+  ungroup() %>%
+  mutate(Year=water_year+1)
 
-ENSO_MEI_seasonal <- ENSO_MEI_monthly %>%
-  #Adds a category for season
-  mutate(Season =
-           ifelse(month %in% c(4, 5, 6), "spring",
-                  ifelse(month %in% c(7, 8, 9), "summer",
-                         ifelse(month %in% c(1, 2, 3), "winter-year", "winter-previous")))) %>%
-  # filter(Season %in% c("spring","summer"))%>%
-  rename(Year=year) %>%
-  group_by(Year,Season) %>%
-  mutate(MEI_mean=mean(ENSO_MEI, na.rm=TRUE),
-         MEI_sum=sum(ENSO_MEI, na.rm=TRUE))%>%
-  select(Year, Season, MEI_mean, MEI_sum) %>%
-  group_by(Year,Season)%>%
-  summarize_at(vars(MEI_mean,MEI_sum), mean, na.rm=TRUE) 
-
-ENSO_MEI_winteryear<-ENSO_MEI_seasonal %>%
-  filter(Season=="winter-year") %>%
-  rename(MEI_mean_winteryear=MEI_mean,
-         MEI_sum_winteryear=MEI_sum)%>%
-  select(-Season)
-ENSO_MEI_winterpreviousyear<-ENSO_MEI_seasonal %>%
-  filter(Season=="winter-previous") %>%
-  mutate(Year=Year+1) %>%
-  rename(MEI_mean_previouswinter=MEI_mean,
-         MEI_sum_previouswinter=MEI_sum) %>%
-  select(-Season)
-
-ENSO_MEI_winter<-left_join(ENSO_MEI_winteryear,ENSO_MEI_winterpreviousyear, by="Year") %>%
-      group_by(Year)%>%
-      mutate(ENSO_MEI_Winter_mean=(MEI_mean_winteryear+MEI_mean_previouswinter)/2,
-             ENSO_MEI_Winter_sum=MEI_sum_winteryear+MEI_sum_previouswinter) %>%
-      select(-(2:5))
-
-ENSO_MEI_spring <- ENSO_MEI_seasonal %>%
-  filter(Season=="spring")%>%
-  rename(ENSO_MEI_Spring_mean=MEI_mean,
-         ENSO_MEI_Spring_sum=MEI_sum) %>%
-  select(-Season)
-
-ENSO_MEI_summer <- ENSO_MEI_seasonal %>%
-  filter(Season=="summer")%>%
-  rename(ENSO_MEI_Summer_mean=MEI_mean,
-         ENSO_MEI_Summer_sum=MEI_sum) %>%
-  select(-Season)
-
-
-ENSO_MEI_summary <- left_join(ENSO_MEI_spring,ENSO_MEI_summer, by="Year" )
-ENSO_MEI_summary <- left_join(ENSO_MEI_summary,ENSO_MEI_winter, by="Year")
 
 
 #***Merge with AnnualData by Year####
@@ -902,7 +874,7 @@ MohonkDailyWeather_monthly <- MohonkDailyWeatherFull %>%
 
 
 #Calculated some snow predictors in a separate dataframe, then joined with MohonkDailyWeather_monthly
-
+#Note that there isn't good snow depth data prior to the 1950s
 SnowPredictors<-MohonkDailyWeatherFull %>%
   mutate(
     year=year(Date),
@@ -910,16 +882,27 @@ SnowPredictors<-MohonkDailyWeatherFull %>%
     month_name=month(Date, label=TRUE),
     water_year = ifelse(month %in% c("1","2","3","4"),
                         year-1, 
-                        year)) %>% #this water_year term is only relevent for winter
-  #metrics. We want 1 Oct-30 April to all correspond to the same water year
-  #exclude May-August, which are *most likely* not directly influencing winter ice phenology
+                        year)) %>%
   filter(!water_year==1929)%>%
+  # filter(water_year<1954)
   group_by(water_year)%>%
-  dplyr::summarize(maxSnowDepth_mm = max(SnowDepth_mm),
-                   datemaxSnowDepth = Date[which(SnowDepth_mm == max(SnowDepth_mm))],
+  dplyr::summarize(maxSnowDepth_mm = max(SnowDepth_mm, na.rm=FALSE),
+                   datemaxSnowDepth = Date[which(SnowDepth_mm == max(SnowDepth_mm, na.rm=FALSE))],
                    maxSnowDepthDOY_fed=hydro.day(datemaxSnowDepth)) %>%
-  select(-datemaxSnowDepth)
+  select(-datemaxSnowDepth) %>%
+  filter(row_number()==1) #There are a handful of years where the summary function calculates duplicate values for some reason. This line selects just the 1st observation
 
 
-MohonkIceWeather<-left_join(MohonkDailyWeather_monthly,SnowPredictors, by="water_year")
+colnames<-(intersect( colnames(MohonkDailyWeather_monthly),  colnames(SnowPredictors))) #identify common columns between data.tables
+MohonkIceWeather<-left_join(MohonkDailyWeather_monthly,SnowPredictors, by=colnames)
+
+colnames<-(intersect( colnames(MohonkDailyWeather_monthly),  colnames(ENSO_MEI_summary))) #identify common columns between data.tables
+MohonkIceWeather<-left_join(MohonkDailyWeather_monthly,ENSO_MEI_summary, by=colnames)
+
+colnames<-(intersect( colnames(MohonkDailyWeather_monthly),  colnames(NAO_summary))) #identify common columns between data.tables
+MohonkIceWeather<-left_join(MohonkDailyWeather_monthly,NAO_summary, by=colnames)
+
+colnames<-(intersect( colnames(MohonkDailyWeather_monthly),  colnames(NOAA_anomoly))) #identify common columns between data.tables
+MohonkIceWeather<-left_join(MohonkDailyWeather_monthly,NOAA_anomoly, by=colnames)
+
 rm(MohonkDailyWeather_monthly,SnowPredictors)
