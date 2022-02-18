@@ -1417,3 +1417,31 @@ MohonkIceWeather <-
   left_join(MohonkIceWeather, NOAA_anomoly, by = colnames)
 
 rm(MohonkDailyWeather_monthly, SnowPredictors)
+
+
+## Add months and seasons to MohonkDailyWeatherFull
+MohonkDailyWeatherFull<-MohonkDailyWeatherFull %>% 
+  mutate(Month=month(Date),
+         Year=year(Date)) %>%
+  mutate(
+    season =
+      ifelse(
+        Month %in% c(12, 1, 2),
+        "winter",
+        ifelse(
+          Month %in% c(3, 4, 5),
+          "spring",
+          ifelse(
+            Month %in% c(6, 7, 8),
+            "summer",
+            ifelse(Month %in% c(9, 10, 11), "fall", "error")
+          )
+        )
+      ),
+    water_year = ifelse(
+      season %in% c("winter", "spring") &
+        Month %in% c("10", "11", "12", "1", "2", "3", "4"),
+      Year - 1,
+      Year
+    )
+  )
