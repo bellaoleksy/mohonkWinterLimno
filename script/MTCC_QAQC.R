@@ -15,17 +15,9 @@ MohonkBathy<-read.csv('data/Mohonk_area_bathymetry_csv2.csv', fill = TRUE)
 MohonkWeeklyProfiles<-read.csv("data/2016_MohonkLake_tblSecchi-Thermistor.csv", fill = TRUE)
 #2020-11-30 IAO: Added in new data
 MohonkWeeklyProfiles_2018_19<-read.csv("data/2018_2019_Mohonklake_Secchi_Thermistor.csv", fill = TRUE)
-# str(MohonkWeeklyProfiles)
-# str(MohonkWeeklyProfiles_2018_19)
-# #Dates are in different format... need to fix. 
-# MohonkWeeklyProfiles<-MohonkWeeklyProfiles %>%
-#   mutate(DATEREAD=ymd(DATEREAD))
-# MohonkWeeklyProfiles_2018_19<-MohonkWeeklyProfiles_2018_19 %>%
-#   mutate(DATEREAD=mdy(DATEREAD))
 
-#Now you can bind the dataframes together without issue
+#Bind the dataframes together
 MohonkWeeklyProfiles<-bind_rows(MohonkWeeklyProfiles,MohonkWeeklyProfiles_2018_19)
-
 
 #Clean up some error values
 MohonkWeeklyProfiles$METER3[MohonkWeeklyProfiles$METER3==783&!is.na(MohonkWeeklyProfiles$METER3)]<-78.3
@@ -54,8 +46,8 @@ names(MohonkWeeklyProfilesMetric)<-c("Date","Collector","DepthToBottom_m",
                                      "Temp_7m","Temp_8m","Temp_9m","Temp_10m",
                                      "Temp_11m","Temp_12m","Temp_Bottom",
                                      "Secchi_m")
-##IAO 2020-12-01: I commented this out because I am going to read as dates earlier
-##in the script
+
+
 MohonkWeeklyProfilesMetric$Date<-as.Date(as.character(MohonkWeeklyProfiles$DATEREAD))
 
 MohonkWeeklyProfilesMetric$Collector<-MohonkWeeklyProfiles$COLLECTOR
@@ -358,11 +350,9 @@ MohonkWeeklyProfilesMetric_export<-MohonkWeeklyProfilesMetric%>%
                                     filter(sumNA<14)%>%
                                     dplyr::select(Date,Temp_0m:Temp_12m,Temp_13m)
 #Export temperature profiles  
-# write_csv(MohonkWeeklyProfilesMetric_export,"figures/MohonkLake_TemperatureProfiles_1985to2017.csv")
-write_csv(MohonkWeeklyProfilesMetric_export,"data/MohonkLake_TemperatureProfiles_1985to2019.csv")
+#write_csv(MohonkWeeklyProfilesMetric_export,"data/MohonkLake_TemperatureProfiles_1985to2019.csv")
 #Write secchi data
-# write_csv(MohonkWeeklySecchi_export,"figures/MohonkLake_SecchiDepth_1985to2017.csv")
-write_csv(MohonkWeeklySecchi_export,"figures/MohonkLake_SecchiDepth_1985to2019.csv")
+# write_csv(MohonkWeeklySecchi_export,"figures/MohonkLake_SecchiDepth_1985to2019.csv")
 
 
 
