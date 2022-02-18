@@ -59,4 +59,4 @@ vignettes/*.pdf
 .DS_Store
 
 #Ignore Archive files
-/Archive
+/script/Archive
