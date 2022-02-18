@@ -452,7 +452,7 @@ AnnualData$MixingAction.OpenWater_gigaJday<-AnnualData$AUC.Stability.openwater_J
 
 #**NAO spring mean -----------------------
 NAO_springmean <- NAO_daily %>%
-  filter(Year>=1985)%>%
+  # filter(Year>=1985)%>%
   dplyr::select(Year, DOY, NAO_index)%>%
   filter(DOY>=80 & DOY <172) %>%
   group_by(Year)%>%
@@ -461,7 +461,7 @@ NAO_springmean <- NAO_daily %>%
 
 #**NAO Summer mean -----------------------
 NAO_summermean <- NAO_daily %>%
-  filter(Year>=1985)%>%
+  # filter(Year>=1985)%>%
   dplyr::select(Year, DOY, NAO_index)%>%
   filter(DOY>=172 & DOY <265) %>%
   group_by(Year)%>%
@@ -482,7 +482,7 @@ NAO_stratifiedperiod <- NAO_daily %>%
 
 #**NAO SpringMixed -----------------------
 NAO_springmixed <- NAO_daily%>%
-  filter(Year>=1985)%>%
+  # filter(Year>=1985)%>%
   left_join(.,AnnualData%>%
               dplyr::select(Year,StartOfStratification_Day,
                      EndOfStratification_Day,IceOutDayofYear),
@@ -801,3 +801,137 @@ DailyInterpol.secchi<-DailyInterpol.secchi%>%
 
 
 
+# Winter metrics ----------------------------------------------------------
+
+#IAO- added 2022-Feb-18
+
+#here I am using a function for calculating water-year DOY. This will help facilitate plotting and analysizing trends in ice-in since they span either side of the winter-year (e.g., 2011-2012). For example, an IceInDayofYear_fed value of 150 means Ice-In occured 150 days after the start of the water-year (Oct1)  
+MohonkIce<-MohonkIce %>%
+    mutate(IceInDayofYear_fed=hydro.day(IceInDate),
+           IceOutDayofYear_fed=hydro.day(IceOutDate))
+
+#I would recommend using IceInDayofYear_fed instead of IceInDayofYear as a response variable, otherwise you have a handful of observations with very low DOY:
+MohonkIce%>%
+    ggplot(aes(x=Year,y=IceInDayofYear))+
+    geom_point(size=3, shape=21, fill="white")
+
+#Starting with the 'MohonkDailyWeatherFull' dataframe which has daily min, mean, max temps and precip as snow or rain, I created a dataframe with monthly to seasonal cumulative metrics.
+MohonkDailyWeather_monthly <- MohonkDailyWeatherFull %>%
+    mutate(
+      year=year(Date),
+      month=month(Date),
+      month_name=month(Date, label=TRUE),
+      water_year = ifelse(month %in% c("1","2","3","4"),
+                          year-1, 
+                          year)) %>% #this water_year term is only relevent for winter
+    #metrics. We want 1 Oct-30 April to all correspond to the same water year
+    
+    filter(!month %in% c("5","6","7","8"))%>%
+    #exclude May-August, which are *most likely* not directly influencing winter ice phenology
+    
+    group_by(water_year, month_name)%>%
+    
+    dplyr::summarize(cumMeanDailyT=sum(TempMean_degC, na.rm=TRUE),
+                     cumSnow=sum(Snow_mm, na.rm=TRUE),
+                     cumRain=sum(Precip_mm, na.rm=TRUE),
+                     percPrecipRain=(cumRain/(cumRain+cumSnow))*100,
+                     nDaysMeanBelowZero=sum(TempMean_degC < 0, na.rm=TRUE),
+                     nDaysMinBelowZero=sum(TempMin_degC < 0, na.rm=TRUE)) %>%
+
+  #Convert dataframe from long to wide format    
+    pivot_wider(names_from="month_name",
+                names_sep="_",
+                values_from = c("cumMeanDailyT","cumSnow","cumRain",
+                                "percPrecipRain","nDaysMeanBelowZero",
+                                "nDaysMinBelowZero")) %>%
+
+  ##Predictors probably more relevant for ice-on DOY 
+    mutate(
+      cumMeanDailyT_SepOct=cumMeanDailyT_Sep+cumMeanDailyT_Oct,
+      cumMeanDailyT_SepOctNov=cumMeanDailyT_Sep+cumMeanDailyT_Oct+cumMeanDailyT_Nov,
+      cumMeanDailyT_OctNov=cumMeanDailyT_Oct+cumMeanDailyT_Nov,
+      cumMeanDailyT_OctNovDec=cumMeanDailyT_Oct+cumMeanDailyT_Nov+cumMeanDailyT_Dec,
+      
+      cumSnow_OctNov=cumSnow_Oct+cumSnow_Nov,
+      cumSnow_OctNovDec=cumSnow_Oct+cumSnow_Nov+cumSnow_Dec,
+      
+      cumRain_SepOct=cumRain_Sep+cumRain_Oct,
+      cumRain_SepOctNov=cumRain_Sep+cumRain_Oct+cumRain_Nov,
+      cumRain_OctNov=cumRain_Oct+cumRain_Nov,
+      cumRain_OctNovDec=cumRain_Oct+cumRain_Nov+cumRain_Dec,
+      
+      nDaysMeanBelowZero_SepOct=nDaysMeanBelowZero_Sep+nDaysMeanBelowZero_Oct,
+      nDaysMeanBelowZero_SepOctNov=nDaysMeanBelowZero_Sep+nDaysMeanBelowZero_Oct+nDaysMeanBelowZero_Nov,
+      nDaysMeanBelowZero_OctNov=nDaysMeanBelowZero_Oct+nDaysMeanBelowZero_Nov,
+      nDaysMeanBelowZero_OctNovDec=nDaysMeanBelowZero_Oct+nDaysMeanBelowZero_Nov+nDaysMeanBelowZero_Dec,
+      
+      nDaysMinBelowZero_SepOct=nDaysMinBelowZero_Sep+nDaysMinBelowZero_Oct,
+      nDaysMinBelowZero_SepOctNov=nDaysMinBelowZero_Sep+nDaysMinBelowZero_Oct+nDaysMinBelowZero_Nov,
+      nDaysMinBelowZero_OctNov=nDaysMinBelowZero_Oct+nDaysMinBelowZero_Nov,
+      nDaysMinBelowZero_OctNovDec=nDaysMinBelowZero_Oct+nDaysMinBelowZero_Nov+nDaysMinBelowZero_Dec,
+      
+    ##Predictors probably more relevant for ice-off DOY 
+      cumMeanDailyT_MarApr=cumMeanDailyT_Mar+cumMeanDailyT_Apr,
+      cumMeanDailyT_FebMarApr=cumMeanDailyT_Feb+cumMeanDailyT_Mar+cumMeanDailyT_Apr,
+      cumMeanDailyT_FebMar=cumMeanDailyT_Feb+cumMeanDailyT_Mar,
+      cumMeanDailyT_JanFebMar=cumMeanDailyT_Jan+cumMeanDailyT_Feb+cumMeanDailyT_Mar,
+      
+      cumSnow_MarApr=cumSnow_Mar+cumSnow_Apr,
+      cumSnow_FebMarApr=cumSnow_Feb+cumSnow_Mar+cumSnow_Apr,
+      cumSnow_FebMar=cumSnow_Feb+cumSnow_Mar,
+      cumSnow_JanFebMar=cumSnow_Jan+cumSnow_Feb+cumSnow_Mar,
+      
+      cumRain_MarApr=cumRain_Mar+cumRain_Apr,
+      cumRain_FebMarApr=cumRain_Feb+cumRain_Mar+cumRain_Apr,
+      cumRain_FebMar=cumRain_Feb+cumRain_Mar,
+      cumRain_JanFebMar=cumRain_Jan+cumRain_Feb+cumRain_Mar,
+      
+      nDaysMeanAboveZero_MarApr=61-(nDaysMeanBelowZero_Mar+nDaysMeanBelowZero_Apr),
+      nDaysMeanAboveZero_Mar=31-nDaysMeanBelowZero_Mar,
+      nDaysMeanAboveZero_FebMar=59-(nDaysMeanBelowZero_Feb+nDaysMeanBelowZero_Mar),
+      
+      nDaysMinAboveZero_MarApr=61-(nDaysMinBelowZero_Mar+nDaysMinBelowZero_Apr),
+      nDaysMinAboveZero_Mar=31-nDaysMinBelowZero_Mar,
+      nDaysMinAboveZero_FebMar=59-(nDaysMinBelowZero_Feb+nDaysMinBelowZero_Mar),
+      
+      Year=water_year+1) %>% #year = the year of ice-off
+    
+    ungroup()%>%
+
+  #join MohonkIce dataframe with ice on/off days    
+    left_join(.,MohonkIce, by="Year") %>%
+
+
+  # get rid of unnecessary columns    
+    select(-IceOutDayofYear_fed,
+           -IceInDate,-IceOutDate,-IceInDate) %>%
+
+    
+  #moves select response variables to 
+  #front of dataframe, then lists the rest of predictor variables.  
+      select(Year, water_year, IceInDayofYear, IceOutDayofYear,
+           LengthOfIceCover_days, IceInDayofYear_fed, everything()) 
+
+
+#Calculated some snow predictors in a separate dataframe, then joined with MohonkDailyWeather_monthly
+
+SnowPredictors<-MohonkDailyWeatherFull %>%
+  mutate(
+    year=year(Date),
+    month=month(Date),
+    month_name=month(Date, label=TRUE),
+    water_year = ifelse(month %in% c("1","2","3","4"),
+                        year-1, 
+                        year)) %>% #this water_year term is only relevent for winter
+  #metrics. We want 1 Oct-30 April to all correspond to the same water year
+  #exclude May-August, which are *most likely* not directly influencing winter ice phenology
+  filter(!water_year==1929)%>%
+  group_by(water_year)%>%
+  dplyr::summarize(maxSnowDepth_mm = max(SnowDepth_mm),
+                   datemaxSnowDepth = Date[which(SnowDepth_mm == max(SnowDepth_mm))],
+                   maxSnowDepthDOY_fed=hydro.day(datemaxSnowDepth)) %>%
+  select(-datemaxSnowDepth)
+
+
+MohonkIceWeather<-left_join(MohonkDailyWeather_monthly,SnowPredictors, by="water_year")
+rm(MohonkDailyWeather_monthly,SnowPredictors)
