@@ -57,3 +57,6 @@ vignettes/*.pdf
 
 #Ignore DS_Store!
 .DS_Store
+
+#Ignore Archive files
+/Archive
