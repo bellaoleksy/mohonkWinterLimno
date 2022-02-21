@@ -12,7 +12,7 @@ library("grid")                         # for unit.pmax(), unit.list()
 library("schoenberg")
 library("tidyr")
 library("nlme")
-library("Hmisc") #correlation matrices
+library(Hmisc, exclude="summarize") #correlation matrices
 
 #Load libraries 
 if(!require(forecast)){install.packages("huxtable")}
@@ -35,6 +35,8 @@ library(officer) #exporting pretty tables to word
 library(flextable) #exporting pretty tables to word
 library(ggpubr) #for ggarrange()
 library(egg)
+library(ggthemes)
+
 # Set theme ---------------------------------------------------------------
 
 
@@ -131,9 +133,8 @@ MohonkIceWeather_trim_correlations %>%
 
 
 
+#Just out of curiosity, is there any relatioship between days since turnover and IceInDOY?
 
-
-# Vis: Strat. end and Ice-in DOY ------------------------------------------
 AnnualData %>%
   mutate(turnoverToIceIn_days=IceInDayofYear-EndOfStratification_Day) %>%
   select(Year,turnoverToIceIn_days,IceInDayofYear) %>%
@@ -159,62 +160,117 @@ AnnualData %>%
 #Includes summary stats of significant slopes
 Ice.SensSlopeSummary<-
   MohonkIce %>%
-  select(Year, IceOutDayofYear_fed,LengthOfIceCover_days,IceInDayofYear_fed) %>%
+  select(Year, IceOutDayofYear,LengthOfIceCover_days,IceInDayofYear_fed) %>%
   pivot_longer(-1) %>%
   group_by(name)%>%
   summarize(Sens_Slope=MTCC.sensSlope(x=Year,y=value)$coefficients["Year"],
             Sens_Intercept=MTCC.sensSlope(x=Year,y=value)$coefficients["Intercept"],
             Sens_pval=MTCC.sensSlope(x=Year,y=value)$pval,
             Sens_z_stat=MTCC.sensSlope(x=Year,y=value)$z_stat,
-            Sens_n=MTCC.sensSlope(x=Year,y=value)$n)%>%
+            Sens_n=MTCC.sensSlope(x=Year,y=value)$n) %>%
   mutate(Significance=ifelse(Sens_pval<0.05,"*","NS"))
 
 
 #Visualize
 glimpse(MohonkIce)
 
+
+
+# ~~FIGURE X~~ Ice in phenology timeseries ------------------------------------------------------------
+
 #**Phenology of stratification plot####
 #Immitate the figure from our GRL paper
 #Create yhat for date of stratification onset
-MohonkIce.Predicted<-MohonkIce%>%dplyr::select(Year)%>%
-  mutate(IceOutDayofYear_fed_yhat=Year*as.numeric(Ice.SensSlopeSummary%>%filter(name=="IceOutDayofYear_fed")%>%dplyr::select(Sens_Slope))+as.numeric(Ice.SensSlopeSummary%>%filter(name=="IceOutDayofYear_fed")%>%dplyr::select(Sens_Intercept)))%>%
-  mutate(LengthOfIceCover_days_yhat=Year*as.numeric(Ice.SensSlopeSummary%>%filter(name=="LengthOfIceCover_days")%>%dplyr::select(Sens_Slope))+as.numeric(Ice.SensSlopeSummary%>%filter(name=="LengthOfIceCover_days")%>%dplyr::select(Sens_Intercept)))%>%
-  mutate(IceInDayofYear_fed_yhat=Year*as.numeric(Ice.SensSlopeSummary%>%filter(name=="IceInDayofYear_fed")%>%dplyr::select(Sens_Slope))+as.numeric(Ice.SensSlopeSummary%>%filter(name=="IceInDayofYear_fed")%>%dplyr::select(Sens_Intercept)))
+MohonkIce.Predicted <- MohonkIce %>% dplyr::select(Year) %>%
+  mutate(
+    IceOutDayofYear_fed_yhat = Year * as.numeric(
+      Ice.SensSlopeSummary %>% filter(name == "IceOutDayofYear") %>% dplyr::select(Sens_Slope)
+    ) + as.numeric(
+      Ice.SensSlopeSummary %>% filter(name == "IceOutDayofYear") %>% dplyr::select(Sens_Intercept)
+    )
+  ) %>%
+  mutate(
+    LengthOfIceCover_days_yhat = Year * as.numeric(
+      Ice.SensSlopeSummary %>% filter(name == "LengthOfIceCover_days") %>% dplyr::select(Sens_Slope)
+    ) + as.numeric(
+      Ice.SensSlopeSummary %>% filter(name == "LengthOfIceCover_days") %>% dplyr::select(Sens_Intercept)
+    )
+  ) %>%
+  mutate(
+    IceInDayofYear_fed_yhat = Year * as.numeric(
+      Ice.SensSlopeSummary %>% filter(name == "IceInDayofYear_fed") %>% dplyr::select(Sens_Slope)
+    ) + as.numeric(
+      Ice.SensSlopeSummary %>% filter(name == "IceInDayofYear_fed") %>% dplyr::select(Sens_Intercept)
+    )
+  )
 
 
 
-# ~~FIGURE X~~ ------------------------------------------------------------
-
-
-ggplot()+
-  geom_segment(data=MohonkIce,aes(x=Year,xend=Year,
-                                  y=IceInDayofYear_fed,
-                                  yend=IceOutDayofYear_fed,
-                                  col=LengthOfIceCover_days))+
-               # col="grey")+
-  geom_point(data=MohonkIce,
-             aes(x=Year,y=IceInDayofYear_fed),
-             shape=21,color="black",fill="#FFFFFF",size=2)+
-  geom_line(data=MohonkIce.Predicted,
-            aes(x=Year,y=IceInDayofYear_fed_yhat),color="black",lty=1)+
-  geom_point(data=MohonkIce,aes(x=Year,
-                                 y=IceOutDayofYear_fed),
-             shape=21,color="black",fill="#FFFFFF",size=2)+
-  scale_color_continuous(high="green", low="red",
-                         name="Ice cover\nduration (days)")+
-  scale_y_continuous(lim=c(50,200),
-                     breaks=seq(50,250,by=25))+
-  scale_x_continuous(limit=c(1930,2020),
-                     breaks=seq(1930,2020,by=10))+
-  theme_MS()+
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),panel.border = element_rect(fill=NA, colour = "black", size=1),
-        axis.text.x= element_text(color="black"),
-        axis.text.y= element_text(color="black"),
-        axis.ticks = element_line(color="black"))+
-  xlab("Year")+
+ggplot() +
+  geom_segment(
+    data = MohonkIce,
+    aes(
+      x = Year,
+      xend = Year,
+      y = IceInDayofYear_fed,
+      yend = IceOutDayofYear_fed,
+      col = LengthOfIceCover_days
+    )
+  ) +
+  # col="grey")+
+  geom_point(
+    data = MohonkIce,
+    aes(x = Year, y = IceInDayofYear_fed, fill = LengthOfIceCover_days),
+    shape = 21,
+    color = "black",
+    size = 1.5
+  ) +
+  geom_line(
+    data = MohonkIce.Predicted,
+    aes(x = Year, y = IceInDayofYear_fed_yhat),
+    color = "black",
+    lty = 1
+  ) +
+  geom_point(
+    data = MohonkIce,
+    aes(x = Year,
+        y = IceOutDayofYear_fed,
+        fill = LengthOfIceCover_days),
+    shape = 21,
+    color = "black",
+    size = 1.5
+  ) +
+  scale_color_continuous(high = "green", low = "red",
+                         name = "Ice cover\nduration (days)") +
+  scale_fill_continuous(high = "green", low = "red",
+                        name = "Ice cover\nduration (days)") +
+  scale_y_continuous(lim = c(50, 200),
+                     breaks = seq(50, 250, by = 25)) +
+  scale_x_continuous(limit = c(1930, 2020),
+                     breaks = seq(1930, 2020, by = 10)) +
+  theme_MS() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"),
+    panel.border = element_rect(
+      fill = NA,
+      colour = "black",
+      size = 1
+    ),
+    axis.text.x = element_text(color = "black"),
+    axis.text.y = element_text(color = "black"),
+    axis.ticks = element_line(color = "black")
+  ) +
+  xlab("Year") +
   ylab("Days since Oct 1 (beginning of water-year)")
-ggsave("figures/manuscript - Mohonk winter limno/preliminary figs/FigX.IcePhenology.png", width=5, height=5,units="in", dpi=300)
+ggsave(
+  "figures/FigX.IcePhenology.png",
+  width = 6,
+  height = 4,
+  units = "in",
+  dpi = 300
+)
 
 # Fitting GAMs for iceOnDOY_fed -------------------------------------------
 
@@ -466,10 +522,10 @@ summary(lm_iceOffDOY_cv)
 
 
 #ENSO 7-year rolling average... 
-ENSO_withNAs<-MohonkWeatherSummary_winter %>%
-  select(MEI_mean_previouswinter,Year) 
-ENSO<-MohonkWeatherSummary_winter %>%
-  select(MEI_mean_previouswinter) %>%
+ENSO_withNAs<-MohonkIceWeather %>%
+  select(ENSO_index_winter,Year) 
+ENSO<-MohonkIceWeather %>%
+  select(ENSO_index_winter) %>%
   drop_na()
 
 ENSO_mean<-data.frame(rollapply(ENSO, width =7, FUN = mean)) %>%
@@ -477,18 +533,18 @@ ENSO_mean<-data.frame(rollapply(ENSO, width =7, FUN = mean)) %>%
 
 ENSO_mean %>%
   ggplot(aes(x=as.numeric(rollingwindow_timepoint),
-             y=MEI_mean_previouswinter))+geom_point()+
+             y=ENSO_index_winter))+geom_point()+
   xlab("7-year rolling window timepoint (1979-2020")+
   ylab("ENSO (mean)")+
   geom_smooth(method="lm", color="black", size=0.5)
 
 #Is the 7-year rolling average of winter ENSO related to the c.v. of ice duration?
-#I guses we can only examine 1980-2020 because of limited ENSO record. Let's try.
-iceDuration_days_short<-MohonkWeatherSummary_winter %>%
+#I guses we can only examine 1978-2020 because of limited ENSO record. Let's try.
+iceDuration_days_short<-MohonkIceWeather %>%
   select(LengthOfIceCover_days, Year) %>%
   left_join(.,ENSO_withNAs, by="Year")%>% ##This step ensures we have all the same years.
   drop_na()%>%                                        ##we have some missing obs. of ice duration early on.
-  select(-Year,-MEI_mean_previouswinter)
+  select(-Year,-ENSO_index_winter)
 
 iceDuration_short_cv<-data.frame(rollapply(iceDuration_days_short, width =7, FUN = cv)) %>%
   rownames_to_column(., var = "rollingwindow_timepoint")  #convert column name to row name 
@@ -503,13 +559,13 @@ iceDuration_short_cv %>%
 #is there a correlation btwn the two?
 #Are they correlated?
 left_join(ENSO_mean,iceDuration_short_cv)%>%
-  ggplot(aes(x=MEI_mean_previouswinter,y=LengthOfIceCover_days))+
+  ggplot(aes(x=ENSO_index_winter,y=LengthOfIceCover_days))+
   geom_point()
 corr_temp<-left_join(ENSO_mean,iceDuration_short_cv)%>%
   mutate(rollingwindow_timepoint=as.numeric(rollingwindow_timepoint))%>%
   arrange(rollingwindow_timepoint) %>%
   drop_na()
-cor.test(corr_temp$MEI_mean_previouswinter, corr_temp$LengthOfIceCover_days)
+cor.test(corr_temp$ENSO_index_winter, corr_temp$LengthOfIceCover_days)
 #No
 
 #But do they look related *at all*???
@@ -522,25 +578,9 @@ left_join(ENSO_mean,iceDuration_short_cv)%>%
 ##is more directly related to temp or precipitation. The periodicity is brought on by the ENSO cycles.
 
 
-##Is the 7-year rolling average of winter+spring temperature related to the c.v. of ice duration?
-cumWS_T<-MohonkWeatherSummary_winter %>%
-  select(cumMeanDailyT_winterSpring) %>%
-  drop_na()
-
-cumWS_T_mean<-data.frame(rollapply(cumWS_T, width =7, FUN = mean)) %>%
-  rownames_to_column(., var = "rollingwindow_timepoint")  #convert column name to row name 
-
-cumWS_T_mean %>%
-  ggplot(aes(x=as.numeric(rollingwindow_timepoint),
-             y=cumMeanDailyT_winterSpring))+geom_point()+
-  xlab("7-year rolling window timepoint")+
-  ylab("Cum. mean daily T of winter+spring (mean)")+
-  geom_smooth(method="lm", color="black", size=0.5)
-
-
 ##Is the 7-year rolling average of cumulative fall temperature related to the c.v. of ice duration?
-cumfall_T<-MohonkWeatherSummary_winter %>%
-  select(cumMeanDailyT_fall, Year) %>%
+cumfall_T<-MohonkIceWeather %>%
+  select(cumMeanDailyT_OctNovDec, Year) %>%
   left_join(.,iceDuration_days_withNAs, by="Year")%>% ##This step ensures we have all the same years.
   drop_na()%>%                                        ##we have some missing obs. of ice duration early on.
   select(-Year,-LengthOfIceCover_days)
@@ -550,25 +590,25 @@ cumfall_T_mean<-data.frame(rollapply(cumfall_T, width =7, FUN = mean)) %>%
 
 cumfall_T_mean %>%
   ggplot(aes(x=as.numeric(rollingwindow_timepoint),
-             y=cumMeanDailyT_fall))+geom_point()+
+             y=cumMeanDailyT_OctNovDec))+geom_point()+
   xlab("7-year rolling window timepoint")+
   ylab("Cum. mean daily T of fall (mean)")+
   geom_smooth(method="lm", color="black", size=0.5)
 
 #Are they correlated?
 left_join(cumfall_T_mean,iceDuration_cv)%>%
-  ggplot(aes(x=cumMeanDailyT_fall,y=LengthOfIceCover_days))+
+  ggplot(aes(x=cumMeanDailyT_OctNovDec,y=LengthOfIceCover_days))+
   geom_point()+
-  xlab("7-year rolling average of cumulative mean daily fall temps")+
+  xlab("7-year rolling average of cumulative mean daily fall temps (Oct+Nov+Dec)")+
   ylab("7-year rolling average of the c.v. in ice over duration")
 
 corr_temp<-left_join(cumfall_T_mean,iceDuration_cv)
-print(cor.test(corr_temp$cumMeanDailyT_fall,corr_temp$LengthOfIceCover_days))
+print(cor.test(corr_temp$cumMeanDailyT_OctNovDec,corr_temp$LengthOfIceCover_days))
 #Does't look like much, but there *is* a significant correlation between the two. 
 
 ##Is the 7-year rolling average of cumulative fall precip related to the c.v. of ice duration?
-cumfall_rain<-MohonkWeatherSummary_winter %>%
-  select(cumRain_fall, Year) %>%
+cumfall_rain<-MohonkIceWeather %>%
+  select(cumRain_OctNovDec, Year) %>%
   left_join(.,iceDuration_days_withNAs, by="Year")%>% ##This step ensures we have all the same years.
   drop_na()%>%                                        ##we have some missing obs. of ice duration early on.
   select(-Year,-LengthOfIceCover_days)
@@ -578,27 +618,29 @@ cumfall_rain_mean<-data.frame(rollapply(cumfall_rain, width =7, FUN = mean)) %>%
 
 cumfall_rain_mean %>%
   ggplot(aes(x=as.numeric(rollingwindow_timepoint),
-             y=cumRain_fall))+geom_point()+
+             y=cumRain_OctNovDec))+geom_point()+
   xlab("7-year rolling window timepoint")+
   ylab("Cum. fall rain (7-year rolling mean)")+
   geom_smooth(method="lm", color="black", size=0.5)
+#It does look cyclicall.. 
+
 
 #Are they correlated?
 left_join(cumfall_rain_mean,iceDuration_cv)%>%
-  ggplot(aes(x=cumRain_fall,y=LengthOfIceCover_days))+
+  ggplot(aes(x=cumRain_OctNovDec,y=LengthOfIceCover_days))+
   geom_point()
 corr_temp<-left_join(cumfall_rain_mean,iceDuration_cv)
-print(cor.test(corr_temp$cumRain_fall,corr_temp$LengthOfIceCover_days))
+print(cor.test(corr_temp$cumRain_OctNovDec,corr_temp$LengthOfIceCover_days))
 #No...
 
 ##Is the 7-year rolling average of prop. fall precip as RAIN related to the c.v. of ice duration?
-propfall_rain<-MohonkWeatherSummary_winter %>%
-  select(cumRain_fall, cumSnow_fall, Year) %>%
-  mutate(prop_rain=cumRain_fall/(cumRain_fall+cumSnow_fall)) %>%
+propfall_rain<-MohonkIceWeather %>%
+  select(cumRain_OctNovDec, cumSnow_OctNovDec, Year) %>%
+  mutate(prop_rain=cumRain_OctNovDec/(cumRain_OctNovDec+cumSnow_OctNovDec)) %>%
   left_join(.,iceDuration_days_withNAs, by="Year")%>% ##This step ensures we have all the same years.
   drop_na()%>%                                        ##we have some missing obs. of ice duration early on.
   select(-Year,-LengthOfIceCover_days,
-         -cumRain_fall,-cumSnow_fall)
+         -cumRain_OctNovDec,-cumSnow_OctNovDec)
 
 propfall_rain_mean<-data.frame(rollapply(propfall_rain, width =7, FUN = mean)) %>%
   rownames_to_column(., var = "rollingwindow_timepoint")  #convert column name to row name 
@@ -609,23 +651,6 @@ propfall_rain_mean %>%
   xlab("7-year rolling window timepoint")+
   ylab("Cum. fall rain (7-year rolling mean)")+
   geom_smooth(method="lm", color="black", size=0.5)
-
-#Are they correlated?
-left_join(propfall_rain_mean,iceDuration_cv)%>%
-  ggplot(aes(x=prop_rain,y=LengthOfIceCover_days))+
-  geom_point()+
-  ylab("7-year rolling average of the c.v. in ice over duration")+
-  xlab("7-year rolling average of the mean proportion of precip as rain")
-#It doesn't look like much, but the correlation is statistically significant
-corr_temp<-left_join(propfall_rain_mean,iceDuration_cv)
-print(cor.test(corr_temp$prop_rain,corr_temp$LengthOfIceCover_days))
-left_join(propfall_rain_mean,iceDuration_cv)%>%
-  mutate(rollingwindow_timepoint=as.numeric(rollingwindow_timepoint))%>%
-  pivot_longer(-rollingwindow_timepoint)%>%
-  ggplot(aes(x=rollingwindow_timepoint,y=value))+
-  geom_point()+
-  facet_wrap(.~name, scales="free_y", nrow=2)
-
 
 
 # ~~~~~~~ Visualize trends ~~~~~~~~ --------------------------------------------------------
@@ -644,6 +669,8 @@ MohonkDailyWeatherFull %>%
   ggtitle("Winter snow totals")+
   coord_cartesian(xlim=c(1930,2020))+
   scale_x_continuous(breaks=seq(1930, 2020, 15))  
+## The caveat here is that prior to 1950 the snow data is kind of patchy
+
 
 #Visualize the years where we have good snow depth data
 MohonkDailyWeatherFull %>% 
@@ -660,12 +687,12 @@ MohonkDailyWeatherFull %>%
 
 #Mean snow depth in march
 MohonkDailyWeatherFull %>% 
-  filter(month=="3")%>%
-  select(Date, SnowDepth_mm, year) %>%
+  filter(Month=="3")%>%
+  select(Date, SnowDepth_mm, Year) %>%
   drop_na()%>%
-  group_by(year) %>%
+  group_by(Year) %>%
   summarize(mean_snowdepth=mean(SnowDepth_mm))%>%
-  ggplot(aes(x=year, y=mean_snowdepth))+
+  ggplot(aes(x=Year, y=mean_snowdepth))+
   geom_point()+
   ggtitle("March snow depth average")+
   coord_cartesian(xlim=c(1930,2020))+
@@ -700,14 +727,14 @@ MohonkDailyWeatherFull %>%
 
 #Trends in March-April-May temperatures
 MohonkDailyWeatherFull %>%
-  select(year, month,TempMax_degC, TempMin_degC, TempMean_degC) %>%
-  group_by(year,month) %>%
+  select(Year, Month,TempMax_degC, TempMin_degC, TempMean_degC) %>%
+  group_by(Year, Month) %>%
   summarize_at(vars(TempMax_degC:TempMean_degC), mean, na.rm=TRUE) %>%
   pivot_longer(-(1:2)) %>%
-  filter(month %in% c("3","4","5"))%>%
-  ggplot(aes(x=year,y=value,color=name))+
+  filter(Month %in% c("3","4","5"))%>%
+  ggplot(aes(x=Year,y=value,color=name))+
     geom_point()+
-    facet_wrap(.~month, nrow=3, scales="free_y")+
+    facet_wrap(.~Month, nrow=3, scales="free_y")+
   geom_line(size=0.5)+
   coord_cartesian(xlim=c(1930,2020))+
   scale_x_continuous(breaks=seq(1930, 2020, 15))  
@@ -730,113 +757,39 @@ MohonkDailyWeatherFull %>%
   geom_smooth(size=0.5)
 
 
-MohonkWeatherSummary_winter %>% 
-  ggplot(aes(x=Year, y=cumMeanDailyT_winterSpring))+
+MohonkIceWeather %>%
+  select(Year, contains(c("cumMean"))) %>%
+  pivot_longer(-1) %>%
+  ggplot(aes(x=Year, y=value))+
   geom_point()+
-  ggtitle("Cumulative winter+spring temperatures")+
+  # ggtitle("Cumulative Mar+Apr temperatures")+
   coord_cartesian(xlim=c(1930,2020))+
   scale_x_continuous(breaks=seq(1930, 2020, 15))+
-  geom_smooth()
+  geom_smooth()+
+  facet_wrap(~name, scales="free_y")
 
-MohonkWeatherSummary_winter %>% 
-  ggplot(aes(x=Year, y=cumMeanDailyT_spring))+
-  geom_point()+
-  ggtitle("Cumulative spring temperatures (1Mar-30Apr)")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))+
-  geom_smooth()
-
-MohonkWeatherSummary_winter %>% 
-  ggplot(aes(x=Year, y=cumMeanDailyT_fall))+
-  geom_point()+
-  ggtitle("Cumulative fall (oct-nov) temperatures")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))+
-  geom_smooth()
-
-MohonkWeatherSummary_winter %>% 
-  ggplot(aes(x=Year, y=cumSnow_winterSpring))+
-  geom_point()+
-  ggtitle("Cumulative winter+spring snow totals")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))+
-  geom_smooth()
-
-MohonkWeatherSummary_winter %>% 
-  ggplot(aes(x=Year, y=cumSnow_spring))+
-  geom_point()+
-  ggtitle("Cumulative spring snow totals (1Mar-30Apr)")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))+
-  geom_smooth()
-
-MohonkWeatherSummary_winter %>% 
-  ggplot(aes(x=Year, y=cumSnow_fall))+
-  geom_point()+
-  ggtitle("Cumulative spring snow totals (1oct-30nov)")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))+
-  geom_smooth()
-
-MohonkWeatherSummary_winter %>% 
-  ggplot(aes(x=Year, y=cumRain_winterSpring))+
-  geom_point()+
-  ggtitle("Cumulative winter+spring Rain totals")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))+
-  geom_smooth()
-
-MohonkWeatherSummary_winter %>% 
-  ggplot(aes(x=Year, y=cumRain_spring))+
-  geom_point()+
-  ggtitle("Cumulative spring Rain totals (1Mar-30Apr)")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))+
-  geom_smooth()
-
-MohonkWeatherSummary_winter %>% 
-  ggplot(aes(x=Year, y=cumRain_fall))+
-  geom_point()+
-  ggtitle("Cumulative spring Rain totals (1Oct-30Nov)")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))+
-  geom_smooth()
 
 # >> corr. with ice-off date ----------------------------------------------
 
-ggpairs(MohonkWeatherSummary_winter, columns = 2:15) 
+# ggpairs(MohonkIceWeather, columns = 3:ncol(MohonkIceWeather)) 
 
 #Strong correlations between Ice out DOY and spring snow (+) and temperatures (-)
 #Moderate correlations between Ice on DOY and Ice duration and MEI of previous winter
 
-MohonkWeatherSummary_winter %>%
-  select(IceOutDayofYear, cumSnow_spring, cumMeanDailyT_spring, cumMeanDailyT_winterSpring,
-         cumRain_spring, NAO_index_spring) %>%
+MohonkIceWeather %>%
+  select(IceOutDayofYear, LengthOfIceCover_days, cumMeanDailyT_Mar, nDaysMeanBelowZero_Mar,
+         nDaysMinBelowZero_Mar, cumMeanDailyT_FebMar, cumSnow_FebMar, nDaysMeanAboveZero_FebMar,
+         maxSnowDepth_mm, NAO_index_spring) %>%
   ggpairs()
-cor.test(MohonkWeatherSummary_winter$IceOutDayofYear, MohonkWeatherSummary_winter$cumSnow_spring)
-cor.test(MohonkWeatherSummary_winter$IceOutDayofYear, MohonkWeatherSummary_winter$cumMeanDailyT_spring)
-cor.test(MohonkWeatherSummary_winter$IceOutDayofYear, MohonkWeatherSummary_winter$cumMeanDailyT_winterSpring)
 
 # >> corr. with ice-on date ----------------------------------------------
 
-MohonkWeatherSummary_winter %>%
-  mutate(prop_rain=cumRain_fall/(cumRain_fall+cumSnow_fall)) %>%
-  select(IceInDayofYear_fed, LengthOfIceCover_days, MEI_mean_previouswinter, 
-         cumSnow_fall, cumMeanDailyT_fall, cumRain_fall) %>%
+MohonkIceWeather %>%
+  mutate(prop_rain=cumRain_OctNovDec/(cumRain_OctNovDec+cumSnow_OctNovDec)) %>%
+  select(IceInDayofYear_fed, prop_rain, ENSO_index_fall, LengthOfIceCover_days, cumMeanDailyT_Dec,
+         nDaysMeanBelowZero_Dec, cumMeanDailyT_OctNov, cumMeanDailyT_OctNovDec, nDaysMinBelowZero_OctNovDec) %>%
   ggpairs()
-cor.test(MohonkWeatherSummary_winter$IceInDayofYear_fed, MohonkWeatherSummary_winter$MEI_mean_previouswinter) #significant
-cor.test(MohonkWeatherSummary_winter$IceInDayofYear_fed, MohonkWeatherSummary_winter$cumMeanDailyT_fall) #highly significant
-cor.test(MohonkWeatherSummary_winter$IceInDayofYear_fed, MohonkWeatherSummary_winter$cumSnow_fall) #marginally significant
-cor.test(MohonkWeatherSummary_winter$IceInDayofYear_fed, MohonkWeatherSummary_winter$cumRain_fall) #significant
-cor.test(MohonkWeatherSummary_winter$LengthOfIceCover_days, MohonkWeatherSummary_winter$MEI_mean_previouswinter) #significant
-cor.test(MohonkWeatherSummary_winter$LengthOfIceCover_days, MohonkWeatherSummary_winter$cumMeanDailyT_fall)#highly significant
 
-#smaller subset
-MohonkWeatherSummary_winter %>%
-  mutate(prop_rain=cumRain_fall/(cumRain_fall+cumSnow_fall)) %>%
-  select(IceInDayofYear_fed, LengthOfIceCover_days, MEI_mean_previouswinter, 
-         cumMeanDailyT_fall) %>%
-  ggpairs()
 
 # Fitting GAMs for mean winter temperature -------------------------------------------
 WinterWx<-MohonkDailyWeatherFull %>%
@@ -846,7 +799,7 @@ WinterWx<-MohonkDailyWeatherFull %>%
   summarize_at(vars(TempMax_degC:TempMean_degC), mean, na.rm=TRUE) 
 
 
-### I added Family Gamma here for how errors should respond
+### Model
 modWinterTempMean <- gamm(TempMean_degC ~ s(water_year),
                   data = WinterWx,
                  correlation = corCAR1(form = ~ water_year),
@@ -911,7 +864,7 @@ WinterWx<-MohonkDailyWeatherFull %>%
   summarize_at(vars(TempMax_degC:TempMean_degC), mean, na.rm=TRUE) 
 
 
-### I added Family Gamma here for how errors should respond
+### Model
 modWinterTempMax <- gamm(TempMax_degC ~ s(water_year),
                           data = WinterWx,
                           correlation = corCAR1(form = ~ water_year),
@@ -932,7 +885,7 @@ WinterTempMaxPred <- cbind(WinterTempMaxPred, data.frame(predict(modWinterTempMa
 WinterTempMaxPred <- transform(WinterTempMaxPred, upper = fit + (2 * se.fit),
                                 lower = fit - (2 * se.fit))
 
-?transform
+# ?transform
 # Plots periods of change
 #https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
 Term <- "water_year"
@@ -953,7 +906,7 @@ lines(upper ~ water_year, data = WinterTempMaxPred, lty = "dashed")
 lines(lower ~ water_year, data = WinterTempMaxPred, lty = "dashed")
 lines(unlist(m1.dsig$incr) ~ water_year, data = WinterTempMaxPred, col = "blue", lwd = 3)
 lines(unlist(m1.dsig$decr) ~ water_year, data = WinterTempMaxPred, col = "red", lwd = 3)
-#To me this indicates that there is no acceleration, and the rate of change is fairly constant. 
+#An acceleration in the trend 1990s-2000s
 
 #But another way to visualize it is there would be a significant period of change if the error bar around
 #the first derivative didn't overlap the horizontal black line.
@@ -1039,16 +992,16 @@ ggplot(WinterTempMinPred,aes(x=water_year,y=fit))+
 
 # Fitting GAMs for mean sept temperature -------------------------------------------
 FallWx<-MohonkDailyWeatherFull %>%
-  filter(month==9)%>%
-  select(year, TempMax_degC, TempMin_degC, TempMean_degC) %>%
-  group_by(year) %>%
+  filter(Month==9)%>%
+  select(Year, TempMax_degC, TempMin_degC, TempMean_degC) %>%
+  group_by(Year) %>%
   summarize_at(vars(TempMax_degC:TempMean_degC), mean, na.rm=TRUE) 
 
 
 ### I added Family Gamma here for how errors should respond
-modFallTempMean <- gamm(TempMean_degC ~ s(year),
+modFallTempMean <- gamm(TempMean_degC ~ s(Year),
                           data = FallWx,
-                          correlation = corCAR1(form = ~ year),
+                          correlation = corCAR1(form = ~ Year),
                           method = "REML")
 
 ## summary object
@@ -1056,8 +1009,8 @@ modFallTempMean_S <- summary(modFallTempMean$gam)
 modFallTempMean_S #Gives you the P values, degrees of freedom...
 
 ###Since we're concerned with the response, include "response" in type of predict()
-FallTempMeanPred <- with(FallWx, data.frame(year = seq(min(year, na.rm=TRUE),
-                                                                 max(year, na.rm=TRUE),
+FallTempMeanPred <- with(FallWx, data.frame(Year = seq(min(Year, na.rm=TRUE),
+                                                                 max(Year, na.rm=TRUE),
                                                                  length.out = 200)))
 FallTempMeanPred <- cbind(FallTempMeanPred, data.frame(predict(modFallTempMean$gam, FallTempMeanPred,
                                                                    type="response",
@@ -1069,37 +1022,37 @@ FallTempMeanPred <- transform(FallTempMeanPred, upper = fit + (2 * se.fit),
 ?transform
 # Plots periods of change
 #https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
-Term <- "year"
+Term <- "Year"
 m1.d <- Deriv(modFallTempMean)
 
-m1.dci <- confint(m1.d, term = "year")
+m1.dci <- confint(m1.d, term = "Year")
 m1.dsig <- signifD(FallTempMeanPred$fit,
                    d = m1.d[[Term]]$deriv,
                    m1.dci[[Term]]$upper,
                    m1.dci[[Term]]$lower)
 
 ylim <- with(FallTempMeanPred, range(upper, lower, fit))
-ylab <- 'Mean Sept temp (water year)'
+ylab <- 'Mean Sept temp (water Year)'
 
-plot(fit ~ year, data = FallTempMeanPred, type = "n", ylab = ylab, ylim = ylim)
-lines(fit ~ year, data = FallTempMeanPred)
-lines(upper ~ year, data = FallTempMeanPred, lty = "dashed")
-lines(lower ~ year, data = FallTempMeanPred, lty = "dashed")
-lines(unlist(m1.dsig$incr) ~ year, data = FallTempMeanPred, col = "blue", lwd = 3)
-lines(unlist(m1.dsig$decr) ~ year, data = FallTempMeanPred, col = "red", lwd = 3)
-#To me this indicates that there is no acceleration, and the rate of change is fairly constant. 
+plot(fit ~ Year, data = FallTempMeanPred, type = "n", ylab = ylab, ylim = ylim)
+lines(fit ~ Year, data = FallTempMeanPred)
+lines(upper ~ Year, data = FallTempMeanPred, lty = "dashed")
+lines(lower ~ Year, data = FallTempMeanPred, lty = "dashed")
+lines(unlist(m1.dsig$incr) ~ Year, data = FallTempMeanPred, col = "blue", lwd = 3)
+lines(unlist(m1.dsig$decr) ~ Year, data = FallTempMeanPred, col = "red", lwd = 3)
+#Pretty substantial acceleration in the trend mid-1980s through 2010s
 
 #But another way to visualize it is there would be a significant period of change if the error bar around
 #the first derivative didn't overlap the horizontal black line.
 plot.Deriv(m1.d)
 
-#Plot Ice on DOY vs. year pretty
-ggplot(FallTempMeanPred,aes(x=year,y=fit))+
+#Plot Ice on DOY vs. Year pretty
+ggplot(FallTempMeanPred,aes(x=Year,y=fit))+
   geom_point(data=FallWx,
-             mapping=aes(x=year, y=TempMean_degC), size=2.5, alpha=0.7) +
+             mapping=aes(x=Year, y=TempMean_degC), size=2.5, alpha=0.7) +
   geom_line(size=1)+
-  geom_ribbon(aes(ymin = (lower), ymax = (upper), x = year), alpha = 0.5, inherit.aes = FALSE) +
-  labs(x="Water year",y="Mean Sept temperature (C)")+
+  geom_ribbon(aes(ymin = (lower), ymax = (upper), x = Year), alpha = 0.5, inherit.aes = FALSE) +
+  labs(x="Water Year",y="Mean Sept temperature (C)")+
   coord_cartesian(xlim=c(1930,2020))+
   scale_x_continuous(breaks=seq(1930, 2020, 15))
 
@@ -1111,8 +1064,8 @@ ggplot(FallTempMeanPred,aes(x=year,y=fit))+
 # Fitting GAMs for cumulative mean fall temperature -------------------------------------------
 
 ### I added Family Gamma here for how errors should respond
-modFallTempMean <- gamm(cumMeanDailyT_fall ~ s(water_year),
-                          data = MohonkWeatherSummary_winter,
+modFallTempMean <- gamm(cumMeanDailyT_OctNovDec ~ s(water_year),
+                          data = MohonkIceWeather,
                           correlation = corCAR1(form = ~ water_year),
                           method = "REML")
 
@@ -1121,7 +1074,7 @@ modFallTempMean_S <- summary(modFallTempMean$gam)
 modFallTempMean_S #Gives you the P values, degrees of freedom...
 
 ###Since we're concerned with the response, include "response" in type of predict()
-FallTempMeanPred <- with(MohonkWeatherSummary_winter, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
+FallTempMeanPred <- with(MohonkIceWeather, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
                                                                  max(water_year, na.rm=TRUE),
                                                                  length.out = 200)))
 FallTempMeanPred <- cbind(FallTempMeanPred, data.frame(predict(modFallTempMean$gam, FallTempMeanPred,
@@ -1151,7 +1104,7 @@ lines(upper ~ water_year, data = FallTempMeanPred, lty = "dashed")
 lines(lower ~ water_year, data = FallTempMeanPred, lty = "dashed")
 lines(unlist(m1.dsig$incr) ~ water_year, data = FallTempMeanPred, col = "blue", lwd = 3)
 lines(unlist(m1.dsig$decr) ~ water_year, data = FallTempMeanPred, col = "red", lwd = 3)
-#To me this indicates that there is no acceleration, and the rate of change is fairly constant. 
+#Similar acceleration mid-1980s to 2010s. 
 
 #But another way to visualize it is there would be a significant period of change if the error bar around
 #the first derivative didn't overlap the horizontal black line.
@@ -1159,8 +1112,8 @@ plot.Deriv(m1.d)
 
 #Plot Ice on DOY vs. year pretty
 ggplot(FallTempMeanPred,aes(x=water_year,y=fit))+
-  geom_point(data=MohonkWeatherSummary_winter,
-             mapping=aes(x=water_year, y=cumMeanDailyT_fall), size=2.5, alpha=0.7) +
+  geom_point(data=MohonkIceWeather,
+             mapping=aes(x=water_year, y=cumMeanDailyT_OctNovDec), size=2.5, alpha=0.7) +
   geom_line(size=1)+
   geom_ribbon(aes(ymin = (lower), ymax = (upper), x = water_year), alpha = 0.5, inherit.aes = FALSE) +
   labs(x="Water year",y="Mean fall temperature (C))")+
@@ -1172,8 +1125,8 @@ ggplot(FallTempMeanPred,aes(x=water_year,y=fit))+
 # Fitting GAMs for cumulative mean spring temperature -------------------------------------------
 
 ### I added Family Gamma here for how errors should respond
-modspringTempMean <- gamm(cumMeanDailyT_spring ~ s(Year),
-                        data = MohonkWeatherSummary_winter,
+modspringTempMean <- gamm(cumMeanDailyT_FebMarApr ~ s(Year),
+                        data = MohonkIceWeather,
                         correlation = corCAR1(form = ~ Year),
                         method = "REML")
 
@@ -1182,7 +1135,7 @@ modspringTempMean_S <- summary(modspringTempMean$gam)
 modspringTempMean_S #Gives you the P values, degrees of freedom...
 
 ###Since we're concerned with the response, include "response" in type of predict()
-springTempMeanPred <- with(MohonkWeatherSummary_winter, data.frame(Year = seq(min(Year, na.rm=TRUE),
+springTempMeanPred <- with(MohonkIceWeather, data.frame(Year = seq(min(Year, na.rm=TRUE),
                                                                                   max(Year, na.rm=TRUE),
                                                                                   length.out = 200)))
 springTempMeanPred <- cbind(springTempMeanPred, data.frame(predict(modspringTempMean$gam, springTempMeanPred,
@@ -1212,7 +1165,7 @@ lines(upper ~ Year, data = springTempMeanPred, lty = "dashed")
 lines(lower ~ Year, data = springTempMeanPred, lty = "dashed")
 lines(unlist(m1.dsig$incr) ~ Year, data = springTempMeanPred, col = "blue", lwd = 3)
 lines(unlist(m1.dsig$decr) ~ Year, data = springTempMeanPred, col = "red", lwd = 3)
-#To me this indicates that there is no acceleration, and the rate of change is fairly constant. 
+#Substantial spring warming since mid 70s to mid 2010s
 
 #But another way to visualize it is there would be a significant period of change if the error bar around
 #the first derivative didn't overlap the horizontal black line.
@@ -1220,8 +1173,8 @@ plot.Deriv(m1.d)
 
 #Plot Ice on DOY vs. year pretty
 ggplot(springTempMeanPred,aes(x=Year,y=fit))+
-  geom_point(data=MohonkWeatherSummary_winter,
-             mapping=aes(x=Year, y=cumMeanDailyT_spring), size=2.5, alpha=0.7) +
+  geom_point(data=MohonkIceWeather,
+             mapping=aes(x=Year, y=cumMeanDailyT_FebMarApr), size=2.5, alpha=0.7) +
   geom_line(size=1)+
   geom_ribbon(aes(ymin = (lower), ymax = (upper), x = Year), alpha = 0.5, inherit.aes = FALSE) +
   labs(x="Water year",y="Cumulative mean spring temperature (C))")+
@@ -1239,20 +1192,15 @@ ggplot(springTempMeanPred,aes(x=Year,y=fit))+
 #Winter+spring is 1Oct-30Apr
 
 # ~ Ice-off , xreg="cumSnow_spring" ------------------------------------------------------
-MohonkWeatherSummary_winter_naFREE<-MohonkWeatherSummary_winter %>%
-  drop_na()
+MohonkWeatherSummary_winter_naFREE<-MohonkIceWeather %>%
+  drop_na(IceOutDayofYear, cumSnow_FebMarApr, cumMeanDailyT_FebMarApr)
 
 arimaFit.SpringSnow<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceOutDayofYear,
-                          xreg=c(MohonkWeatherSummary_winter_naFREE$cumSnow_spring),
+                          xreg=c(MohonkWeatherSummary_winter_naFREE$cumSnow_FebMarApr),
                           # xreg=cbind(AnnualData$GlobalTempAnomoly_C,
                           # AnnualData$Year),
                           seasonal=FALSE,allowdrift = FALSE,
                           stationary=TRUE)
-
-#The first argument is the y variable
-#The second is xregression variables. I think you need to do xreg=cbind(x1,x2) for multiple
-#seasonal=FALSE removes seasonal trends, allowdrift=FALSE disallows a drift component (we want to specify that, I think stationary=TRUE is redundant with allowdrift
-
 
 arimaFit.SpringSnow #display the model that was fit
 
@@ -1273,14 +1221,9 @@ SpringSnowaicc<-as.numeric(arimaFit.SpringSnow$aicc)
 
 
 arimaFit.SpringDailyTcum<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceOutDayofYear,
-                                       xreg=c(MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_spring),
+                                       xreg=c(MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_FebMarApr),
                                        seasonal=FALSE,allowdrift = FALSE,
                                        stationary=TRUE)
-
-#The first argument is the y variable
-#The second is xregression variables. I think you need to do xreg=cbind(x1,x2) for multiple
-#seasonal=FALSE removes seasonal trends, allowdrift=FALSE disallows a drift component (we want to specify that, I think stationary=TRUE is redundant with allowdrift
-
 
 arimaFit.SpringDailyTcum #display the model that was fit
 
@@ -1304,8 +1247,8 @@ SpringDailyTcumaicc<-arimaFit.SpringDailyTcum$aicc
 Response <- "Ice out DOY"
 
 #Vector of predictors used in models 
-Predictor <- c("Cum spring snow",
-               "Cum spring temp")
+Predictor <- c("Cumul. spring snow",
+               "Cumul. spring temp")
 
 #Pull all xreg interecepts
 SpringSnowint<-as.numeric(arimaFit.SpringSnow$coef["intercept"])
@@ -1339,16 +1282,11 @@ TS_dataframe<-data.frame(Response, Predictor, AICc, int, coef, pdq)
 
 arimaFit.TempSnowSpring.cum<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceOutDayofYear,
                                                   # xreg=c(AnnualData$Global),
-                                                  xreg=cbind(MohonkWeatherSummary_winter_naFREE$cumSnow_spring,
-                                                             MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_spring),
+                                                  xreg=cbind(MohonkWeatherSummary_winter_naFREE$cumSnow_FebMarApr,
+                                                             MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_FebMarApr),
                                                   # AnnualData$Year),
                                                   seasonal=FALSE,allowdrift = FALSE,
                                                   stationary=TRUE)
-
-#The first argument is the y variable
-#The second is xregression variables. I think you need to do xreg=cbind(x1,x2) for multiple
-#seasonal=FALSE removes seasonal trends, allowdrift=FALSE disallows a drift component (we want to specify that, I think stationary=TRUE is redundant with allowdrift
-
 
 arimaFit.TempSnowSpring.cum #display the model that was fit
 
@@ -1362,7 +1300,7 @@ TempSnowSpring.cumaicc<-as.numeric(arimaFit.TempSnowSpring.cum$aicc)
 Response <- "Ice out DOY"
 
 #Vector of predictors used in models 
-Predictor <- "Cum spring snow + Cum spring temp"
+Predictor <- "Cumul. spring snow + Cumu spring temp"
 
 #Pull all xreg coefficients and intercepts
 coef_cumSnow_spring<-as.numeric(arimaFit.TempSnowSpring.cum$coef["xreg1"])#extracts the xreg coefficient
@@ -1395,20 +1333,19 @@ TS_data_iceout_table_hux <-
   set_all_borders(TRUE) 
 
 # theme_plain(TS_dataframe_hux) 
-# quick_html(TS_data_iceout_table_hux, file = 'figures/MohonkWinter/IceOut_TSmodel_output.html')
-quick_docx(TS_data_iceout_table_hux, file = 'figures/MohonkWinter/IceOut_TSmodel_output.docx')
+# quick_docx(TS_data_iceout_table_hux, file = 'figures/IceOut_TSmodel_output.docx')
 
 
 MohonkWeatherSummary_winter_naFREE$fittedIceOutDOY<-as.numeric(arimaFit.TempSnowSpring.cum$fitted)
 
 #Predicted values
 MohonkWeatherSummary_winter_naFREE %>%
-  select(fittedIceOutDOY,cumSnow_spring,cumMeanDailyT_spring)%>%
-  rename("Cumulative daily spring precipitation (cm)"="cumSnow_spring",
-         "Cumulative mean daily spring air T (C)"="cumMeanDailyT_spring")%>%
+  select(fittedIceOutDOY,cumSnow_FebMarApr,cumMeanDailyT_FebMarApr)%>%
+  rename("Cumulative daily precipitation (cm) Feb-Apr"="cumSnow_FebMarApr",
+         "Cumulative mean daily spring air T (C) Feb-Apr"="cumMeanDailyT_FebMarApr")%>%
   pivot_longer(-1, names_to="predictorID", values_to="predictorValue")%>%
   ggplot(aes(y=fittedIceOutDOY, x=predictorValue))+
-  geom_jitter(shape=21,size=2, color="black", fill="#42AB9A", width=0.05)+
+  geom_jitter(shape=21,size=2, color="black", fill="#81b29a", width=0.05)+
   scale_fill_viridis_c(guide = "colourbar")+
   theme_MS() + 
   ylab("Predicted Ice Out DOY ")+
@@ -1418,16 +1355,16 @@ MohonkWeatherSummary_winter_naFREE %>%
         axis.title.x=element_blank(),
         panel.grid.minor=element_blank(), panel.grid.major=element_blank()) +
   facet_wrap(.~predictorID, scales="free_x", switch="x")
-ggsave("figures/MohonkWinter/IceOut_predictors_TSmodelout.png", width=7, height=3,units="in", dpi=300)
+ggsave("figures/IceOut_predictors_TSmodelout.png", width=7, height=3,units="in", dpi=300)
 
 #Raw values
 MohonkWeatherSummary_winter_naFREE %>%
-  select(IceOutDayofYear,cumSnow_spring,cumMeanDailyT_spring)%>%
-  rename("Cumulative daily spring precipitation (cm)"="cumSnow_spring",
-         "Cumulative mean daily spring air T (C)"="cumMeanDailyT_spring")%>%
+  select(IceOutDayofYear,cumSnow_FebMarApr,cumMeanDailyT_FebMarApr)%>%
+  rename("Cumulative daily precipitation (cm) Feb-Apr"="cumSnow_FebMarApr",
+         "Cumulative mean daily spring air T (C) Feb-Apr"="cumMeanDailyT_FebMarApr")%>%
   pivot_longer(-1, names_to="predictorID", values_to="predictorValue")%>%
   ggplot(aes(y=IceOutDayofYear, x=predictorValue))+
-  geom_jitter(shape=21,size=2, color="black", fill="#42AB9A", width=0.05)+
+  geom_jitter(shape=21,size=2, color="black", fill="#81b29a", width=0.05)+
   scale_fill_viridis_c(guide = "colourbar")+
   theme_MS() + 
   ylab("Ice Out DOY ")+
@@ -1437,7 +1374,7 @@ MohonkWeatherSummary_winter_naFREE %>%
         axis.title.x=element_blank(),
         panel.grid.minor=element_blank(), panel.grid.major=element_blank()) +
   facet_wrap(.~predictorID, scales="free_x", switch="x")
-
+#Looks pretty similar! 
 
 
 # Ice-off DOY mult. reg. model --------------------------------------------
@@ -1445,21 +1382,26 @@ MohonkWeatherSummary_winter_naFREE %>%
 #Since there is no apparaent autocorrelation in the timeseries, could we use mult. reg. to get an
 #easier to interpret model output?
 
-mr_1<-lm(IceOutDayofYear~cumSnow_spring+cumMeanDailyT_spring,data=MohonkWeatherSummary_winter)
+mr_1<-lm(IceOutDayofYear~cumSnow_FebMarApr+cumMeanDailyT_FebMarApr,data=MohonkWeatherSummary_winter_naFREE)
 summary(mr_1)
 plot(mr_1)
 
-
+# Leaning toward no but the R2 is pretty high which suggests to me that
+# cumulative spring ppt and cumulative daily T are pretty good predictors of ice-off. 
 
 
 # Ice-on TS - 1 predictor models--------------------------------------------------------
 
-# ~ Ice-on , xreg="MEI_mean_previouswinter" ------------------------------------------------------
-MohonkWeatherSummary_winter_naFREE<-MohonkWeatherSummary_winter %>%
-  drop_na()
+##Note that the trouble with using ENSO/MEI indices is that the data do not span the entire record. 
 
-arimaFit.MEIprevWinter<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceInDayofYear_fed,
-                                xreg=c(MohonkWeatherSummary_winter_naFREE$MEI_mean_previouswinter),
+# ~ Ice-on , xreg="ENSO_index_fall" ------------------------------------------------------
+MohonkWeatherSummary_winter_naFREE<-MohonkIceWeather %>%
+  drop_na(IceInDayofYear_fed, ENSO_index_fall, cumMeanDailyT_OctNovDec)
+
+
+
+arimaFit.ENSOprevFall<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceInDayofYear_fed,
+                                xreg=c(MohonkWeatherSummary_winter_naFREE$ENSO_index_fall),
                                 # xreg=cbind(AnnualData$GlobalTempAnomoly_C,
                                 # AnnualData$Year),
                                 seasonal=FALSE,allowdrift = FALSE,
@@ -1470,24 +1412,24 @@ arimaFit.MEIprevWinter<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceInDayof
 #seasonal=FALSE removes seasonal trends, allowdrift=FALSE disallows a drift component (we want to specify that, I think stationary=TRUE is redundant with allowdrift
 
 
-arimaFit.MEIprevWinter #display the model that was fit
+arimaFit.ENSOprevFall #display the model that was fit
 
-MEIprevWintercoef<-as.numeric(arimaFit.MEIprevWinter$coef["xreg"])#extracts the xreg coefficient
+ENSOprevFallcoef<-as.numeric(arimaFit.ENSOprevFall$coef["xreg"])#extracts the xreg coefficient
 
-IceIn_residuals<-as.numeric(arimaFit.MEIprevWinter$residuals) #residuals
+IceIn_residuals<-as.numeric(arimaFit.ENSOprevFall$residuals) #residuals
 
 #Gets the (p,d,q) model fit where p is the autoregressive terms, d is the integrative, and q is the moving average
-MEIprevWinter_pdq<-paste0(as.numeric(arimaFit.MEIprevWinter$arma[1]),sep=",",
-                       as.numeric(arimaFit.MEIprevWinter$arma[6]),sep=",",
-                       as.numeric(arimaFit.MEIprevWinter$arma[2]))
+ENSOprevFall_pdq<-paste0(as.numeric(arimaFit.ENSOprevFall$arma[1]),sep=",",
+                       as.numeric(arimaFit.ENSOprevFall$arma[6]),sep=",",
+                       as.numeric(arimaFit.ENSOprevFall$arma[2]))
 
 #extract aicc value
-MEIprevWinteraicc<-as.numeric(arimaFit.MEIprevWinter$aicc)
+ENSOprevFallaicc<-as.numeric(arimaFit.ENSOprevFall$aicc)
 
-# ~ Ice-on , xreg="MEI_mean_previouswinter" ------------------------------------------------------
+# ~ Ice-on , xreg="ENSO_index_fall" ------------------------------------------------------
 
 arimaFit.cumFallPrecip<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceInDayofYear_fed,
-                                   xreg=c(MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_fall),
+                                   xreg=c(MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_OctNovDec),
                                    # xreg=cbind(AnnualData$GlobalTempAnomoly_C,
                                    # AnnualData$Year),
                                    seasonal=FALSE,allowdrift = FALSE,
@@ -1523,23 +1465,23 @@ Predictor <- c("Prev. winter ENSO",
                "Cum fall temp")
 
 #Pull all xreg interecepts
-MEIprevWinterint<-as.numeric(arimaFit.MEIprevWinter$coef["intercept"])
+ENSOprevFallint<-as.numeric(arimaFit.ENSOprevFall$coef["intercept"])
 cumFallPrecipint<-as.numeric(arimaFit.cumFallPrecip$coef["intercept"])
 
 #Vector of xreg coefficients
-int <- c(MEIprevWinterint,
+int <- c(ENSOprevFallint,
          cumFallPrecipint)
 
 #Vector of xreg coefficients
-coef <- c(MEIprevWintercoef,
+coef <- c(ENSOprevFallcoef,
           cumFallPrecipcoef)
 
 #vector of AICc values
-AICc<-c(MEIprevWinteraicc,
+AICc<-c(ENSOprevFallaicc,
         cumFallPrecipaicc)
 
 #Vector of all p,d,q data
-pdq <- c(MEIprevWinter_pdq,
+pdq <- c(ENSOprevFall_pdq,
          cumFallPrecip_pdq)
 
 #Combine to make a dataframe of model output 
@@ -1549,21 +1491,16 @@ TS_dataframe_IceIn<-data.frame(Response, Predictor, AICc, int, coef, pdq)
 
 # Ice-on TS - 2 predictor models--------------------------------------------------------
 
-# ~ Ice-on , xreg="MEI_mean_previouswinter + cumMeanDailyT_fall" ------------------------------------------------------
+# ~ Ice-on , xreg="ENSO_index_fall + cumMeanDailyT_OctNovDec" ------------------------------------------------------
 
 
 arimaFit.ENSOcumT<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceInDayofYear_fed,
                                         # xreg=c(AnnualData$Global),
-                                        xreg=cbind(MohonkWeatherSummary_winter_naFREE$MEI_mean_previouswinter,
-                                                   MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_fall),
+                                        xreg=cbind(MohonkWeatherSummary_winter_naFREE$ENSO_index_fall,
+                                                   MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_OctNovDec),
                                         # AnnualData$Year),
                                         seasonal=FALSE,allowdrift = FALSE,
                                         stationary=TRUE)
-
-#The first argument is the y variable
-#The second is xregression variables. I think you need to do xreg=cbind(x1,x2) for multiple
-#seasonal=FALSE removes seasonal trends, allowdrift=FALSE disallows a drift component (we want to specify that, I think stationary=TRUE is redundant with allowdrift
-
 
 arimaFit.ENSOcumT #display the model that was fit
 
@@ -1577,11 +1514,11 @@ ENSOcumTaicc<-as.numeric(arimaFit.ENSOcumT$aicc)
 Response <- "Ice in DOY (fed)"
 
 #Vector of predictors used in models 
-Predictor <- "Prev. winter ENSO + cum. fall air T"
+Predictor <- "Prev. fall ENSO + cum. fall air T"
 
 #Pull all xreg coefficients and intercepts
 coef_WinterENSO<-as.numeric(arimaFit.ENSOcumT$coef["xreg1"])#extracts the xreg coefficient
-coef_cumMeanDailyT_fall<-as.numeric(arimaFit.ENSOcumT$coef["xreg2"])#extracts the xreg coefficient
+coef_cumMeanDailyT_OctNovDec<-as.numeric(arimaFit.ENSOcumT$coef["xreg2"])#extracts the xreg coefficient
 int<-as.numeric(arimaFit.ENSOcumT$coef["intercept"])#common intercept
 
 
@@ -1596,7 +1533,7 @@ pdq<-paste0(as.numeric(arimaFit.ENSOcumT$arma[1]),sep=",",
 
 #Combine to make a dataframe of model output 
 TS_dataframe_2factormodels_IceIn<-data.frame(Response, Predictor, AICc,
-                                       int, coef_WinterENSO, coef_cumMeanDailyT_fall,
+                                       int, coef_WinterENSO, coef_cumMeanDailyT_OctNovDec,
                                        pdq)
 
 
@@ -1619,12 +1556,12 @@ MohonkWeatherSummary_winter_naFREE$fittedIceInDOY<-as.numeric(arimaFit.ENSOcumT$
 
 #Predicted values
 MohonkWeatherSummary_winter_naFREE %>%
-  select(fittedIceInDOY,MEI_mean_previouswinter,cumMeanDailyT_fall)%>%
-  rename("Winter ENSO index"="MEI_mean_previouswinter",
-         "Cumulative mean daily fall air T (C)"="cumMeanDailyT_fall")%>%
+  select(fittedIceInDOY,ENSO_index_fall,cumMeanDailyT_OctNovDec)%>%
+  rename("Fall ENSO index"="ENSO_index_fall",
+         "Cumulative mean daily fall air T (C)"="cumMeanDailyT_OctNovDec")%>%
   pivot_longer(-1, names_to="predictorID", values_to="predictorValue")%>%
   ggplot(aes(y=fittedIceInDOY, x=predictorValue))+
-  geom_jitter(shape=21,size=2, color="black", fill="#42AB9A", width=0.05)+
+  geom_jitter(shape=21,size=2, color="black", fill="#81b29a", width=0.05)+
   scale_fill_viridis_c(guide = "colourbar")+
   theme_MS() + 
   ylab("Predicted Ice In DOY (days since Oct 1)")+
@@ -1638,12 +1575,12 @@ MohonkWeatherSummary_winter_naFREE %>%
 
 #Raw values
 MohonkWeatherSummary_winter_naFREE %>%
-  select(IceInDayofYear_fed,MEI_mean_previouswinter,cumMeanDailyT_fall)%>%
-  rename("Winter ENSO index"="MEI_mean_previouswinter",
-         "Cumulative mean daily fall air T (C)"="cumMeanDailyT_fall")%>%
+  select(IceInDayofYear_fed,ENSO_index_fall,cumMeanDailyT_OctNovDec)%>%
+  rename("Fall ENSO index"="ENSO_index_fall",
+         "Cumulative mean daily fall air T (C)"="cumMeanDailyT_OctNovDec")%>%
   pivot_longer(-1, names_to="predictorID", values_to="predictorValue")%>%
   ggplot(aes(y=IceInDayofYear_fed, x=predictorValue))+
-  geom_jitter(shape=21,size=2, color="black", fill="#42AB9A", width=0.05)+
+  geom_jitter(shape=21,size=2, color="black", fill="#81b29a", width=0.05)+
   scale_fill_viridis_c(guide = "colourbar")+
   theme_MS() + 
   ylab("Ice In DOY (days since Oct 1)")+
@@ -1658,11 +1595,15 @@ MohonkWeatherSummary_winter_naFREE %>%
 # Ice-on DOY linear model --------------------------------------------
 #I think we are violating the assumptions of normality? so better to go with the non-parametric TS models. 
 
-mr_2<-lm(IceInDayofYear_fed~MEI_mean_previouswinter,data=MohonkWeatherSummary_winter)
-summary(mr_2)
-plot(mr_2)
+mr_2a<-lm(IceInDayofYear_fed~ENSO_index_fall,data=MohonkIceWeather)
+summary(mr_2a)
+plot(mr_2a)
 
-mr_2<-lm(IceInDayofYear_fed~cumMeanDailyT_fall,data=MohonkWeatherSummary_winter)
-summary(mr_2)
-plot(mr_2)
+mr_2b<-lm(IceInDayofYear_fed~cumMeanDailyT_OctNovDec,data=MohonkIceWeather)
+summary(mr_2b)
+plot(mr_2b)
+
+mr_2c<-lm(IceInDayofYear_fed~cumMeanDailyT_OctNovDec+ENSO_index_fall,data=MohonkIceWeather)
+summary(mr_2c)
+plot(mr_2c)
 
