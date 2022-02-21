@@ -384,7 +384,7 @@ lines(upper ~ Year, data = IceDurationPred, lty = "dashed")
 lines(lower ~ Year, data = IceDurationPred, lty = "dashed")
 lines(unlist(m2.dsig$incr) ~ Year, data = IceDurationPred, col = "blue", lwd = 3)
 lines(unlist(m2.dsig$decr) ~ Year, data = IceDurationPred, col = "red", lwd = 3)
-#To me this indicates that there is no acceleration, and the rate of change is fairly constant. 
+#Ice duration is getting shorter, with no periods of acceleration
 
 #But another way to visualize it is there would be a significant period of change if the error bar around
 #the first derivative didn't overlap the horizontal black line.
@@ -523,9 +523,9 @@ summary(lm_iceOffDOY_cv)
 
 #ENSO 7-year rolling average... 
 ENSO_withNAs<-MohonkIceWeather %>%
-  select(ENSO_index_winter,Year) 
+  select(ENSO_index_fall,Year) 
 ENSO<-MohonkIceWeather %>%
-  select(ENSO_index_winter) %>%
+  select(ENSO_index_fall) %>%
   drop_na()
 
 ENSO_mean<-data.frame(rollapply(ENSO, width =7, FUN = mean)) %>%
@@ -533,7 +533,7 @@ ENSO_mean<-data.frame(rollapply(ENSO, width =7, FUN = mean)) %>%
 
 ENSO_mean %>%
   ggplot(aes(x=as.numeric(rollingwindow_timepoint),
-             y=ENSO_index_winter))+geom_point()+
+             y=ENSO_index_fall))+geom_point()+
   xlab("7-year rolling window timepoint (1979-2020")+
   ylab("ENSO (mean)")+
   geom_smooth(method="lm", color="black", size=0.5)
@@ -544,7 +544,7 @@ iceDuration_days_short<-MohonkIceWeather %>%
   select(LengthOfIceCover_days, Year) %>%
   left_join(.,ENSO_withNAs, by="Year")%>% ##This step ensures we have all the same years.
   drop_na()%>%                                        ##we have some missing obs. of ice duration early on.
-  select(-Year,-ENSO_index_winter)
+  select(-Year,-ENSO_index_fall)
 
 iceDuration_short_cv<-data.frame(rollapply(iceDuration_days_short, width =7, FUN = cv)) %>%
   rownames_to_column(., var = "rollingwindow_timepoint")  #convert column name to row name 
@@ -559,13 +559,13 @@ iceDuration_short_cv %>%
 #is there a correlation btwn the two?
 #Are they correlated?
 left_join(ENSO_mean,iceDuration_short_cv)%>%
-  ggplot(aes(x=ENSO_index_winter,y=LengthOfIceCover_days))+
+  ggplot(aes(x=ENSO_index_fall,y=LengthOfIceCover_days))+
   geom_point()
 corr_temp<-left_join(ENSO_mean,iceDuration_short_cv)%>%
   mutate(rollingwindow_timepoint=as.numeric(rollingwindow_timepoint))%>%
   arrange(rollingwindow_timepoint) %>%
   drop_na()
-cor.test(corr_temp$ENSO_index_winter, corr_temp$LengthOfIceCover_days)
+cor.test(corr_temp$ENSO_index_fall, corr_temp$LengthOfIceCover_days)
 #No
 
 #But do they look related *at all*???
