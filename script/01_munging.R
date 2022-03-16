@@ -833,7 +833,7 @@ AnnualData <- left_join(AnnualData, NAO_summary, by = c("Year"))
 # * summer mean (july + august + sept)
 # * winter mean (oct-march)
 
-ENSO_MEI_summary <- ENSO_MEI_monthly %>%
+ENSO_summary <- ENSO_monthly %>%
   mutate(
     season =
       ifelse(
@@ -858,7 +858,7 @@ ENSO_MEI_summary <- ENSO_MEI_monthly %>%
   ) %>% #this water_year term is only relevent for winter
   #metrics. We want 1 Oct-30 April to all correspond to the same water year
   group_by(water_year, season) %>%
-  dplyr::summarize(ENSO_index = mean(ENSO_MEI)) %>%
+  dplyr::summarize(ENSO_index = mean(ENSO_index)) %>%
   # filter(season%in%c("winter","spring")) %>% #where winter is [1oct-28feb]  & spring is [1march-30april]
   pivot_wider(
     names_from = "season",
@@ -872,11 +872,11 @@ ENSO_MEI_summary <- ENSO_MEI_monthly %>%
 
 
 #***Merge with AnnualData by Year####
-AnnualData <- left_join(AnnualData, ENSO_MEI_summary, by = c("Year"))
+AnnualData <- left_join(AnnualData, ENSO_summary, by = c("Year"))
 
 ##quick QAQC- how do  ENSO and ENSO_MEI compare?
-# ggplot(AnnualData, aes(x=ENSO_Spring.x,y=ENSO_MEI_Spring))+geom_point()
-# ggplot(AnnualData, aes(x=ENSO_Summer.x,y=ENSO_MEI_Summer))+geom_point()
+# ggplot(AnnualData, aes(x=ENSO_Spring.x,y=ENSO_Spring))+geom_point()
+# ggplot(AnnualData, aes(x=ENSO_Summer.x,y=ENSO_Summer))+geom_point()
 #Yes they are highly correlated.
 
 
@@ -1398,10 +1398,10 @@ MohonkIceWeather <-
 colnames <-
   (intersect(
     colnames(MohonkDailyWeather_monthly),
-    colnames(ENSO_MEI_summary)
+    colnames(ENSO_summary)
   )) #identify common columns between data.tables
 MohonkIceWeather <-
-  left_join(MohonkIceWeather, ENSO_MEI_summary, by = colnames)
+  left_join(MohonkIceWeather, ENSO_summary, by = colnames)
 
 colnames <-
   (intersect(colnames(MohonkDailyWeather_monthly),  colnames(NAO_summary))) #identify common columns between data.tables
