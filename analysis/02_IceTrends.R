@@ -1,41 +1,59 @@
-library(GGally)
-library(ggcorrplot)
-library(scales)
-library(ggplot2)
-library(patchwork)
-library(lubridate)
-#load packages necessary for GAMS
-library("mgcv")
-library("scam")
-library("cowplot")
-library("grid")                         # for unit.pmax(), unit.list()
-library("schoenberg")
-library("tidyr")
-library("nlme")
-library(Hmisc, exclude="summarize") #correlation matrices
-
 #Load libraries 
-if(!require(forecast)){install.packages("huxtable")}
-if(!require(forecast)){install.packages("magrittr")}
+if(!require(huxtable)){install.packages("huxtable")}
+if(!require(magrittr)){install.packages("magrittr")}
 if(!require(forecast)){install.packages("forecast")}
-if(!require(forecast)){install.packages("officer")}
-if(!require(forecast)){install.packages("flextable")}
+if(!require(officer)){install.packages("officer")}
+if(!require(flextable)){install.packages("flextable")}
 if(!require(egg)){install.packages("egg")} #tag_facet ftn
-install.packages("viridis")
+if(!require(viridis)){install.packages("viridis")} 
+if(!require(lubridate)){install.packages("lubridate")} 
+if(!require(viridis)){install.packages("viridis")} 
+if(!require(tidyverse)){install.packages("tidyverse")} 
+if(!require(scales)){install.packages("scales")} 
+if(!require(urca)){install.packages("urca")} 
+if(!require(fracdiff)){install.packages("fracdiff")} 
+if(!require(tseries)){install.packages("tseries")} 
+if(!require(Hmisc)){install.packages("Hmisc")} 
+if(!require(GGally)){install.packages("GGally")} 
+if(!require(ggcorrplot)){install.packages("ggcorrplot")} 
+if(!require(patchwork)){install.packages("patchwork")} 
+if(!require(ggpubr)){install.packages("ggpubr")} 
+if(!require(ggthemes)){install.packages("ggthemes")} 
+if(!require(mgcv)){install.packages("mgcv")} 
+if(!require(scam)){install.packages("scam")} 
+if(!require(cowplot)){install.packages("cowplot")} 
+if(!require(grid)){install.packages("grid")} 
+if(!require(schoenberg)){install.packages("schoenberg")} 
+if(!require(nlme)){install.packages("nlme")} 
+
+
+library(huxtable) #Pretty tables
+library(magrittr)
+library(forecast)
+library(officer) #exporting pretty tables to word
+library(flextable) #exporting pretty tables to word
+library(egg)
 library(viridis)
 library(lubridate)
 library(tidyverse)
-library(forecast)
+library(scales)
 library(urca)
 library(fracdiff)
 library(tseries)
-library(magrittr)
-library(huxtable) #Pretty tables
-library(officer) #exporting pretty tables to word
-library(flextable) #exporting pretty tables to word
+library(Hmisc, exclude="summarize") #correlation matrices
+library(GGally)
+library(ggcorrplot)
+library(patchwork)
 library(ggpubr) #for ggarrange()
-library(egg)
 library(ggthemes)
+library(mgcv)
+library(scam)
+library(cowplot)
+library(grid) # for unit.pmax(), unit.list()
+library(schoenberg)
+library(nlme)
+
+
 
 # Set theme ---------------------------------------------------------------
 
@@ -129,7 +147,9 @@ MohonkIceWeather_trim_correlations<-MohonkIceWeather_trim_correlations%>%
 #Take a look at what variables are highly correlated with IceOut and IceIn
 MohonkIceWeather_trim_correlations %>%
   group_by(row) %>%
-  filter(abs(cor) > 0.5)
+  filter(abs(cor) > 0.5) %>%
+  arrange(row) %>%
+  filter(row=="IceInDayofYear_fed")
 
 
 
