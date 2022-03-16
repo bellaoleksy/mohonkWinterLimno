@@ -38,7 +38,6 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-
 #Exclude any data
 /data_export
 
