@@ -1,0 +1,11 @@
+Date,yyyy-mm-dd
+Precip_mm,precipitation as rain (mm)
+Snow_mm,precipitation as snow (mm)
+SnowDepth_mm,snow depth (mm)
+TempMax_degC,maximum daily  airT (C)
+TempMin_degC,minimum daily air T (C)
+TempMean_degC,mean daily air T (C)
+year,year
+month,month
+season,season; 12-1-2 = winter; 3-4 = spring; 10-11 = fall; 5-6-7-8 = summer
+water_year,water year correspoding to [Date]

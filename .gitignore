@@ -39,9 +39,6 @@ vignettes/*.pdf
 .Renviron
 
 #Exclude any data
-/data
-
-#Exclude any data
 /data_export
 
 #Exclude rsconnect

@@ -1,0 +1,20 @@
+colName,description
+water_year,water year of ice-off date
+cumMeanDailyT_spring,cumulative mean daily air temperature spring (1Mar-30Apr)
+cumMeanDailyT_fall,cumulative mean daily air temperature fall (1Oct-30Nov)
+cumSnow_spring,cumulative spring snow (1Mar-30Apr)
+cumSnow_fall,cumulative fall snowfall (1Oct-30Nov)
+cumRain_spring,cumulative spring rain (1Mar-30Apr)
+cumRain_fall,cumulative fall rain (1Oct-30Nov)
+cumMeanDailyT_winterSpring,cumulative mean daily air temperature winter + spring (1Dec-30Apr)
+cumSnow_winterSpring,cumulative winter + spring snow (1Dec-30Apr)
+cumRain_winterSpring,cumulative winter + spring rain (1Dec-30Apr)
+Year,year of ice-out
+IceInDayofYear,ice-in day of year
+IceOutDayofYear,Ice-out day ofyear
+LengthOfIceCover_days,length of ice cover (days)
+IceInDayofYear_fed,"ice-in day of year, days since Oct 1"
+MEI_mean_previouswinter,mean ENSO index (1Oct-30Mar)
+MEI_sum_previouswinter,cumulative ENSO index (1Oct-30Mar)
+NAO_index_spring,mean NAO index spring (1Mar-30Apr)
+NAO_index_winter,mean NAO index winter (1Jan-30Mar)
