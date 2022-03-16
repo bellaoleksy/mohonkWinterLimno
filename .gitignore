@@ -60,3 +60,4 @@ vignettes/*.pdf
 
 #Ignore Archive files
 /script/Archive
+.Rproj.user
