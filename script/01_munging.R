@@ -384,7 +384,7 @@ AnnualData <- AnnualData %>%
 medianCompositeStability <- DailyInterpol %>%
   dplyr::select(dayofyear, stability_Jperm2) %>%
   group_by(dayofyear) %>%
-  summarize(MedianStability_Jperm2 = median(stability_Jperm2, na.rm =
+  dplyr::summarize(MedianStability_Jperm2 = median(stability_Jperm2, na.rm =
                                               TRUE))
 #Breakpoint analysis
 Stability.cutoff1 <-
@@ -398,7 +398,7 @@ AnnualBreakpoint.method2 <- DailyInterpol %>%
   dplyr::select(Year, dayofyear, stability_Jperm2) %>%
   filter(!is.na(stability_Jperm2)) %>%
   group_by(Year) %>%
-  summarize(AnnualBreakpoint = stability_Jperm2[pettitt.test(stability_Jperm2)$estimate[1]])
+  dplyr::summarize(AnnualBreakpoint = stability_Jperm2[pettitt.test(stability_Jperm2)$estimate[1]])
 #hist(temp$AnnualBreakpoint)
 Stability.cutoff2 <-
   median(AnnualBreakpoint.method2$AnnualBreakpoint)
@@ -411,7 +411,7 @@ AnnualBreakpoint.method3 <- DailyInterpol %>%
   dplyr::select(Year, dayofyear, stability_Jperm2) %>%
   filter(!is.na(stability_Jperm2)) %>%
   group_by(Year) %>%
-  summarize(AnnualBreakpoint = stability_Jperm2[pettitt.test(stability_Jperm2)$estimate[1]])
+  dplyr::summarize(AnnualBreakpoint = stability_Jperm2[pettitt.test(stability_Jperm2)$estimate[1]])
 median(AnnualBreakpoint.method3$AnnualBreakpoint) #Take the median
 #Median of both method from spring and fall
 median(
@@ -770,7 +770,7 @@ NAO_summary <- NAO_daily %>%
   ) %>% #this water_year term is only relevent for winter
   #metrics. We want 1 Oct-30 April to all correspond to the same water year
   group_by(water_year, season) %>%
-  summarize(NAO_index = mean(NAO_index)) %>%
+  dplyr::summarize(NAO_index = mean(NAO_index)) %>%
   # filter(season%in%c("winter","spring")) %>% #where winter is [1oct-28feb]  & spring is [1march-30april]
   pivot_wider(
     names_from = "season",
@@ -826,12 +826,8 @@ NAO_summary <- NAO_daily %>%
 AnnualData <- left_join(AnnualData, NAO_summary, by = c("Year"))
 # AnnualData<-left_join(AnnualData,ENSO_summary,by=c("Year"))
 
-#**Seasonal ENSO- MEI indices ----------------------------------------------------
-
-#Summarizing ENSO data slightly different from NAO since we only have monthly times steps:
-# * spring mean (april + may + june)
-# * summer mean (july + august + sept)
-# * winter mean (oct-march)
+#**Seasonal and monthly ENSO- ONI indices ----------------------------------------------------
+#ONI stands for Oceanic Nina Index
 
 ENSO_summary <- ENSO_monthly %>%
   mutate(
@@ -859,7 +855,6 @@ ENSO_summary <- ENSO_monthly %>%
   #metrics. We want 1 Oct-30 April to all correspond to the same water year
   group_by(water_year, season) %>%
   dplyr::summarize(ENSO_index = mean(ENSO_index)) %>%
-  # filter(season%in%c("winter","spring")) %>% #where winter is [1oct-28feb]  & spring is [1march-30april]
   pivot_wider(
     names_from = "season",
     names_sep = "_",
@@ -869,6 +864,32 @@ ENSO_summary <- ENSO_monthly %>%
   ungroup() %>%
   mutate(Year = water_year + 1)
 
+
+ENSO_monthly_trim <- ENSO_monthly %>%
+  mutate(
+    water_year = ifelse(
+        month %in% c("10", "11", "12", "1", "2", "3", "4"),
+      year - 1,
+      year
+    ),
+    MonthAbb = month.abb[month]
+  ) %>% #this water_year term is only relevent for winter
+  #metrics. We want 1 Oct-30 April to all correspond to the same water year
+  filter(month %in% c("10", "11", "12", "1", "2", "3", "4")) %>%
+  select(water_year,ENSO_index,MonthAbb) %>%
+  rename(ENSO=ENSO_index) %>%
+  pivot_wider(
+    names_from = "MonthAbb",
+    names_sep = "_",
+    names_prefix = "ENSO_",
+    values_from = "ENSO"
+  ) %>%
+  ungroup() %>%
+  mutate(Year = water_year + 1,
+         ENSO_Oct_to_Mar = ENSO_Oct+ENSO_Nov+ENSO_Dec+
+                                 ENSO_Jan+ENSO_Feb+ENSO_Mar)
+
+ENSO_summary<-left_join(ENSO_summary, ENSO_monthly_trim, by=c("Year","water_year"))
 
 
 #***Merge with AnnualData by Year####
@@ -880,15 +901,24 @@ AnnualData <- left_join(AnnualData, ENSO_summary, by = c("Year"))
 #Yes they are highly correlated.
 
 
-# * Load NOAA annual temperature anomoly ----------------------------------
-#Pulled from: https://www.ncdc.noaa.gov/monitoring-references/faq/anomalies.php#anomalies
+# * Load NOAA annual temperature anomaly ----------------------------------
+#Pulled from: https://www.ncdc.noaa.gov/cag/global/time-series
 #Specs: Time scale = Annual
 #       Region = Global
 #       Surface = Land and Ocean
-NOAA_anomoly <- read.csv("data/NOAA_globaltempanomoly.csv") %>%
-  rename(GlobalTempAnomoly_C = Value)
+
+# NOAA_anomaly <- read.csv("data/NOAA_globaltempanomaly.csv") %>%
+#   rename(GlobalTempanomaly_C = Value)
+
+NOAA_anomaly_monthly <- read.csv("data/NOAA_globaltempanomaly_monthly_1929-2022.csv") %>%
+  rename(GlobalTempanomaly_C = Value)
+
+NOAA_anomaly <- NOAA_anomaly_monthly %>%
+  group_by(Year) %>%
+  dplyr::summarize(GlobalTempanomaly_C=mean(GlobalTempanomaly_C, na.rm=T))
+
 #* Merge temp anom. with AnnualData by Year####
-AnnualData <- left_join(AnnualData, NOAA_anomoly, by = c("Year"))
+AnnualData <- left_join(AnnualData, NOAA_anomaly, by = c("Year"))
 
 #Daily Interpolate Secchi####
 #There are several repeated days - some are NA for both duplicates, other have two secchi readings
@@ -970,7 +1000,7 @@ DailyInterpol.secchiPeriods <- DailyInterpol.secchi %>%
   )
 #**Summarize the 4 different secchi periods by year####
 AnnualData_SecchiPeriods <-
-  DailyInterpol.secchiPeriods %>% group_by(Year) %>% summarize(
+  DailyInterpol.secchiPeriods %>% group_by(Year) %>% dplyr::summarize(
     SecchiDepth_Summer_m = mean(SummerPeriod, na.rm = TRUE),
     SecchiDepth_StratifiedPeriod_m = mean(StratifiedPeriod, na.rm = TRUE),
     SecchiDepth_Spring_m = mean(SpringPeriod, na.rm = TRUE),
@@ -1255,12 +1285,9 @@ MohonkDailyWeather_monthly <- MohonkDailyWeatherFull %>%
                         year)
   ) %>% #this water_year term is only relevent for winter
   #metrics. We want 1 Oct-30 April to all correspond to the same water year
-  
   filter(!month %in% c("5", "6", "7", "8")) %>%
   #exclude May-August, which are *most likely* not directly influencing winter ice phenology
-  
   group_by(water_year, month_name) %>%
-  
   dplyr::summarize(
     cumMeanDailyT = sum(TempMean_degC, na.rm = TRUE),
     cumSnow = sum(Snow_mm, na.rm = TRUE),
@@ -1271,7 +1298,6 @@ MohonkDailyWeather_monthly <- MohonkDailyWeatherFull %>%
                                TRUE),
     nDaysMinBelowZero = sum(TempMin_degC < 0, na.rm = TRUE)
   ) %>%
-  
   #Convert dataframe from long to wide format
   pivot_wider(
     names_from = "month_name",
@@ -1411,10 +1437,10 @@ MohonkIceWeather <-
 colnames <-
   (intersect(
     colnames(MohonkDailyWeather_monthly),
-    colnames(NOAA_anomoly)
+    colnames(NOAA_anomaly)
   )) #identify common columns between data.tables
 MohonkIceWeather <-
-  left_join(MohonkIceWeather, NOAA_anomoly, by = colnames)
+  left_join(MohonkIceWeather, NOAA_anomaly, by = colnames)
 
 rm(MohonkDailyWeather_monthly, SnowPredictors)
 
@@ -1445,3 +1471,4 @@ MohonkDailyWeatherFull<-MohonkDailyWeatherFull %>%
       Year
     )
   )
+
