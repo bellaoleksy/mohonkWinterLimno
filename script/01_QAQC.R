@@ -223,9 +223,10 @@ MohonkWeeklyProfiles2017metric.sensor.daily<-MohonkWeeklyProfilesSensorDaily.col
 MohonkWeeklyProfiles2017Metric<-MohonkWeeklyProfiles2017Metric[order(MohonkWeeklyProfiles2017Metric$Date),]
 
 # Seasonal NAO indices ----------------------------------------------------
-
+#2022-03-16 New Data from: https://psl.noaa.gov/data/timeseries/daily/
+#Data only available through 2020 for the time being
 #Read in data
-NAO_daily<-read.csv("data/NAO_index_daily.csv")
+NAO_daily<-read.csv("data/NAO_index_daily_1948-2020.csv")
 
 #Make date column
 NAO_daily$Date <- paste(NAO_daily$Year, NAO_daily$Month, NAO_daily$Day, sep="-") %>%
