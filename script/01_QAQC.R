@@ -262,7 +262,8 @@ MohonkDailyWeather<-MohonkDailyWeather.upload[,c("Date","Precip_mm","Snow_mm",
 ####Source: ENSO (MEI v2) - 1979 to present, monthly
 ####https://psl.noaa.gov/data/climateindices/
 #Read in data
-ENSO_MEI_monthly<-read.csv("data/ENSO_MEI_1979-2020.csv")
+# ENSO_MEI_monthly<-read.csv("data/ENSO_MEI_1979-2020.csv")
+ENSO_monthly<-read.csv("data/ONI_index_monthly_1950-2022.csv")
 
 
 ##Upload Mohonk FULL RECORD NOAA National Weather Service Temp and Precip daily data ####   
