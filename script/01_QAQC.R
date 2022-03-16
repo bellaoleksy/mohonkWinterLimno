@@ -5,7 +5,7 @@ if(!require(lubridate)){install.packages("lubridate")}
 
 library(tidyverse)
 library(lubridate)
-library(ggplot2)
+
 
 
 #READ Bathymetry####

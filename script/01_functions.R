@@ -12,7 +12,9 @@
 if (!require(rLakeAnalyzer)) {
   install.packages("rLakeAnalyzer")
 }
-
+if (!require(lfstat)) {
+  install.packages("lfstat")
+}
 library(rLakeAnalyzer)
 library("lfstat") #for water_year function
 
