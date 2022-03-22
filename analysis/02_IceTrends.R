@@ -91,7 +91,8 @@ res2
 #Create dataframe of pearson r and p-values
 MohonkIceWeather_correlations<-flattenCorrMatrix(res2$r, res2$P)
 
-#Filter out r > 0.7 
+#In an effort to limit the number of covariates, here I am looking at all correlations > 0.7
+#and then below making a choice on which of the pair I should keep.
 MohonkIceWeather_correlations_trim <- MohonkIceWeather_correlations %>%
   filter(abs(cor) > 0.7) %>%
   arrange(desc(cor)) 
@@ -141,7 +142,7 @@ MohonkIceWeather_trim <- MohonkIceWeather %>%
 res3 <- rcorr(as.matrix(MohonkIceWeather_trim[,3:ncol(MohonkIceWeather_trim)]))
 MohonkIceWeather_trim_correlations<-flattenCorrMatrix(res3$r, res3$P)
 MohonkIceWeather_trim_correlations<-MohonkIceWeather_trim_correlations%>%
-  filter(row %in% c("IceOutDayofYear","IceInDayofYear_fed")) %>%
+  filter(row %in% c("IceOutDayofYear","IceInDayofYear_fed","LengthOfIceCover_days")) %>%
   filter(p < 0.05) 
 
 #Take a look at what variables are highly correlated with IceOut and IceIn
@@ -151,10 +152,70 @@ MohonkIceWeather_trim_correlations %>%
   arrange(row) %>%
   filter(row=="IceInDayofYear_fed")
 
+#Look at the top 10 strongest correlations for each predictor variable
+MohonkIce_top10<-MohonkIceWeather_trim_correlations %>%
+  mutate(cor_abs=abs(cor)) %>%
+  arrange(desc(cor_abs)) %>%
+  group_by(row) %>%
+  slice(1:10)
+
+#Extract variable names 
+IceInVars <- MohonkIce_top10 %>% filter(row=="IceInDayofYear_fed") %>% pull(column)
+IceOutVars <- MohonkIce_top10 %>% filter(row=="IceOutDayofYear") %>% pull(column)
+IceDurationVars <- MohonkIce_top10 %>% filter(row=="LengthOfIceCover_days") %>% pull(column)
+
+#Visualize correlations with IceInDayofYear_fed
+MohonkIceWeather %>%
+  select(IceInDayofYear_fed, all_of(IceInVars)) %>%
+  ggpairs() 
+median(MohonkIceWeather$IceInDayofYear,na.rm=T)
+# December 14th median ice-in DOY
+# cumMeanDailyT_OctNovDec & nDaysMinBelowZero_OctNovDec -0.79 Keep the former since the latter had *slightly* weaker corr. w/ ice-in
+# cumMeanDailyT_OctNovDec & cumMeanDailyT_Dec r=0.77. Keep the former since the latter had *slightly* weaker corr. w/ ice-in
+# cumMeanDailyT_OctNovDec & nDaysMinBelowZero_Dec r=-0.63. Again, keep the former since the latter had *slightly* weaker corr. w/ ice-in
+# cumMeanDailyT_OctNovDec & nDaysMeanBelowZero_Dec r=-0.67. Keep the former since the latter had *slightly* weaker corr. w/ ice-in
+# cumMeanDailyT_OctNovDec & cumMeanDailyT_Nov r=0.67.
+# cumMeanDailyT_OctNovDec & nDaysMinBelowZero_Nov r=-0.53.
+# percPrecipRain_Jan ranks in the top 10 correlations with IceIn but considering that IceIn almost always happens before January, we should drop.
+# cumMeanDailyT_OctNovDec & cumMeanDailyT_OctNov r=0.79. These two are highly correlated but corr between IceIn & cumMeanDailyT_OctNov is only 0.40.
+# cumMeanDailyT_OctNovDec & nDaysMeanBelowZero_Nov r=-0.54. Keeping cumMeanDailyT_OctNovDec since it is much more highly correlated with IceIn.
+## This basically only leaves us with one predictor variable...
+## What about keeping nDaysMinBelowZero_Nov too since it isn't too strongly colinear with cumMeanDailyT_OctNovDec?
+MohonkIceWeather %>%
+  select(IceInDayofYear_fed, cumMeanDailyT_OctNovDec, nDaysMinBelowZero_Nov) %>%
+  ggpairs() 
+
+#Visualize correlations with IceOutDayofYear
+MohonkIceWeather %>%
+  select(IceOutDayofYear, all_of(IceOutVars)) %>%
+  ggpairs() 
+median(MohonkIceWeather$IceOutDayofYear,na.rm=T)
+# cumMeanDailyT_MarApr & cumMeanDailyT_Mar r=0.82. The median ice-off DOY is April 7th so I could see making the case for including April temps.
+# IceOutDayofYear & LengthOfIceCover_days r=0.72. I could also see making the case for including length of ice cover as a predictor because if the ice has been on the lake longer, it is also thicker.
+# cumMeanDailyT_MarApr & nDaysMeanAboveZero_FebMar r=0.60  Keep the former since the latter had *slightly* weaker corr. w/ ice-out
+# cumMeanDailyT_MarApr & nDaysMinAboveZero_Mar r=0.48 Keep both, since they aren't strong collinear
+# cumMeanDailyT_MarApr & nDaysMinBelowZero_Mar r=-0.48 Drop the latter, since keeping nDaysMinBelowZero_Mar
+# cumMeanDailyT_MarApr & nDaysMeanBelowZero_Mar r=-0.78 Strongly collinear, keep cumMeanDailyT_MarApr
+# cumMeanDailyT_MarApr & nDaysMeanAboveZero_Mar r=0.78 Strongly collinear, keep cumMeanDailyT_MarApr
+# cumMeanDailyT_MarApr & cumSnow_FebMar r=-0.43 Inclined to keep both. 
+# cumMeanDailyT_MarApr & maxSnowDepth_mm r=-0.27 Inclined to keep both. 
+# maxSnowDepth_mm & cumSnow_FebMar r=0.69. Strong collinear, maybe most of the snow tends to fall in Feb + March? cumSnow_FebMar more strongly correlated with IceOutDOY
+MohonkIceWeather %>%
+  select(IceOutDayofYear, cumMeanDailyT_MarApr, nDaysMinAboveZero_Mar, cumSnow_FebMar, maxSnowDepth_mm) %>%
+  ggpairs() 
+#We have less data for maxSnowDepth_mm than cumSnow_FebMar, so let's keep drop maxSnowDepth_mm.
 
 
-#Just out of curiosity, is there any relatioship between days since turnover and IceInDOY?
+#Visualize correlations with IceOutDayofYear
+MohonkIceWeather %>%
+  select(LengthOfIceCover_days, IceOutDayofYear, all_of(IceDurationVars)) %>%
+  ggpairs() 
+median(MohonkIceWeather$LengthOfIceCover_days,na.rm=T) #100 days
 
+
+
+
+#Just out of curiosity, is there any relationship between days since turnover and IceInDOY?
 AnnualData %>%
   mutate(turnoverToIceIn_days=IceInDayofYear-EndOfStratification_Day) %>%
   select(Year,turnoverToIceIn_days,IceInDayofYear) %>%
@@ -173,7 +234,6 @@ AnnualData %>%
 #Sen slopes using DCR defined function that is drawn from zyp and trend functions#
 #No longer need to impute values or use zyp.sen
 #Deals with NA values
-#Use MTCC.sensSlope(x=AnnualData$Year,y=AnnualData$VARIABLE) 
 #create new df with variable name, sen slope, intercept, z, n, pvalue
 
 #Runs Theil Sen's slopes on each variable
@@ -183,7 +243,7 @@ Ice.SensSlopeSummary<-
   select(Year, IceOutDayofYear,LengthOfIceCover_days,IceInDayofYear_fed) %>%
   pivot_longer(-1) %>%
   group_by(name)%>%
-  summarize(Sens_Slope=MTCC.sensSlope(x=Year,y=value)$coefficients["Year"],
+  dplyr::summarize(Sens_Slope=MTCC.sensSlope(x=Year,y=value)$coefficients["Year"],
             Sens_Intercept=MTCC.sensSlope(x=Year,y=value)$coefficients["Intercept"],
             Sens_pval=MTCC.sensSlope(x=Year,y=value)$pval,
             Sens_z_stat=MTCC.sensSlope(x=Year,y=value)$z_stat,
@@ -196,7 +256,7 @@ glimpse(MohonkIce)
 
 
 
-# ~~FIGURE X~~ Ice in phenology timeseries ------------------------------------------------------------
+# ~~FIGURE 1~~ Ice in phenology timeseries ------------------------------------------------------------
 
 #**Phenology of stratification plot####
 #Immitate the figure from our GRL paper
