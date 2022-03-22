@@ -30,11 +30,21 @@ iceDuration_variability<-
          RollingWindow_years=RW_length) #Record the Rolling window length in a column
 
 #Plot the variability####
-ggplot(data=iceDuration_cv,aes(x=year_median,y=LengthOfIceCover_days_sd))+
+ggplot(data=iceDuration_variability,
+       aes(x=year_median,y=LengthOfIceCover_days_cv))+
   geom_point()+
   xlab(bquote(Year~median))+
   ylab("Ice duration (c.v.)")+
   geom_smooth(method="gam", color="black", size=0.5)
+
+#Plot the sd####
+ggplot(data=iceDuration_variability,
+       aes(x=year_median,y=LengthOfIceCover_days_sd))+
+  geom_point()+
+  xlab(bquote(Year~median))+
+  ylab("Ice duration (s.d.)")+
+  geom_smooth(method="gam", color="black", size=0.5)
+#Effectively the same pattern. 
 
 #Create dataframe all rolling windows####
 datalist=list()  #initialize empty list for storing a bunch of ice duration variabilities of different lengths
@@ -54,15 +64,17 @@ for(RW_length_i in 3:30){
 iceDuration_variability_all<-do.call(bind_rows,datalist) 
 
 #*Rolling sd vs. year facet wrapped by all rolling window sizes####
-ggplot(data=iceDuration_variability_all,aes(x=year_median,y=LengthOfIceCover_days_sd))+
+ggplot(data=iceDuration_variability_all,
+       aes(x=year_median,y=LengthOfIceCover_days_sd))+
   geom_point()+
   xlab(bquote(Year~median))+
   ylab("Ice duration (s.d.)")+
   geom_smooth(method="gam", color="black", size=0.5)+
-  facet_wrap(~RollingWindow_years)
+  facet_wrap(~RollingWindow_years, scales="free_y")
 
 #*Rolling cv vs. year facet wrapped by all rolling window sizes####
-ggplot(data=iceDuration_variability_all,aes(x=year_median,y=LengthOfIceCover_days_cv))+
+ggplot(data=iceDuration_variability_all,
+       aes(x=year_median,y=LengthOfIceCover_days_cv))+
   geom_point()+
   xlab(bquote(Year~median))+
   ylab("Ice duration (c.v.)")+
@@ -70,7 +82,8 @@ ggplot(data=iceDuration_variability_all,aes(x=year_median,y=LengthOfIceCover_day
   facet_wrap(~RollingWindow_years)
 
 #*Rolling mean vs. year facet wrapped by all rolling window sizes####
-ggplot(data=iceDuration_variability_all,aes(x=year_median,y=LengthOfIceCover_days_mean))+
+ggplot(data=iceDuration_variability_all,
+       aes(x=year_median,y=LengthOfIceCover_days_mean))+
   geom_point()+
   xlab(bquote(Year~median))+
   ylab("Ice duration (mean)")+
