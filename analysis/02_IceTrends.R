@@ -140,6 +140,7 @@ MohonkIceWeather_trim <- MohonkIceWeather %>%
 
 #Look for potentially spurious correlations
 res3 <- rcorr(as.matrix(MohonkIceWeather_trim[,3:ncol(MohonkIceWeather_trim)]))
+# res3 <- rcorr(as.matrix(MohonkIceWeather[,3:ncol(MohonkIceWeather)]))
 MohonkIceWeather_trim_correlations<-flattenCorrMatrix(res3$r, res3$P)
 MohonkIceWeather_trim_correlations<-MohonkIceWeather_trim_correlations%>%
   filter(row %in% c("IceOutDayofYear","IceInDayofYear_fed","LengthOfIceCover_days")) %>%
@@ -165,7 +166,7 @@ IceOutVars <- MohonkIce_top10 %>% filter(row=="IceOutDayofYear") %>% pull(column
 IceDurationVars <- MohonkIce_top10 %>% filter(row=="LengthOfIceCover_days") %>% pull(column)
 
 #Visualize correlations with IceInDayofYear_fed
-MohonkIceWeather %>%
+MohonkIceWeather_trim %>%
   select(IceInDayofYear_fed, all_of(IceInVars)) %>%
   ggpairs() 
 median(MohonkIceWeather$IceInDayofYear,na.rm=T)
@@ -184,6 +185,18 @@ median(MohonkIceWeather$IceInDayofYear,na.rm=T)
 MohonkIceWeather %>%
   select(IceInDayofYear_fed, cumMeanDailyT_OctNovDec, nDaysMinBelowZero_Nov) %>%
   ggpairs() 
+
+#Alternatively, look at a matrix as above...
+IceInVars_df<-MohonkIceWeather %>%
+  select(all_of(IceInVars))
+IceInCorrMat <- rcorr(as.matrix(IceInVars_df[,1:ncol(IceInVars_df)]))
+#Create dataframe of pearson r and p-values
+flattenCorrMatrix(IceInCorrMat$r, IceInCorrMat$P) %>%
+  filter(abs(cor)>=0.7) %>%
+  arrange(row)
+
+
+
 
 #Visualize correlations with IceOutDayofYear
 MohonkIceWeather %>%
@@ -212,7 +225,14 @@ MohonkIceWeather %>%
   ggpairs() 
 median(MohonkIceWeather$LengthOfIceCover_days,na.rm=T) #100 days
 
-
+#Alternatively, look at a matrix as above...
+IceOutVars_df<-MohonkIceWeather %>%
+  select(all_of(IceOutVars))
+IceOutCorrMat <- rcorr(as.matrix(IceOutVars_df[,1:ncol(IceOutVars_df)]))
+#Create dataframe of pearson r and p-values
+flattenCorrMatrix(IceOutCorrMat$r, IceOutCorrMat$P) %>%
+  filter(abs(cor)>=0.7) %>%
+  arrange(row)
 
 
 #Just out of curiosity, is there any relationship between days since turnover and IceInDOY?
@@ -224,9 +244,6 @@ AnnualData %>%
   geom_line(size=0.5)+
   xlab("Year")+
   geom_smooth(method="lm",color="grey50", size=0.5)
-
-
-
 
 
 
