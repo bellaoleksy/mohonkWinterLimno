@@ -76,4 +76,8 @@ ggplot(data=iceDuration_variability_all,aes(x=year_median,y=LengthOfIceCover_day
   ylab("Ice duration (mean)")+
   geom_smooth(method="gam", color="black", size=0.5)+
   facet_wrap(~RollingWindow_years)
-  
+
+#Find periodicity in each plot#####
+#https://stackoverflow.com/questions/17788859/acf-plot-with-ggplot2-setting-width-of-geom-bar
+#probably have to loop through each one rolling window size, create acf data frame and plot
+#Or create acf data frame as in here: https://stackoverflow.com/questions/44697596/using-ggplots-facet-wrap-with-autocorrelation-plot  
