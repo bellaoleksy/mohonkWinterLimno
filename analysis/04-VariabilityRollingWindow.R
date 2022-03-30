@@ -94,3 +94,25 @@ ggplot(data=iceDuration_variability_all,
 #https://stackoverflow.com/questions/17788859/acf-plot-with-ggplot2-setting-width-of-geom-bar
 #probably have to loop through each one rolling window size, create acf data frame and plot
 #Or create acf data frame as in here: https://stackoverflow.com/questions/44697596/using-ggplots-facet-wrap-with-autocorrelation-plot  
+library(purrr)
+
+df_acf <- iceDuration_variability_all %>% 
+  group_by(RollingWindow_years) %>% 
+  summarise(list_acf=list(acf(LengthOfIceCover_days_sd, plot=FALSE,na.action = na.pass))) %>%
+  mutate(acf_vals=purrr::map(list_acf, ~as.numeric(.x$acf))) %>% 
+  select(-list_acf) %>% 
+  unnest(cols=c(acf_vals)) %>% 
+  group_by(RollingWindow_years) %>% 
+  mutate(lag=row_number() - 1)
+
+df_ci <- iceDuration_variability_all %>% 
+  group_by(RollingWindow_years) %>% 
+  summarise(ci = qnorm((1 + 0.95)/2)/sqrt(n()))
+
+ggplot(df_acf, aes(x=lag, y=acf_vals)) +
+  geom_bar(stat="identity", width=.05) +
+  geom_hline(yintercept = 0) +
+  geom_hline(data = df_ci, aes(yintercept = -ci), color="blue", linetype="dotted") +
+  geom_hline(data = df_ci, aes(yintercept = ci), color="blue", linetype="dotted") +
+  labs(x="Lag", y="ACF") +
+  facet_wrap(~RollingWindow_years)
