@@ -57,7 +57,22 @@ for(RW_length_i in 3:30){
            LengthOfIceCover_days_cv=as.vector(rollapply(iceDuration_days_withNAs%>%dplyr::select(LengthOfIceCover_days), width =RW_length_i, FUN = cv)), #rolling window coefficient of variation of length RW_length
            LengthOfIceCover_days_mean=as.vector(rollapply(iceDuration_days_withNAs%>%dplyr::select(LengthOfIceCover_days), width =RW_length_i, FUN = function(x, na.rm = TRUE)  {mean(x, na.rm = na.rm)})), #rolling window mean of length RW_length
            RollingWindow_years=RW_length_i) #Record the Rolling window length in a column
+  
+    #Calculate slope
+      sensSlope<-MTCC.sensSlope(iceDuration_temporary$year_median,iceDuration_temporary$LengthOfIceCover_days_sd)
+      sensSlope$coefficients
+    #Store the residuals and other sens slope fit stats in iceDuration_temporary  
+      iceDuration_temporary<-iceDuration_temporary%>%
+                              mutate(sensSlope_fit=year_median*sensSlope$coefficients["Year"]+sensSlope$coefficients["Intercept"],
+                                     sensSlope_slope=sensSlope$coefficients["Year"],
+                                     sensSlope_intercept=sensSlope$coefficients["Intercept"],
+                                     sensSlope_residuals=sensSlope$residuals,
+                                     sensSlope_pval=sensSlope$pval,
+                                     sensSlope_z_stat=sensSlope$z_stat,
+                                     sensSlope_n=sensSlope$n)
+    #Export each Rollingwindow length to the datalist  
       datalist[[RW_length_i]]<-iceDuration_temporary  #Store the temporary data frame in a list
+      
     }   
 
 #*compile them all in one data frame####    
@@ -67,10 +82,20 @@ iceDuration_variability_all<-do.call(bind_rows,datalist)
 ggplot(data=iceDuration_variability_all,
        aes(x=year_median,y=LengthOfIceCover_days_sd))+
   geom_point()+
+  geom_line(aes(y=sensSlope_fit),size=1.5,col="blue")+
   xlab(bquote(Year~median))+
   ylab("Ice duration (s.d.)")+
   geom_smooth(method="gam", color="black", size=0.5)+
-  facet_wrap(~RollingWindow_years, scales="free_y")
+  facet_wrap(~RollingWindow_years) #, scales="free_y"
+    
+#*Rolling sd residuals from sens slopes vs. year facet wrapped by all rolling window sizes####
+ggplot(data=iceDuration_variability_all,
+       aes(x=year_median,y=sensSlope_residuals))+
+  geom_point()+
+  xlab(bquote(Year~median))+
+  ylab("Ice duration (s.d.)")+
+  geom_smooth(method="gam", color="black", size=0.5)+
+  facet_wrap(~RollingWindow_years) #, scales="free_y"
 
 #*Rolling cv vs. year facet wrapped by all rolling window sizes####
 ggplot(data=iceDuration_variability_all,
@@ -98,7 +123,7 @@ library(purrr)
 
 df_acf <- iceDuration_variability_all %>% 
   group_by(RollingWindow_years) %>% 
-  summarise(list_acf=list(acf(LengthOfIceCover_days_sd, plot=FALSE,na.action = na.pass))) %>%
+  summarise(list_acf=list(acf(sensSlope_residuals, plot=FALSE,na.action = na.pass))) %>%
   mutate(acf_vals=purrr::map(list_acf, ~as.numeric(.x$acf))) %>% 
   select(-list_acf) %>% 
   unnest(cols=c(acf_vals)) %>% 
@@ -116,3 +141,15 @@ ggplot(df_acf, aes(x=lag, y=acf_vals)) +
   geom_hline(data = df_ci, aes(yintercept = ci), color="blue", linetype="dotted") +
   labs(x="Lag", y="ACF") +
   facet_wrap(~RollingWindow_years)
+
+
+#Is the variability increasing?#####
+#This tests the slope of each time series and determines significance correcting for 27 comparisons
+iceDuration_variability_summary<-iceDuration_variability_all%>%group_by(RollingWindow_years)%>%summarize(sensSlope_pval=mean(sensSlope_pval),sensSlope_slope=mean(sensSlope_slope))%>%mutate(significance=ifelse(sensSlope_pval<0.05/27,"*","NS"))%>%print(n=Inf)
+#Is the slope different depending on the rolling window
+ggplot(data=iceDuration_variability_summary,aes(y=sensSlope_slope,x=RollingWindow_years))+geom_point()
+
+#STOPPED HERE######
+#Questions remain:
+  #periodicity in the residuals? Is it a residuals of the rolling window?
+  #GARCH models in econ get at volatility: https://www.idrisstsafack.com/post/garch-models-with-r-programming-a-practical-example-with-tesla-stock

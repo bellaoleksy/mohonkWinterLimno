@@ -324,7 +324,7 @@ MTCC.sensSlope <- function (x, y)
   #Compile a list for export
   res <- list(
     coefficients = c(intercept, slope),
-    residuals = (y - slope * x + intercept),
+    residuals = (y - (slope * x + intercept)),
     pval = pval,
     z_stat = z,
     n = n
