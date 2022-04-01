@@ -79,6 +79,8 @@ theme_set(theme_MS())
 
 
 
+#Run the main script to bring in all data and functions####
+source('00_main.R')
 
 
 # Correlations of winter predictor variables -------------------------------------------
@@ -101,36 +103,23 @@ head(MohonkIceWeather_correlations_trim)
 
 ##Quite a few variables highly correlated ( r > 0.90 ) 
 ## so I am filtering those out prior to further analyses, but you can welcome to change this!
-MohonkIceWeather_trim <- MohonkIceWeather %>%
-  select(-cumSnow_SepOct, -cumSnow_SepOctNov, #never any snow in Sept
-         -nDaysMeanBelowZero_SepOct, -nDaysMeanBelowZero_SepOctNov, #never any days below zero Sept
-         -nDaysMinBelowZero_SepOct, -nDaysMinBelowZero_SepOctNov,
-         -nDaysMeanBelowZero_OctNov, #might as well just keep Nov
-         -cumSnow_FebMarApr, #probablyy not much snow in April
-         -nDaysMinBelowZero_OctNov, #Nov closer to ice-in DOY
-         -cumSnow_OctNov, #but keep cumSnow_Nov
-         -cumRain_FebMarApr, #probably little rain in Feb
-         -cumRain_FebMar, #probably little rain in Feb
-         -nDaysMeanAboveZero_MarApr, #Tough call, but warmer earlier will 
-                                     #probably drive the trend in an earlier ice-out day
-         -cumSnow_MarApr, #probably little snow in April
-         -cumRain_SepOctNov, #probably little rain in November
-         -cumMeanDailyT_FebMarApr, #Keep cumMeanDailyT_FebMar
-         -cumMeanDailyT_SepOctNov, #Keep cumMeanDailyT_OctNov
-         -nDaysMeanBelowZero_OctNovDec, #nDaysMeanBelowZero_Dec
-         -cumSnow_OctNovDec, #Keep cumSnow_Dec
-         -cumRain_OctNovDec, #probably little rain December
-         -nDaysMinAboveZero_FebMar, #keep nDaysMinAboveZero_Mar
-         -nDaysMinBelowZero_Jan, #keep nDaysMeanBelowZero_Jan
-         -cumRain_Oct, #but drop cumRain_OctNov since we have
-                       #cumSnow_Nov
-         -cumRain_JanFebMar, #probably little rain in Jan
-         -cumMeanDailyT_JanFebMar, #but keep cumMeanDailyT_FebMar
-         -cumMeanDailyT_MarApr, #but keep cumMeanDailyT_Mar
-         -cumSnow_JanFebMar, #but keep cumSnow_FebMar
-         -nDaysMinAboveZero_MarApr, #but keep nDaysMinAboveZero_Mar
-         -cumRain_MarApr, #but keep cumRain_Mar
-  )
+# MohonkIceWeather_trim <- MohonkIceWeather %>%
+#   select(-cumSnow_SepOct, -cumSnow_SepOctNov, #never any snow in Sept
+#          -nDaysMeanBelowZero_SepOct, -nDaysMeanBelowZero_SepOctNov, #never any days below zero Sept
+#          -nDaysMinBelowZero_SepOct, -nDaysMinBelowZero_SepOctNov,
+#          -cumSnow_FebMarApr, #probablyy not much snow in April
+#          -cumSnow_OctNov, #but keep cumSnow_Nov, almost never snows in Oct
+#          -nDaysMinAboveZero_FebMar, #keep nDaysMinAboveZero_Mar
+#          -nDaysMinBelowZero_Jan, #keep nDaysMeanBelowZero_Jan
+#          -cumRain_Oct, #but drop cumRain_OctNov since we have
+#                        #cumSnow_Nov
+#          -cumRain_JanFebMar, #probably little rain in Jan
+#          -cumMeanDailyT_JanFebMar, #but keep cumMeanDailyT_FebMar
+#          -cumMeanDailyT_MarApr, #but keep cumMeanDailyT_Mar
+#          -cumSnow_JanFebMar, #but keep cumSnow_FebMar
+#          -nDaysMinAboveZero_MarApr, #but keep nDaysMinAboveZero_Mar
+#          -cumRain_MarApr, #but keep cumRain_Mar
+#   )
 
 ## UNSURE about the following pairs, so I am keeping those in for now:
 # 	nDaysMeanBelowZero_Dec	nDaysMinBelowZero_Dec	0.86
@@ -139,7 +128,7 @@ MohonkIceWeather_trim <- MohonkIceWeather %>%
 # 	cumMeanDailyT_Mar	nDaysMeanAboveZero_Mar	0.83
 
 #Look for potentially spurious correlations
-res3 <- rcorr(as.matrix(MohonkIceWeather_trim[,3:ncol(MohonkIceWeather_trim)]))
+res3 <- rcorr(as.matrix(MohonkIceWeather[,3:ncol(MohonkIceWeather)]))
 # res3 <- rcorr(as.matrix(MohonkIceWeather[,3:ncol(MohonkIceWeather)]))
 MohonkIceWeather_trim_correlations<-flattenCorrMatrix(res3$r, res3$P)
 MohonkIceWeather_trim_correlations<-MohonkIceWeather_trim_correlations%>%
@@ -149,7 +138,7 @@ MohonkIceWeather_trim_correlations<-MohonkIceWeather_trim_correlations%>%
 #Take a look at what variables are highly correlated with IceOut and IceIn
 MohonkIceWeather_trim_correlations %>%
   group_by(row) %>%
-  filter(abs(cor) > 0.5) %>%
+  filter(p <= 0.05 & abs(cor) > 0.4) %>% #Somehow every predictor has a p-value < 0.05, so I added a secondary criteria of correlation strength
   arrange(row) %>%
   filter(row=="IceInDayofYear_fed")
 
@@ -164,6 +153,10 @@ MohonkIce_top10<-MohonkIceWeather_trim_correlations %>%
 IceInVars <- MohonkIce_top10 %>% filter(row=="IceInDayofYear_fed") %>% pull(column)
 IceOutVars <- MohonkIce_top10 %>% filter(row=="IceOutDayofYear") %>% pull(column)
 IceDurationVars <- MohonkIce_top10 %>% filter(row=="LengthOfIceCover_days") %>% pull(column)
+
+#Export table of top 10 correlations
+write_csv(MohonkIce_top10, "data/exported/MohonkIce_CorrMatrix.csv")
+
 
 #Visualize correlations with IceInDayofYear_fed
 MohonkIceWeather_trim %>%
@@ -191,14 +184,14 @@ IceInVars_df<-MohonkIceWeather %>%
   select(all_of(IceInVars))
 IceInCorrMat <- rcorr(as.matrix(IceInVars_df[,1:ncol(IceInVars_df)]))
 #Create dataframe of pearson r and p-values
-flattenCorrMatrix(IceInCorrMat$r, IceInCorrMat$P) %>%
+IceInDOY_corrMat<-flattenCorrMatrix(IceInCorrMat$r, IceInCorrMat$P) %>%
   filter(abs(cor)>=0.7) %>%
-  arrange(row)
+  arrange(row) %>%
+  mutate(y="IceInDayofYear_fed") %>%
+  relocate(y, .before = row) 
+write_csv(IceInDOY_corrMat, "data/exported/IceInDOY_CollinearMatrix.csv")
 
-
-
-
-#Visualize correlations with IceOutDayofYear
+ #Visualize correlations with IceOutDayofYear
 MohonkIceWeather %>%
   select(IceOutDayofYear, all_of(IceOutVars)) %>%
   ggpairs() 
@@ -230,9 +223,14 @@ IceOutVars_df<-MohonkIceWeather %>%
   select(all_of(IceOutVars))
 IceOutCorrMat <- rcorr(as.matrix(IceOutVars_df[,1:ncol(IceOutVars_df)]))
 #Create dataframe of pearson r and p-values
-flattenCorrMatrix(IceOutCorrMat$r, IceOutCorrMat$P) %>%
+IceOutDOY_corrMat<-flattenCorrMatrix(IceOutCorrMat$r, IceOutCorrMat$P) %>%
   filter(abs(cor)>=0.7) %>%
-  arrange(row)
+  arrange(row) %>%
+  mutate(y="IceOutDayofYear") %>%
+  relocate(y, .before = row) 
+IceOutDOY_corrMat
+write_csv(IceOutDOY_corrMat, "data/exported/IceOutDOY_CollinearMatrix.csv")
+
 
 
 #Just out of curiosity, is there any relationship between days since turnover and IceInDOY?
