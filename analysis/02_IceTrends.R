@@ -154,6 +154,10 @@ IceInVars <- MohonkIce_top10 %>% filter(row=="IceInDayofYear_fed") %>% pull(colu
 IceOutVars <- MohonkIce_top10 %>% filter(row=="IceOutDayofYear") %>% pull(column)
 IceDurationVars <- MohonkIce_top10 %>% filter(row=="LengthOfIceCover_days") %>% pull(column)
 
+#Export table of top 10 correlations
+write_csv(MohonkIce_top10, "data/exported/MohonkIce_CorrMatrix.csv")
+
+
 #Visualize correlations with IceInDayofYear_fed
 MohonkIceWeather_trim %>%
   select(IceInDayofYear_fed, all_of(IceInVars)) %>%
@@ -185,7 +189,7 @@ IceInDOY_corrMat<-flattenCorrMatrix(IceInCorrMat$r, IceInCorrMat$P) %>%
   arrange(row) %>%
   mutate(y="IceInDayofYear_fed") %>%
   relocate(y, .before = row) 
-write_csv(IceInDOY_corrMat, "data/exported/IceInDOY_corrMat.csv")
+write_csv(IceInDOY_corrMat, "data/exported/IceInDOY_CollinearMatrix.csv")
 
  #Visualize correlations with IceOutDayofYear
 MohonkIceWeather %>%
@@ -225,7 +229,7 @@ IceOutDOY_corrMat<-flattenCorrMatrix(IceOutCorrMat$r, IceOutCorrMat$P) %>%
   mutate(y="IceOutDayofYear") %>%
   relocate(y, .before = row) 
 IceOutDOY_corrMat
-write_csv(IceOutDOY_corrMat, "data/exported/IceOutDOY_corrMat.csv")
+write_csv(IceOutDOY_corrMat, "data/exported/IceOutDOY_CollinearMatrix.csv")
 
 
 
