@@ -11,6 +11,8 @@ if (!require(zoo)) {install.packages("zoo")}
 #Try using zoo package
 library(zoo)
 
+
+
 #Rolling CV using zoo package####
 #Code snagged from Gavin in this response:
 #https://stackoverflow.com/questions/13195442/moving-variance-in-r
@@ -18,6 +20,15 @@ library(zoo)
 ##Ice Duration
 iceDuration_days_withNAs<-MohonkIce %>%
   select(LengthOfIceCover_days,Year) 
+
+
+temp.sensSlope<-MTCC.sensSlope(x=iceDuration_days_withNAs$Year,y=iceDuration_days_withNAs$LengthOfIceCover_days)
+
+iceDuration_days_withNAs%>%mutate(sensSlope_fit=as.numeric(temp.sensSlope$coefficients["Intercept"])+as.numeric(temp.sensSlope$coefficients["Year"])*Year)
+ggplot(data=iceDuration_days_withNAs,aes(y=LengthOfIceCover_days,x=Year))+geom_point()+
+  geom_abline(intercept=as.numeric(temp.sensSlope$coefficients["Intercept"]),slope=as.numeric(temp.sensSlope$coefficients["Year"]))
+
+plot(temp.sensSlope$residuals~iceDuration_days_withNAs$Year)
 
 #Rolling window calculations of CV or standard deviation####
 RW_length<-15 #set the rolling window length globally (in years)
