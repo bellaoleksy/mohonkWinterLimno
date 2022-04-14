@@ -67,8 +67,13 @@ for(RW_length_i in 3:30){
            LengthOfIceCover_days_sd=as.vector(rollapply(iceDuration_days_withNAs%>%dplyr::select(LengthOfIceCover_days), width =RW_length_i, FUN = function(x, na.rm = TRUE)  {sd(x, na.rm = na.rm)})), #rolling window standard deviation of length RW_length
            LengthOfIceCover_days_cv=as.vector(rollapply(iceDuration_days_withNAs%>%dplyr::select(LengthOfIceCover_days), width =RW_length_i, FUN = cv)), #rolling window coefficient of variation of length RW_length
            LengthOfIceCover_days_mean=as.vector(rollapply(iceDuration_days_withNAs%>%dplyr::select(LengthOfIceCover_days), width =RW_length_i, FUN = function(x, na.rm = TRUE)  {mean(x, na.rm = na.rm)})), #rolling window mean of length RW_length
+           LengthOfIceCover_days_n=as.vector(rollapply(iceDuration_days_withNAs%>%dplyr::select(LengthOfIceCover_days), width =RW_length_i, FUN = function(x, na.rm = TRUE)  {sum(!is.na(x))})), #rolling window count the number of nonNA measurements that went into length RW_length
            RollingWindow_years=RW_length_i) #Record the Rolling window length in a column
-  
+   #Figure out proportion of days used for rolling stats
+    iceDuration_temporary<-iceDuration_temporary%>%mutate(proportion_used=LengthOfIceCover_days_n/RollingWindow_years)%>%
+                            mutate(LengthOfIceCover_days_sd=ifelse(proportion_used>=0.75,LengthOfIceCover_days_sd,NA),
+                                   LengthOfIceCover_days_cv=ifelse(proportion_used>=0.75,LengthOfIceCover_days_cv,NA),
+                                   LengthOfIceCover_days_mean=ifelse(proportion_used>=0.75,LengthOfIceCover_days_mean,NA))
     #Calculate slope
       sensSlope<-MTCC.sensSlope(iceDuration_temporary$year_median,iceDuration_temporary$LengthOfIceCover_days_sd)
       sensSlope$coefficients
@@ -83,7 +88,14 @@ for(RW_length_i in 3:30){
                                      sensSlope_n=sensSlope$n)
     #Export each Rollingwindow length to the datalist  
       datalist[[RW_length_i]]<-iceDuration_temporary  #Store the temporary data frame in a list
-      
+    
+    #Fit auto.arima with xreg as year
+      #auto.arima(iceDuration_temporary$LengthOfIceCover_days_sd,
+                 #xreg=c(iceDuration_temporary$year_median),
+                 # xreg=cbind(AnnualData$GlobalTempAnomoly_C,
+                 # AnnualData$Year),
+                 #seasonal=FALSE,allowdrift = FALSE,
+                 #stationary=TRUE)
     }   
 
 #*compile them all in one data frame####    
@@ -132,6 +144,7 @@ ggplot(data=iceDuration_variability_all,
 #Or create acf data frame as in here: https://stackoverflow.com/questions/44697596/using-ggplots-facet-wrap-with-autocorrelation-plot  
 library(purrr)
 
+#Calculate the acf for various lags for each one
 df_acf <- iceDuration_variability_all %>% 
   group_by(RollingWindow_years) %>% 
   summarise(list_acf=list(acf(sensSlope_residuals, plot=FALSE,na.action = na.pass))) %>%
@@ -141,10 +154,15 @@ df_acf <- iceDuration_variability_all %>%
   group_by(RollingWindow_years) %>% 
   mutate(lag=row_number() - 1)
 
+#Calculate confidence intervals for significance
 df_ci <- iceDuration_variability_all %>% 
   group_by(RollingWindow_years) %>% 
   summarise(ci = qnorm((1 + 0.95)/2)/sqrt(n()))
 
+#Merge the CI back in with df_acf
+df_acf<-left_join(df_acf,df_ci,by="RollingWindow_years")%>%mutate(significant_acf=ifelse(abs(acf_vals)>ci,"*","NS"))
+
+#Plot the acfs by rolling lag
 ggplot(df_acf, aes(x=lag, y=acf_vals)) +
   geom_bar(stat="identity", width=.05) +
   geom_hline(yintercept = 0) +
@@ -153,12 +171,55 @@ ggplot(df_acf, aes(x=lag, y=acf_vals)) +
   labs(x="Lag", y="ACF") +
   facet_wrap(~RollingWindow_years)
 
+#Summarize which lags are signficant
+df_acf_summary<-df_acf%>%filter(significant_acf=="*")%>%ungroup()%>%group_by(lag)%>%summarize(common_lag=n())
+
+ggplot(data=df_acf_summary,aes(x=lag,y=common_lag))+geom_point()
+
+
 
 #Is the variability increasing?#####
 #This tests the slope of each time series and determines significance correcting for 27 comparisons
 iceDuration_variability_summary<-iceDuration_variability_all%>%group_by(RollingWindow_years)%>%summarize(sensSlope_pval=mean(sensSlope_pval),sensSlope_slope=mean(sensSlope_slope))%>%mutate(significance=ifelse(sensSlope_pval<0.05/27,"*","NS"))%>%print(n=Inf)
 #Is the slope different depending on the rolling window
 ggplot(data=iceDuration_variability_summary,aes(y=sensSlope_slope,x=RollingWindow_years))+geom_point()
+
+
+#Merge for a single plot by selecting a specifc rolling window and merging with original data
+#Calculate Bollinger Bands by doing the moving average +/- moving sd for that window
+window_select<-4 #set window here
+Merge_singleRollingWindow<-left_join(tibble(iceDuration_days_withNAs),iceDuration_variability_all%>%filter(RollingWindow_years==window_select)%>%mutate(Year=trunc(year_median)),by="Year")%>%mutate(max_sd=LengthOfIceCover_days_mean+LengthOfIceCover_days_sd,min_sd=LengthOfIceCover_days_mean-LengthOfIceCover_days_sd)
+
+#Graph a single plot with rolling window SDs as shaded region
+#These are bollinger band in econ/finance: https://www.investopedia.com/terms/b/bollingerbands.asp
+ggplot(data=Merge_singleRollingWindow)+
+  geom_ribbon(aes(x=Year,ymin=min_sd,ymax=max_sd),color=rgb(186,182,170,max=255),fill="sky blue")+
+  geom_line(aes(x=Year,y=LengthOfIceCover_days_mean),color=rgb(186,182,170,max=255),size=1)+ #Moving average
+  #geom_errorbar(aes(x=Year,ymin=min_sd,ymax=max_sd),size=1)+
+  geom_point(aes(x=Year,y=LengthOfIceCover_days),shape=21,fill=rgb(96,98,99,max=255),size=2)+ #actual days of ice cover
+  ylab("Ice duration (days)")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+#*Rolling sd vs. year####
+ggplot(data=Merge_singleRollingWindow)+
+  geom_line(aes(x=year_median,y=sensSlope_fit),color=rgb(186,182,170,max=255),size=1)+
+  geom_point(aes(x=year_median,y=LengthOfIceCover_days_sd),shape=21,fill=rgb(96,98,99,max=255),size=2)+
+  xlab(bquote(Year))+
+  ylab("Ice duration (s.d.)")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  
+#*Rolling sd residuals from sens slopes vs. year####
+ggplot(data=Merge_singleRollingWindow,
+       aes(x=year_median,y=sensSlope_residuals))+
+  geom_smooth(method="gam", color="black", size=0.5,color=rgb(186,182,170,max=255),fill="sky blue")+
+  geom_point(shape=21,fill=rgb(96,98,99,max=255),size=2)+
+  xlab(bquote(Year))+
+  ylab("Ice duration (s.d.)")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+  
 
 #STOPPED HERE######
 #Questions remain:
