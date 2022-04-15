@@ -232,7 +232,6 @@ IceOutDOY_corrMat
 write_csv(IceOutDOY_corrMat, "data/exported/IceOutDOY_CollinearMatrix.csv")
 
 
-
 #Just out of curiosity, is there any relationship between days since turnover and IceInDOY?
 AnnualData %>%
   mutate(turnoverToIceIn_days=IceInDayofYear-EndOfStratification_Day) %>%
