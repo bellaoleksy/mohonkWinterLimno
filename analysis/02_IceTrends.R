@@ -25,6 +25,7 @@ if(!require(cowplot)){install.packages("cowplot")}
 if(!require(grid)){install.packages("grid")} 
 if(!require(schoenberg)){install.packages("schoenberg")} 
 if(!require(nlme)){install.packages("nlme")} 
+if(!require(nlme)){install.packages("gratia")} 
 
 
 library(huxtable) #Pretty tables
@@ -52,6 +53,7 @@ library(cowplot)
 library(grid) # for unit.pmax(), unit.list()
 library(schoenberg)
 library(nlme)
+library(gratia)
 
 
 
@@ -232,7 +234,6 @@ IceOutDOY_corrMat
 write_csv(IceOutDOY_corrMat, "data/exported/IceOutDOY_CollinearMatrix.csv")
 
 
-
 #Just out of curiosity, is there any relationship between days since turnover and IceInDOY?
 AnnualData %>%
   mutate(turnoverToIceIn_days=IceInDayofYear-EndOfStratification_Day) %>%
@@ -370,16 +371,23 @@ ggsave(
 # Fitting GAMs for iceOnDOY_fed -------------------------------------------
 
 
-
 ### I added Family Gamma here for how errors should respond
-modIceOn <- gamm(IceInDayofYear_fed ~ s(Year),
-                    family=Gamma(link="log"), data = MohonkIce,
-                    correlation = corCAR1(form = ~ Year),
-                    method = "REML")
+modIceOn0 <- gamm(IceInDayofYear_fed ~ s(Year),
+                  # family=Gamma(link="log"),
+                  data = MohonkIce,
+                  correlation = corARMA(form = ~ Year, p = 1),
+                  method = "REML")
 
 ## summary object
-modIceOn_S <- summary(modIceOn$gam)
+modIceOn_S <- summary(modIceOn0$gam)
 modIceOn_S #Gives you the P values, degrees of freedom...
+
+#PLOT Autocorrelation function of residuals from the additive model with AR(1) errors
+ACF <- acf(resid(modIceOn0$lme, type = "normalized"), plot = FALSE)
+ACF <- setNames(data.frame(unclass(ACF)[c("acf", "lag")]), c("ACF","Lag"))
+ggplot(ACF, aes(x = Lag, y = ACF)) +
+  geom_hline(aes(yintercept = 0)) +
+  geom_segment(mapping = aes(xend = Lag, yend = 0))
 
 ###Since we're concerned with the response, include "response" in type of predict()
 IceOnPred <- with(MohonkIce, data.frame(Year = seq(min(Year, na.rm=TRUE),
@@ -429,13 +437,24 @@ ggplot(IceOnPred,aes(x=Year,y=fit))+
   coord_cartesian(xlim=c(1930,2020))+
   scale_x_continuous(breaks=seq(1930, 2020, 15))
 
+## BUT the fit is poor. Can we add in additional predictors to improve the model fit? 
+
+
+### I added Family Gamma here for how errors should respond
+modIceOn1 <- gam(IceInDayofYear_fed ~ s(Year),
+                 family=Gamma(link="log"), data = MohonkIceWeather,
+                 correlation = corCAR1(form = ~ Year),
+                 method = "REML")
+
+summary(modIceOn)
+
 # Fitting GAMs for iceDuration_days -------------------------------------------
 
 
 glimpse(MohonkIce)
 
 ### I added Family Gamma here for how errors should respond
-modIceDuration <- gamm(LengthOfIceCover_days ~ s(Year),
+modIceDuration <- gamm(LengthOfIceCover_days ~ s(Year) + s(nDaysMeanBelowZero_OctNovDec),
                  family=Gamma(link="log"), data = MohonkIce,
                  correlation = corCAR1(form = ~ Year),
                  method = "REML")
