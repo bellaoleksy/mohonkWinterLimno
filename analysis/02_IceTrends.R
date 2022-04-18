@@ -25,7 +25,9 @@ if(!require(cowplot)){install.packages("cowplot")}
 if(!require(grid)){install.packages("grid")} 
 if(!require(schoenberg)){install.packages("schoenberg")} 
 if(!require(nlme)){install.packages("nlme")} 
-if(!require(nlme)){install.packages("gratia")} 
+if(!require(gratia)){install.packages("gratia")} 
+if(!require(itsadug)){install.packages("itsadug")} 
+if(!require(visreg)){install.packages("visreg")} 
 
 
 library(huxtable) #Pretty tables
@@ -54,7 +56,8 @@ library(grid) # for unit.pmax(), unit.list()
 library(schoenberg)
 library(nlme)
 library(gratia)
-
+library(itsadug)
+library(visreg)
 
 
 # Set theme ---------------------------------------------------------------
@@ -370,17 +373,19 @@ ggsave(
 
 # Fitting GAMs for iceOnDOY_fed -------------------------------------------
 
+#Distribution of y
+hist(MohonkIceWeather$IceInDayofYear_fed)
 
 ### I added Family Gamma here for how errors should respond
-modIceOn0 <- gamm(IceInDayofYear_fed ~ s(Year),
-                  # family=Gamma(link="log"),
+modIceOn0 <- gam(IceInDayofYear_fed ~ s(Year),
+                  family=Gamma(link="log"),
                   data = MohonkIce,
-                  correlation = corARMA(form = ~ Year, p = 1),
+                  correlation = corCAR1(form = ~ Year),
                   method = "REML")
-
+summary(modIceOn0)
 ## summary object
-modIceOn_S <- summary(modIceOn0$gam)
-modIceOn_S #Gives you the P values, degrees of freedom...
+modIceOn0_S <- summary(modIceOn0$gam)
+modIceOn0_S #Gives you the P values, degrees of freedom...
 
 #PLOT Autocorrelation function of residuals from the additive model with AR(1) errors
 ACF <- acf(resid(modIceOn0$lme, type = "normalized"), plot = FALSE)
@@ -440,54 +445,353 @@ ggplot(IceOnPred,aes(x=Year,y=fit))+
 ## BUT the fit is poor. Can we add in additional predictors to improve the model fit? 
 
 
-### I added Family Gamma here for how errors should respond
-modIceOn1 <- gam(IceInDayofYear_fed ~ s(Year),
-                 family=Gamma(link="log"), data = MohonkIceWeather,
+### IceInDayofYear_fed~nDaysMeanBelowZero_OctNovDec
+modIceOn1 <- gam(IceInDayofYear_fed ~  s(nDaysMeanBelowZero_OctNovDec),
+                 family=Gamma(link="log"),
+                 data = MohonkIceWeather,
                  correlation = corCAR1(form = ~ Year),
                  method = "REML")
+summary(modIceOn1)
+# summary(modIceOn1$gam)
+#Fit improves substantially over null model
 
-summary(modIceOn)
+draw(modIceOn1, residuals = TRUE)
+#Partial plots of estimated smooth functions with partial residuals
 
-# Fitting GAMs for iceDuration_days -------------------------------------------
 
-
-glimpse(MohonkIce)
-
-### I added Family Gamma here for how errors should respond
-modIceDuration <- gamm(LengthOfIceCover_days ~ s(Year) + s(nDaysMeanBelowZero_OctNovDec),
-                 family=Gamma(link="log"), data = MohonkIce,
+### IceInDayofYear_fed~cumMeanDailyT_OctNovDec
+modIceOn2 <- gam(IceInDayofYear_fed ~ s(cumMeanDailyT_OctNovDec) ,
+                 family=Gamma(link="log"),
+                 data = MohonkIceWeather,
                  correlation = corCAR1(form = ~ Year),
                  method = "REML")
+summary(modIceOn2)
+# summary(modIceOn2$gam)
+#Fit improves substantially over null model
 
+draw(modIceOn2, residuals = TRUE)
+#Partial plots of estimated smooth functions with partial residuals
+
+### IceInDayofYear_fed~Sept + Oct + Nov + Dec
+modIceOn3 <- gam(IceInDayofYear_fed ~  s(cumMeanDailyT_Sep) + s(cumMeanDailyT_Oct) + s(cumMeanDailyT_Nov) + s(cumMeanDailyT_Dec),
+                 family=Gamma(link="log"),
+                 data = MohonkIceWeather,
+                 correlation = corCAR1(form = ~ Year),
+                 method = "REML")
+summary(modIceOn3)
+# summary(modIceOn3$gam)
+#Fit improves substantially over null model
+
+#A few visuals
+vis.gam(modIceOn3, view=c("cumMeanDailyT_Nov","cumMeanDailyT_Dec"), plot.type="contour", color="cm", type="response")
+vis.gam(modIceOn3, view=c("cumMeanDailyT_Nov","cumMeanDailyT_Dec"), theta= 120, ticktype="detailed", type="response") #Adjust theta to get a different view
+vis.gam(modIceOn3, view=c("cumMeanDailyT_Nov","cumMeanDailyT_Dec"),
+        theta= 45, type="response",
+        ticktype="detailed",
+        color="cm",
+        # xlim=c(420,630),ylim=c(-300,200),
+        zlab="Ice In DOY (since Oct 1)",
+        xlab="Nov. cumulative temp (°C)",
+        ylab="Dec. cumulative temp (°C)") #Adjust theta to get a different view
+
+
+draw(modIceOn3$gam, residuals = TRUE)
+#Partial plots of estimated smooth functions with partial residuals
+
+### IceInDayofYear_fed~Nov + Dec
+### Last model contains only Nov + Dec since individually Sep and Oct were not statistically significantly. 
+modIceOn4 <- gam(IceInDayofYear_fed ~  s(cumMeanDailyT_Nov) + s(cumMeanDailyT_Dec),
+                 family=Gamma(link="log"),
+                 data = MohonkIceWeather,
+                 correlation = corCAR1(form = ~ Year),
+                 method = "REML")
+summary(modIceOn4)
+# modIceOn4_S<-summary(modIceOn4$gam)
+# modIceOn4_S
+#Fit improves substantially over null model
+
+#A few visuals
+vis.gam(modIceOn4, view=c("cumMeanDailyT_Nov","cumMeanDailyT_Dec"), type="response")
+vis.gam(modIceOn4, view=c("cumMeanDailyT_Nov","cumMeanDailyT_Dec"),plot.type="contour",color="cm", type="response")
+vis.gam(modIceOn4,theta= -100, type="response")
+
+
+draw(modIceOn4, residuals = TRUE)
+#Partial plots of estimated smooth functions with partial residuals
+
+
+#How to compare the fits of multiple GAMs models? 
+#Would be worth digging into more but found this as a solution:
+#https://rdrr.io/cran/itsadug/man/compareML.html
+#From the documentation: "This method is preferred over other functions such as AIC for models that include an AR1 model or random effects (especially nonlinear random smooths using bs='fs'). CompareML also reports the AIC difference, but that value should be treated with care."
+
+compareML(modIceOn3, modIceOn4) #Very similar, mod4 might slightly better than 3
+compareML(modIceOn2, modIceOn4)
+compareML(modIceOn1, modIceOn4)
+compareML(modIceOn0, modIceOn4)
+
+
+visreg::visreg2d(modIceOn4, xvar='cumMeanDailyT_Nov', yvar='cumMeanDailyT_Dec', scale='response')
+
+# Fitting GAMs for IceOutDayofYear -------------------------------------------
+
+#Distribution of y
+hist(MohonkIceWeather$IceOutDayofYear)
+
+### I added Family Gamma here for how errors should respond
+modIceOut0 <- gam(IceOutDayofYear ~ s(Year),
+                 family=Gamma(link="log"),
+                 data = MohonkIceWeather,
+                 correlation = corCAR1(form = ~ Year),
+                 method = "REML")
+summary(modIceOut0)
 ## summary object
-modIceDuration_S <- summary(modIceDuration$gam)
-modIceDuration_S #Gives you the P values, degrees of freedom...
+# modIceOut0_S <- summary(modIceOut0$gam)
+# modIceOut0_S #Gives you the P values, degrees of freedom...
+
+#PLOT Autocorrelation function of residuals from the additive model with AR(1) errors
+ACF <- acf(resid(modIceOut0, type = "response"), plot = FALSE)
+ACF <- setNames(data.frame(unclass(ACF)[c("acf", "lag")]), c("ACF","Lag"))
+ggplot(ACF, aes(x = Lag, y = ACF)) +
+geom_hline(aes(yintercept = 0)) +
+geom_segment(mapping = aes(xend = Lag, yend = 0))
+#Does this suggest that an AR(1) model isn't necessary? 
+
 
 ###Since we're concerned with the response, include "response" in type of predict()
-IceDurationPred <- with(MohonkIce, data.frame(Year = seq(min(Year, na.rm=TRUE),
-                                                 max(Year, na.rm=TRUE),
-                                                 length.out = 200)))
-
-IceDurationPred <- cbind(IceDurationPred, data.frame(predict(modIceDuration$gam, IceDurationPred,
+IceOffPred <- with(MohonkIce, data.frame(Year = seq(min(Year, na.rm=TRUE),
+                                                   max(Year, na.rm=TRUE),
+                                                   length.out = 200)))
+IceOffPred <- cbind(IceOffPred, data.frame(predict(modIceOut0, IceOffPred,
                                                  type="response",
                                                  se.fit = TRUE)))
-
 ### this calculates on the link scale (i.e., log)
-IceDurationPred <- transform(IceDurationPred,
-                             upper = fit + (2 * se.fit),
-                             lower = fit - (2 * se.fit))
+IceOffPred <- transform(IceOffPred, upper = fit + (2 * se.fit),
+                       lower = fit - (2 * se.fit))
 
 
 # Plots periods of change
 #https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
 Term <- "Year"
-m2.d <- Deriv(modIceDuration)
+m1.d <- Deriv(modIceOut0)
 
-m2.dci <- confint(m2.d, term = "Year")
-m2.dsig <- signifD(IceDurationPred$fit,
-                   d = m2.d[[Term]]$deriv,
-                   m2.dci[[Term]]$upper,
-                   m2.dci[[Term]]$lower)
+m1.dci <- confint(m1.d, term = "Year")
+m1.dsig <- signifD(IceOffPred$fit,
+                   d = m1.d[[Term]]$deriv,
+                   m1.dci[[Term]]$upper,
+                   m1.dci[[Term]]$lower)
+
+ylim <- with(IceOffPred, range(upper, lower, fit))
+ylab <- 'Ice on DOY (water year)'
+
+plot(fit ~ Year, data = IceOffPred, type = "n", ylab = ylab, ylim = ylim)
+lines(fit ~ Year, data = IceOffPred)
+lines(upper ~ Year, data = IceOffPred, lty = "dashed")
+lines(lower ~ Year, data = IceOffPred, lty = "dashed")
+lines(unlist(m1.dsig$incr) ~ Year, data = IceOffPred, col = "blue", lwd = 3)
+lines(unlist(m1.dsig$decr) ~ Year, data = IceOffPred, col = "red", lwd = 3)
+#No significant change in IceOut DOY, which we already knew from the sens slopes 
+
+#But another way to visualize it is there would be a significant period of change if the error bar around
+#the first derivative didn't overlap the horizontal black line.
+plot.Deriv(m1.d)
+
+#Plot Ice off DOY vs. year pretty
+ggplot(IceOffPred,aes(x=Year,y=fit))+
+  geom_point(data=MohonkIce,
+             mapping=aes(x=Year, y=IceOutDayofYear), size=2.5, alpha=0.7) +
+  geom_line(size=1)+
+  geom_ribbon(aes(ymin = (lower), ymax = (upper), x = Year), alpha = 0.5, inherit.aes = FALSE) +
+  labs(x="Year",y="Ice off (DOY)")+
+  coord_cartesian(xlim=c(1930,2020))+
+  scale_x_continuous(breaks=seq(1930, 2020, 15))
+## BUT the fit is poor. Can we add in additional predictors to improve the model fit? 
+
+
+
+### IceOutDayofYear~cumMeanDailyT_FebMarApr+cumSnow_FebMarApr
+modIceOut1 <- gam(IceOutDayofYear ~  s(cumMeanDailyT_FebMarApr) + s(cumSnow_FebMarApr),
+                 family=Gamma(link="log"),
+                 data = MohonkIceWeather,
+                 # correlation = corCAR1(form = ~ Year),
+                 method = "REML")
+summary(modIceOut1)
+# summary(modIceOut1$gam)
+#Fit improves substantially over null model
+
+draw(modIceOut1, residuals = TRUE)
+#Partial plots of estimated smooth functions with partial residuals
+
+### IceOutDayofYear~cumMeanDailyT_FebMar+cumSnow_FebMar (same as 1, but exclude April)
+modIceOut2 <- gam(IceOutDayofYear ~ s(cumMeanDailyT_FebMar) + s(cumSnow_FebMar) ,
+                 family=Gamma(link="log"),
+                 data = MohonkIceWeather,
+                 # correlation = corCAR1(form = ~ Year),
+                 method = "REML")
+summary(modIceOut2)
+# summary(modIceOut2$gam)
+# Fit is a bit better than modIceOut2, in terms of deviance explained
+
+draw(modIceOut2, residuals = TRUE)
+#Partial plots of estimated smooth functions with partial residuals
+
+
+### IceOutDayofYear ~ nDaysMinAboveZero_FebMar + cumSnow_FebMar
+modIceOut3 <- gam(IceOutDayofYear ~  s(nDaysMinAboveZero_FebMar) + s(cumSnow_FebMar) ,
+                 family=Gamma(link="log"),
+                 data = MohonkIceWeather,
+                 # correlation = corCAR1(form = ~ Year),
+                 method = "REML")
+summary(modIceOut3)
+# summary(modIceOut3$gam)
+
+
+#A few visuals
+vis.gam(modIceOut3, view=c("nDaysMinAboveZero_FebMar","cumSnow_FebMar"), plot.type="contour", color="cm", type="response")
+vis.gam(modIceOut3, view=c("nDaysMinAboveZero_FebMar","cumSnow_FebMar"), theta= 120, ticktype="detailed", type="response") #Adjust theta to get a different view
+vis.gam(modIceOut3, view=c("nDaysMinAboveZero_FebMar","cumSnow_FebMar"),
+        theta= 45, type="response",
+        ticktype="detailed",
+        color="cm",
+        zlab="\nIce Out DOY (Julian day)",
+        xlab="\n#/days min daily temperature > 0°C Feb-Mar",
+        ylab="\nCumulative snowfall Feb-Mar") #Adjust theta to get a different view
+
+
+draw(modIceOut3, residuals = TRUE)
+#Partial plots of estimated smooth functions with partial residuals
+
+### IceInDayofYear~ nDaysMinAboveZero_FebMar + cumSnow_FebMarApr
+### Last model contains only Nov + Dec since individually Sep and Oct were not statistically significantly. 
+modIceOut4 <- gam(IceOutDayofYear ~  s(nDaysMinAboveZero_FebMar) + s(cumSnow_FebMarApr),
+                 family=Gamma(link="log"),
+                 data = MohonkIceWeather,
+                 # correlation = corCAR1(form = ~ Year),
+                 method = "REML")
+summary(modIceOut4)
+# modIceOut4_S<-summary(modIceOut4$gam)
+# modIceOut4_S
+#Fit improves if you include cumulative snowfall through April 
+
+draw(modIceOut4, residuals = TRUE)
+#Partial plots of estimated smooth functions with partial residuals
+
+### IceInDayofYear~ cumMeanDailyT_Feb + cumMeanDailyT_Mar + cumMeanDailyT_Apr + cumSnow_FebMarApr
+### Last model contains only Nov + Dec since individually Sep and Oct were not statistically significantly. 
+modIceOut5 <- gam(IceOutDayofYear ~  s(cumMeanDailyT_Feb) + s(cumMeanDailyT_Mar) + s(cumMeanDailyT_Apr) + s(cumSnow_FebMarApr),
+                  family=Gamma(link="log"),
+                  data = MohonkIceWeather,
+                  # correlation = corCAR1(form = ~ Year),
+                  method = "REML")
+summary(modIceOut5)
+#Looks like the best model fit yet! cumMeanDailyT_Apr marginally significant. 
+
+draw(modIceOut5, residuals = TRUE)
+#Partial plots of estimated smooth functions with partial residuals
+
+### IceInDayofYear~ cumMeanDailyT_Feb + cumMeanDailyT_Mar +  cumSnow_FebMarApr
+### Last model contains only Nov + Dec since individually Sep and Oct were not statistically significantly. 
+modIceOut6 <- gam(IceOutDayofYear ~  s(cumMeanDailyT_Feb) + s(cumMeanDailyT_Mar) + s(cumSnow_FebMarApr),
+                  family=Gamma(link="log"),
+                  data = MohonkIceWeather,
+                  # correlation = corCAR1(form = ~ Year),
+                  method = "REML")
+summary(modIceOut6)
+#Shows that there is probably some benefit in keeping April in the model. 
+
+draw(modIceOut6, residuals = TRUE)
+#Partial plots of estimated smooth functions with partial residuals
+
+
+#How to compare the fits of multiple GAMs models? 
+#Would be worth digging into more but found this as a solution:
+#https://rdrr.io/cran/itsadug/man/compareML.html
+#From the documentation: "This method is preferred over other functions such as AIC for models that include an AR1 model or random effects (especially nonlinear random smooths using bs='fs'). CompareML also reports the AIC difference, but that value should be treated with care."
+
+compareML(modIceOut5, modIceOut6) #ModIceOut6 preferred
+compareML(modIceOut2, modIceOut3) #ModIceOut2 preferred
+compareML(modIceOut2, modIceOut4) #ModIceOut2 preferred
+compareML(modIceOut1, modIceOut2) #ModIceOut2 preferred
+compareML(modIceOut4, modIceOut6) #ModIceOut2 preferred
+compareML(modIceOut3, modIceOut6) # Similar performance-- could pick based on %Dev explained?
+compareML(modIceOut2, modIceOut6) # Similar performance-- could pick based on %Dev explained?
+compareML(modIceOut1, modIceOut6) # Similar performance-- could pick based on %Dev explained?
+
+# Model 6 compared to Model 2 has lower AIC and %dev explained is 75%
+# Model 2 has a %dev explained of 73.4% and is more parsimonious, so I would lean toward using that instead. We can make the final call together, and also report all of them in a supplement. 
+
+## Look at model diagnostics
+appraise(modIceOut2)
+appraise(modIceOut6)
+
+
+## Look at the predictions a few different ways
+visreg::visreg(modIceOut2, "cumMeanDailyT_FebMar", "cumSnow_FebMar", gg=TRUE, ylab="Ice out DOY")
+#Not entirely sure what the values on top mean, and it looks like not all the values are plotted?
+
+mgcv::vis.gam(modIceOut2, view=c("cumMeanDailyT_FebMar","cumSnow_FebMar"),
+        plot.type="contour", color="cm", type="response")
+
+visreg::visreg2d(modIceOut2, xvar='cumMeanDailyT_FebMar', yvar='cumSnow_FebMar', scale='response')
+
+vis.gam(modIceOut2, view=c("cumMeanDailyT_FebMar","cumSnow_FebMar"),
+        theta= 120, type="response",
+        ticktype="detailed",
+        color="cm",
+        zlab="\nIce Out DOY (Julian day)",
+        xlab="\nCumulative air temp Feb-Mar °C",
+        ylab="\nCumulative snowfall Feb-Mar") #Adjust theta to get a different view
+
+
+
+# Fitting GAMs for iceDuration_days -------------------------------------------
+
+
+#Distribution of y
+hist(MohonkIceWeather$LengthOfIceCover_days)
+
+### I added Family Gamma here for how errors should respond
+modIceDuration0 <- gam(LengthOfIceCover_days ~ s(Year),
+                  family=Gamma(link="log"),
+                  data = MohonkIceWeather,
+                  correlation = corCAR1(form = ~ Year),
+                  method = "REML")
+summary(modIceDuration0)
+## summary object
+# modIceDuration0_S <- summary(modIceDuration0$gam)
+# modIceDuration0_S #Gives you the P values, degrees of freedom...
+
+#PLOT Autocorrelation function of residuals from the additive model with AR(1) errors
+ACF <- acf(resid(modIceDuration0, type = "response"), plot = FALSE)
+ACF <- setNames(data.frame(unclass(ACF)[c("acf", "lag")]), c("ACF","Lag"))
+ggplot(ACF, aes(x = Lag, y = ACF)) +
+  geom_hline(aes(yintercept = 0)) +
+  geom_segment(mapping = aes(xend = Lag, yend = 0))
+#Does this suggest that an AR(1) model isn't necessary? 
+
+
+###Since we're concerned with the response, include "response" in type of predict()
+IceDurationPred <- with(MohonkIce, data.frame(Year = seq(min(Year, na.rm=TRUE),
+                                                    max(Year, na.rm=TRUE),
+                                                    length.out = 200)))
+IceDurationPred <- cbind(IceDurationPred, data.frame(predict(modIceDuration0, IceDurationPred,
+                                                   type="response",
+                                                   se.fit = TRUE)))
+### this calculates on the link scale (i.e., log)
+IceDurationPred <- transform(IceDurationPred, upper = fit + (2 * se.fit),
+                        lower = fit - (2 * se.fit))
+
+
+# Plots periods of change
+#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
+Term <- "Year"
+m1.d <- Deriv(modIceDuration0)
+
+m1.dci <- confint(m1.d, term = "Year")
+m1.dsig <- signifD(IceDurationPred$fit,
+                   d = m1.d[[Term]]$deriv,
+                   m1.dci[[Term]]$upper,
+                   m1.dci[[Term]]$lower)
 
 ylim <- with(IceDurationPred, range(upper, lower, fit))
 ylab <- 'Ice duration (days)'
@@ -496,52 +800,100 @@ plot(fit ~ Year, data = IceDurationPred, type = "n", ylab = ylab, ylim = ylim)
 lines(fit ~ Year, data = IceDurationPred)
 lines(upper ~ Year, data = IceDurationPred, lty = "dashed")
 lines(lower ~ Year, data = IceDurationPred, lty = "dashed")
-lines(unlist(m2.dsig$incr) ~ Year, data = IceDurationPred, col = "blue", lwd = 3)
-lines(unlist(m2.dsig$decr) ~ Year, data = IceDurationPred, col = "red", lwd = 3)
-#Ice duration is getting shorter, with no periods of acceleration
+lines(unlist(m1.dsig$incr) ~ Year, data = IceDurationPred, col = "blue", lwd = 3)
+lines(unlist(m1.dsig$decr) ~ Year, data = IceDurationPred, col = "red", lwd = 3)
+#No significant change in IceOut DOY, which we already knew from the sens slopes 
 
-#But another way to visualize it is there would be a significant period of change if the error bar around
 #the first derivative didn't overlap the horizontal black line.
-plot.Deriv(m2.d)
+plot.Deriv(m1.d)
 
-#Plot Ice duration vs. Year pretty
+#Plot Ice off DOY vs. year pretty
 ggplot(IceDurationPred,aes(x=Year,y=fit))+
-  geom_point(data=MohonkIce,
+  geom_point(data=MohonkIceWeather,
              mapping=aes(x=Year, y=LengthOfIceCover_days), size=2.5, alpha=0.7) +
   geom_line(size=1)+
   geom_ribbon(aes(ymin = (lower), ymax = (upper), x = Year), alpha = 0.5, inherit.aes = FALSE) +
-  labs(x="Year",y="Ice duration (days)")+
+  labs(x="Year",y="Ice Duration (days)")+
   coord_cartesian(xlim=c(1930,2020))+
   scale_x_continuous(breaks=seq(1930, 2020, 15))
+## BUT the fit is poor. Can we add in additional predictors to improve the model fit? 
 
 
-# Trends in the residuals? ------------------------------------------------
-##Ice duration
-lm1<-lm(LengthOfIceCover_days~Year, MohonkIce)
-iceDurationResiduals<-lm1$model 
-iceDurationResiduals <- iceDurationResiduals %>%
-  mutate(residuals=lm1$residuals)
-iceDurationResiduals %>%
-  ggplot(aes(Year,residuals))+geom_point()
 
-##Ice on
-lm2<-lm(IceInDayofYear_fed~Year, MohonkIce)
-iceOnResiduals<-lm2$model 
-iceOnResiduals <- iceOnResiduals %>%
-  mutate(residuals=lm2$residuals)
-iceOnResiduals %>%
-  ggplot(aes(Year,residuals))+geom_point()
+### IceOutDayofYear~cumMeanDailyT_FebMarApr+cumSnow_FebMarApr
+modIceDuration1 <- gam(LengthOfIceCover_days ~  s(IceOutDayofYear) ,
+                  family=Gamma(link="log"),
+                  data = MohonkIceWeather,
+                  # correlation = corCAR1(form = ~ Year),
+                  method = "REML")
+summary(modIceDuration1)
+# summary(modIceDuration1$gam)
+#Fit improves substantially over null model
+
+draw(modIceDuration1, residuals = TRUE)
+#Partial plots of estimated smooth functions with partial residuals
+
+### IceOutDayofYear~cumMeanDailyT_FebMar+cumSnow_FebMar (same as 1, but exclude April)
+modIceDuration2 <- gam(LengthOfIceCover_days ~ s(IceInDayofYear_fed),
+                  family=Gamma(link="log"),
+                  data = MohonkIceWeather,
+                  # correlation = corCAR1(form = ~ Year),
+                  method = "REML")
+summary(modIceDuration2)
+# summary(modIceDuration2$gam)
+# Fit is a bit better than modIceDuration2, in terms of deviance explained
+
+draw(modIceDuration2, residuals = TRUE)
+#Partial plots of estimated smooth functions with partial residuals
 
 
-##Ice off
-lm3<-lm(IceOutDayofYear_fed~Year, MohonkIce)
-iceOffResiduals<-lm3$model 
-iceOffResiduals <- iceOffResiduals %>%
-  mutate(residuals=lm3$residuals)
-iceOffResiduals %>%
-  ggplot(aes(Year,residuals))+geom_point()
-lm3.b<-lm(residuals~Year,iceOffResiduals)
-summary(lm3.b)
+### IceOutDayofYear ~ nDaysMinAboveZero_FebMar + cumSnow_FebMar
+modIceDuration3 <- gam(LengthOfIceCover_days ~  s(IceInDayofYear_fed) + s(IceOutDayofYear),
+                  family=Gamma(link="log"),
+                  data = MohonkIceWeather,
+                  # correlation = corCAR1(form = ~ Year),
+                  method = "REML")
+summary(modIceDuration3)
+# summary(modIceDuration3$gam)
+# Wow don't know if I've ever gotten a model this close to perfect HA!
+
+draw(modIceDuration3, residuals = TRUE)
+#Partial plots of estimated smooth functions with partial residuals
+
+#How to compare the fits of multiple GAMs models? 
+#Would be worth digging into more but found this as a solution:
+#https://rdrr.io/cran/itsadug/man/compareML.html
+#From the documentation: "This method is preferred over other functions such as AIC for models that include an AR1 model or random effects (especially nonlinear random smooths using bs='fs'). CompareML also reports the AIC difference, but that value should be treated with care."
+
+compareML(modIceDuration1, modIceDuration2) #modIceDuration2 preferred
+compareML(modIceDuration2, modIceDuration3) #modIceDuration3 preferred
+
+
+## Look at model diagnostics
+appraise(modIceDuration3) # Yikes but residuals vs. linear predictors plot doesn't look great. 
+appraise(modIceDuration2) # Slightly better than modIceDuration3
+appraise(modIceDuration1) # Slightly better than modIceDuration3
+
+
+
+## Look at the predictions a few different ways
+visreg::visreg(modIceDuration3, "IceInDayofYear_fed", "IceOutDayofYear", gg=TRUE, ylab="Ice Duration")
+#Not entirely sure what the values on top mean, and it looks like not all the values are plotted?
+
+mgcv::vis.gam(modIceDuration3, view=c("IceInDayofYear_fed","IceOutDayofYear"),
+              plot.type="contour", color="cm", type="response")
+
+visreg::visreg2d(modIceDuration3, xvar='IceInDayofYear_fed', yvar='IceOutDayofYear', scale='response')
+
+vis.gam(modIceDuration3, view=c("IceInDayofYear_fed","IceOutDayofYear"),
+        theta= 120, type="response",
+        ticktype="detailed",
+        color="cm",
+        zlab="Ice Duration (days)",
+        xlab="\nIce Out (Julian DOY)",
+        ylab="\nIce In (days since Oct 1)") #Adjust theta to get a different view
+
+
 
 
 # 10 year rolling window of C.V.? -----------------------------------------
