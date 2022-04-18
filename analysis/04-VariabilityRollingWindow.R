@@ -7,9 +7,11 @@ source('00_main.R')
 
 #Libraries
 if (!require(zoo)) {install.packages("zoo")}
+if(!require(patchwork)){install.packages("patchwork")}
 
 #Try using zoo package
 library(zoo)
+library(patchwork) #laying out multipanel plots with the same size
 
 
 
@@ -173,53 +175,79 @@ ggplot(df_acf, aes(x=lag, y=acf_vals)) +
 
 #Summarize which lags are signficant
 df_acf_summary<-df_acf%>%filter(significant_acf=="*")%>%ungroup()%>%group_by(lag)%>%summarize(common_lag=n())
-
+  df_acf%>%filter(significant_acf=="*")%>%print(n=Inf)
+  df_acf%>%filter(significant_acf=="*")%>%filter(acf_vals<0.98)%>%group_by(RollingWindow_years)%>%slice(which.max(abs(acf_vals)))
 ggplot(data=df_acf_summary,aes(x=lag,y=common_lag))+geom_point()
 
 
 
 #Is the variability increasing?#####
 #This tests the slope of each time series and determines significance correcting for 27 comparisons
-iceDuration_variability_summary<-iceDuration_variability_all%>%group_by(RollingWindow_years)%>%summarize(sensSlope_pval=mean(sensSlope_pval),sensSlope_slope=mean(sensSlope_slope))%>%mutate(significance=ifelse(sensSlope_pval<0.05/27,"*","NS"))%>%print(n=Inf)
+iceDuration_variability_summary<-iceDuration_variability_all%>%group_by(RollingWindow_years)%>%summarize(sensSlope_pval=mean(sensSlope_pval),sensSlope_slope=mean(sensSlope_slope),sensSlope_intercept=mean(sensSlope_intercept),sensSlope_z_stat=mean(sensSlope_z_stat),sensSlope_n=mean(sensSlope_n))%>%mutate(significance=ifelse(sensSlope_pval<0.05/27,"*","NS"))%>%print(n=Inf)
 #Is the slope different depending on the rolling window
 ggplot(data=iceDuration_variability_summary,aes(y=sensSlope_slope,x=RollingWindow_years))+geom_point()
 
 
 #Merge for a single plot by selecting a specifc rolling window and merging with original data
 #Calculate Bollinger Bands by doing the moving average +/- moving sd for that window
-window_select<-4 #set window here
+window_select<-10 #set window here
 Merge_singleRollingWindow<-left_join(tibble(iceDuration_days_withNAs),iceDuration_variability_all%>%filter(RollingWindow_years==window_select)%>%mutate(Year=trunc(year_median)),by="Year")%>%mutate(max_sd=LengthOfIceCover_days_mean+LengthOfIceCover_days_sd,min_sd=LengthOfIceCover_days_mean-LengthOfIceCover_days_sd)
 
 #Graph a single plot with rolling window SDs as shaded region
 #These are bollinger band in econ/finance: https://www.investopedia.com/terms/b/bollingerbands.asp
-ggplot(data=Merge_singleRollingWindow)+
-  geom_ribbon(aes(x=Year,ymin=min_sd,ymax=max_sd),color=rgb(186,182,170,max=255),fill="sky blue")+
-  geom_line(aes(x=Year,y=LengthOfIceCover_days_mean),color=rgb(186,182,170,max=255),size=1)+ #Moving average
+gg.duration<-ggplot(data=Merge_singleRollingWindow)+
+  geom_ribbon(aes(x=Year,ymin=min_sd,ymax=max_sd),color="light grey",fill="sky blue")+
+  geom_line(aes(x=Year,y=LengthOfIceCover_days_mean),color="light grey",size=0.5)+ #Moving average
   #geom_errorbar(aes(x=Year,ymin=min_sd,ymax=max_sd),size=1)+
-  geom_point(aes(x=Year,y=LengthOfIceCover_days),shape=21,fill=rgb(96,98,99,max=255),size=2)+ #actual days of ice cover
+  geom_point(aes(x=Year,y=LengthOfIceCover_days),shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+ #actual days of ice cover
   ylab("Ice duration (days)")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 #*Rolling sd vs. year####
-ggplot(data=Merge_singleRollingWindow)+
-  geom_line(aes(x=year_median,y=sensSlope_fit),color=rgb(186,182,170,max=255),size=1)+
-  geom_point(aes(x=year_median,y=LengthOfIceCover_days_sd),shape=21,fill=rgb(96,98,99,max=255),size=2)+
+gg.rollingwindow<-ggplot(data=Merge_singleRollingWindow)+
+  geom_line(aes(x=year_median,y=sensSlope_fit),color="light grey",size=0.5)+
+  geom_point(aes(x=year_median,y=LengthOfIceCover_days_sd),shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+
   xlab(bquote(Year))+
   ylab("Ice duration (s.d.)")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   
 #*Rolling sd residuals from sens slopes vs. year####
-ggplot(data=Merge_singleRollingWindow,
+gg.residuals<-ggplot(data=Merge_singleRollingWindow,
        aes(x=year_median,y=sensSlope_residuals))+
-  geom_smooth(method="gam", color="black", size=0.5,color=rgb(186,182,170,max=255),fill="sky blue")+
-  geom_point(shape=21,fill=rgb(96,98,99,max=255),size=2)+
+  geom_smooth(method="gam", size=0.5,color=rgb(186,182,170,max=255),fill="sky blue")+
+  geom_point(shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+
+  geom_errorbarh(aes(xmin=1953,xmax=1953+10,y=8))+
   xlab(bquote(Year))+
   ylab("Ice duration (s.d.)")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-  
+ 
+#goes left to right
+#panel letter size
+panel.size<-10
+List<-list(gg.duration+
+             #theme(axis.title.y=element_text(size=10),axis.text.y = element_text(angle = 90,hjust=0.5),axis.title.x=element_blank(),axis.text.x=element_blank(),plot.title = element_text(size = panel.size, face = "bold"))+ #Rotate and center the x axis labels
+             #scale_y_continuous(limits=c(10,10000),trans="log10",breaks=c(10,100,1000,10000),labels=trans_format("log10",math_format(10^.x)))+
+             #geom_text(data=panelLetter.data, aes(x=xpos,y=ypos,hjust=hjustvar,vjust=vjustvar,label="d",fontface="bold"))+
+             ggtitle("(a)"),
+           gg.rollingwindow+
+             #theme(axis.title.y=element_text(size=10),axis.text.y = element_text(angle = 90,hjust=0.5),axis.title.x=element_blank(),axis.text.x=element_blank(),plot.title = element_text(size = panel.size, face = "bold"))+ #Rotate and center the x axis labels
+             #scale_y_continuous(limits=c(1,10000),trans="log10",breaks=trans_breaks("log10", function(x) 10^x),labels=trans_format("log10",math_format(10^.x)))+ 
+             ggtitle("(b)"),
+           gg.residuals+
+             #theme(axis.title.y=element_text(size=10),axis.text.y = element_text(angle = 90,hjust=0.5),axis.title.x=element_text(size=10),plot.title = element_text(size = panel.size, face = "bold"))+ #Rotate and center the x axis labels
+             #scale_y_continuous(breaks=c(3,6,9))+ 
+             #geom_text(data=panelLetter.data, aes(x=xpos,y=ypos,hjust=hjustvar,vjust=vjustvar,label="b",fontface="bold"))+
+             ggtitle("(c)")
+           )
+
+#Plot them using patchwork####
+(gg.3panel.patchwork.3x1<-wrap_plots(List,ncol = 3,nrow = 1)&theme(plot.margin = unit(c(3,3,3,3),"pt")))
+#Could do a 3x3 with width 6, height = 5
+ggsave(paste("figures/mohonkWinterLimno-FigureX-RollingWindow",window_select,"Years.jpg",sep=""), plot=gg.3panel.patchwork.3x1, width=6, height=2,units="in", dpi=300)
+
 
 #STOPPED HERE######
 #Questions remain:
