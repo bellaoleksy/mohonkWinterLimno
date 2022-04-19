@@ -248,6 +248,51 @@ List<-list(gg.duration+
 #Could do a 3x3 with width 6, height = 5
 ggsave(paste("figures/mohonkWinterLimno-FigureX-RollingWindow",window_select,"Years.jpg",sep=""), plot=gg.3panel.patchwork.3x1, width=6, height=2,units="in", dpi=300)
 
+#Variance contribution calculation####
+#Create dataframe all rolling windows####
+datalist.variance=list()  #initialize empty list for storing a bunch of ice duration variabilities of different lengths
+
+  
+#*Loop through all the years####
+  #debug: year_i<-71
+for(year_i in 1:length(iceDuration_days_withNAs$Year)){
+  
+  #find the overall variance
+  overall_var<-var(iceDuration_days_withNAs$LengthOfIceCover_days,na.rm=TRUE)
+  #drop a year
+  dropped_year<-tibble(iceDuration_days_withNAs)%>%filter(Year!=iceDuration_days_withNAs$Year[year_i])
+  #calculate new variance - if the year had an NA value, then it should be the same
+  dropped_var<-var(dropped_year$LengthOfIceCover_days,na.rm=TRUE)
+  #Calculate teh residual for each year
+  residual<-iceDuration_days_withNAs$LengthOfIceCover_days[year_i]-mean(iceDuration_days_withNAs$LengthOfIceCover_days,na.rm=TRUE)
+  residual_squared<-residual^2
+  
+  #Calculate some fits
+  #Figure out delta var (+ is increase, - is decrease)
+  if(is.na(iceDuration_days_withNAs$LengthOfIceCover_days[year_i])){delta_var<-NA}else{delta_var<-overall_var-dropped_var}
+  #Figure out % change
+  percent_change_var<-100*(delta_var/overall_var)
+  
+  #Export each year to the datalist  
+  #Store the temporary data frame in a list
+  datalist.variance[[year_i]]<-tibble(year=iceDuration_days_withNAs$Year[year_i],overall_var=overall_var,dropped_var=dropped_var,delta_var=delta_var,percent_change_var=percent_change_var,residual=residual,residual_squared=residual_squared)  
+  
+}   
+
+#*compile them all in one data frame####    
+iceDuration_variability_metric<-do.call(bind_rows,datalist.variance) 
+ggplot(data=iceDuration_variability_metric,aes(x=year,y=delta_var))+geom_point()
+ggplot(data=iceDuration_variability_metric,aes(x=year,y=residual_squared))+geom_point()
+
+#See the relationship between teleconnections and residuals
+NAO_SMA<-tibble(
+          year=as.vector(rollapply(NAO_summary%>%dplyr::select(water_year), width =window_select, FUN = function(x, na.rm = TRUE)  {median(x, na.rm = na.rm)})),
+          NAO_SMA=as.vector(rollapply(NAO_summary%>%dplyr::select(NAO_index_winter), width =window_select, FUN = function(x, na.rm = TRUE)  {median(x, na.rm = na.rm)})))
+ggplot(data=NAO_summary,aes(x=water_year,y=NAO_index_winter))+geom_point()+
+  geom_line(data=NAO_SMA,aes(x=year,y=NAO_SMA))+
+  #geom_point(data=Merge_singleRollingWindow,
+             #aes(x=year_median,y=sensSlope_residuals*20),color="blue")+
+  geom_point(data=iceDuration_variability_metric,aes(x=year,y=residual_squared/20),color="red")
 
 #STOPPED HERE######
 #Questions remain:
