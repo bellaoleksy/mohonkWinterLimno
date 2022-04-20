@@ -174,7 +174,7 @@ ggplot(df_acf, aes(x=lag, y=acf_vals)) +
   facet_wrap(~RollingWindow_years)
 
 #Summarize which lags are signficant
-df_acf_summary<-df_acf%>%filter(significant_acf=="*")%>%ungroup()%>%group_by(lag)%>%summarize(common_lag=n())
+df_acf_summary<-df_acf%>%filter(significant_acf=="*")%>%ungroup()%>%group_by(lag)%>%dplyr::summarize(common_lag=n())
   df_acf%>%filter(significant_acf=="*")%>%print(n=Inf)
   df_acf%>%filter(significant_acf=="*")%>%filter(acf_vals<0.98)%>%group_by(RollingWindow_years)%>%slice(which.max(abs(acf_vals)))
 ggplot(data=df_acf_summary,aes(x=lag,y=common_lag))+geom_point()
@@ -183,7 +183,7 @@ ggplot(data=df_acf_summary,aes(x=lag,y=common_lag))+geom_point()
 
 #Is the variability increasing?#####
 #This tests the slope of each time series and determines significance correcting for 27 comparisons
-iceDuration_variability_summary<-iceDuration_variability_all%>%group_by(RollingWindow_years)%>%summarize(sensSlope_pval=mean(sensSlope_pval),sensSlope_slope=mean(sensSlope_slope),sensSlope_intercept=mean(sensSlope_intercept),sensSlope_z_stat=mean(sensSlope_z_stat),sensSlope_n=mean(sensSlope_n))%>%mutate(significance=ifelse(sensSlope_pval<0.05/27,"*","NS"))%>%print(n=Inf)
+iceDuration_variability_summary<-iceDuration_variability_all%>%group_by(RollingWindow_years)%>%dplyr::summarize(sensSlope_pval=mean(sensSlope_pval),sensSlope_slope=mean(sensSlope_slope),sensSlope_intercept=mean(sensSlope_intercept),sensSlope_z_stat=mean(sensSlope_z_stat),sensSlope_n=mean(sensSlope_n))%>%mutate(significance=ifelse(sensSlope_pval<0.05/27,"*","NS"))%>%print(n=Inf)
 #Is the slope different depending on the rolling window
 ggplot(data=iceDuration_variability_summary,aes(y=sensSlope_slope,x=RollingWindow_years))+geom_point()
 
