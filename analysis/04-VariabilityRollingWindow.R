@@ -8,11 +8,12 @@ source('00_main.R')
 #Libraries
 if (!require(zoo)) {install.packages("zoo")}
 if(!require(patchwork)){install.packages("patchwork")}
+if(!require(forecast)){install.packages("forecast")}
 
 #Try using zoo package
 library(zoo)
 library(patchwork) #laying out multipanel plots with the same size
-
+library(forecast)
 
 
 #Rolling CV using zoo package####
@@ -176,7 +177,8 @@ ggplot(df_acf, aes(x=lag, y=acf_vals)) +
 #Summarize which lags are signficant
 df_acf_summary<-df_acf%>%filter(significant_acf=="*")%>%ungroup()%>%group_by(lag)%>%dplyr::summarize(common_lag=n())
   df_acf%>%filter(significant_acf=="*")%>%print(n=Inf)
-  df_acf%>%filter(significant_acf=="*")%>%filter(acf_vals<0.98)%>%group_by(RollingWindow_years)%>%slice(which.max(abs(acf_vals)))
+  #This finds the largest correlation for bigger than 6 year lag
+  df_acf%>%filter(significant_acf=="*")%>%filter(lag>6)%>%group_by(RollingWindow_years)%>%slice(which.max(abs(acf_vals)))%>%print(n=Inf)
 ggplot(data=df_acf_summary,aes(x=lag,y=common_lag))+geom_point()
 
 
@@ -190,8 +192,14 @@ ggplot(data=iceDuration_variability_summary,aes(y=sensSlope_slope,x=RollingWindo
 
 #Merge for a single plot by selecting a specifc rolling window and merging with original data
 #Calculate Bollinger Bands by doing the moving average +/- moving sd for that window
-window_select<-10 #set window here
+window_select<-4 #set window here
 Merge_singleRollingWindow<-left_join(tibble(iceDuration_days_withNAs),iceDuration_variability_all%>%filter(RollingWindow_years==window_select)%>%mutate(Year=trunc(year_median)),by="Year")%>%mutate(max_sd=LengthOfIceCover_days_mean+LengthOfIceCover_days_sd,min_sd=LengthOfIceCover_days_mean-LengthOfIceCover_days_sd)
+
+  #pacf
+  pacf(Merge_singleRollingWindow$sensSlope_residuals,na.action = na.pass)
+
+#time series of the residuals
+auto.arima(Merge_singleRollingWindow$sensSlope_residuals)
 
 #Graph a single plot with rolling window SDs as shaded region
 #These are bollinger band in econ/finance: https://www.investopedia.com/terms/b/bollingerbands.asp
@@ -252,7 +260,7 @@ ggsave(paste("figures/mohonkWinterLimno-FigureX-RollingWindow",window_select,"Ye
 #Create dataframe all rolling windows####
 datalist.variance=list()  #initialize empty list for storing a bunch of ice duration variabilities of different lengths
 
-  
+#Calculate a metric that is the residual^2 for each year, relative to the mean std####  
 #*Loop through all the years####
   #debug: year_i<-71
 for(year_i in 1:length(iceDuration_days_withNAs$Year)){
@@ -285,14 +293,22 @@ ggplot(data=iceDuration_variability_metric,aes(x=year,y=delta_var))+geom_point()
 ggplot(data=iceDuration_variability_metric,aes(x=year,y=residual_squared))+geom_point()
 
 #See the relationship between teleconnections and residuals
+#Find the NAO simple moving average at the same scale as the window above
 NAO_SMA<-tibble(
           year=as.vector(rollapply(NAO_summary%>%dplyr::select(water_year), width =window_select, FUN = function(x, na.rm = TRUE)  {median(x, na.rm = na.rm)})),
-          NAO_SMA=as.vector(rollapply(NAO_summary%>%dplyr::select(NAO_index_winter), width =window_select, FUN = function(x, na.rm = TRUE)  {median(x, na.rm = na.rm)})))
+          NAO_SMA=as.vector(rollapply(NAO_summary%>%dplyr::select(NAO_index_winter), width =window_select, FUN = function(x, na.rm = TRUE)  {mean(x, na.rm = na.rm)})))
+#Find the NAO simple moving average at the same scale as the window above
+ENSO_SMA<-tibble(
+  year=as.vector(rollapply(ENSO_summary%>%dplyr::select(water_year), width =window_select, FUN = function(x, na.rm = TRUE)  {median(x, na.rm = na.rm)})),
+  ENSO_SMA=as.vector(rollapply(ENSO_summary%>%dplyr::select(ENSO_index_winter), width =window_select, FUN = function(x, na.rm = TRUE)  {mean(x, na.rm = na.rm)})))
+
+#Plot the residuals plus the points and line for NAO and ENSO####
 ggplot(data=NAO_summary,aes(x=water_year,y=NAO_index_winter))+geom_point()+
   geom_line(data=NAO_SMA,aes(x=year,y=NAO_SMA))+
-  #geom_point(data=Merge_singleRollingWindow,
-             #aes(x=year_median,y=sensSlope_residuals*20),color="blue")+
-  geom_point(data=iceDuration_variability_metric,aes(x=year,y=residual_squared/20),color="red")
+  geom_line(data=ENSO_SMA,aes(x=year,y=ENSO_SMA*100),color="red")+
+  geom_point(data=ENSO_summary,aes(x=water_year,y=ENSO_index_winter*100),color="red")+
+  #geom_point(data=Merge_singleRollingWindow,aes(x=Year,y=sensSlope_residuals*10),color="blue")+
+  geom_smooth(data=Merge_singleRollingWindow,aes(x=Year,y=sensSlope_residuals*10),method="gam")
 
 #STOPPED HERE######
 #Questions remain:
