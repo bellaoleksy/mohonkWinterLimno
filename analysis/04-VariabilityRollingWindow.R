@@ -310,7 +310,50 @@ ggplot(data=NAO_summary,aes(x=water_year,y=NAO_index_winter))+geom_point()+
   #geom_point(data=Merge_singleRollingWindow,aes(x=Year,y=sensSlope_residuals*10),color="blue")+
   geom_smooth(data=Merge_singleRollingWindow,aes(x=Year,y=sensSlope_residuals*10),method="gam")
 
+
+
+#Sens slope for each of the three metrics####
+sensSlope<-MTCC.sensSlope(iceDuration_temporary$year_median,iceDuration_temporary$LengthOfIceCover_days_sd)
+
+#*Create a new data frame with extra columns####
+MohonkIce_resids<-MohonkIce
+
+#*Sens slope for each metric####
+duration.sensSlope<-MTCC.sensSlope(x=MohonkIce_resids$Year,y=MohonkIce_resids$LengthOfIceCover_days)
+iceIn.sensSlope<-MTCC.sensSlope(x=MohonkIce_resids$Year,y=MohonkIce_resids$IceInDayofYear_fed)
+iceOut.sensSlope<-MTCC.sensSlope(x=MohonkIce_resids$Year,y=MohonkIce_resids$IceOutDayofYear_fed)
+
+#*Calculate residuals from the mean
+duration.resids<-MohonkIce_resids$LengthOfIceCover_days-mean(MohonkIce_resids$LengthOfIceCover_days,na.rm=TRUE)
+iceIn.resids<-MohonkIce_resids$IceInDayofYear_fed-mean(MohonkIce_resids$IceInDayofYear_fed,na.rm=TRUE)
+iceOut.resids<-MohonkIce_resids$IceOutDayofYear_fed-mean(MohonkIce_resids$IceOutDayofYear_fed,na.rm=TRUE)
+
+#Bind the residuals from the sens slopes on as extra columns####
+MohonkIce_resids<-bind_cols(tibble(MohonkIce_resids),
+          tibble(duration_sens_resids=duration.sensSlope$residuals),
+          tibble(iceIn_sens_resids=iceIn.sensSlope$residuals),
+          tibble(iceOut_sens_resids=iceOut.sensSlope$residuals),
+          tibble(duration_resids=duration.resids),
+          tibble(iceIn_resids=iceIn.resids),
+          tibble(iceOut_resids=iceOut.resids))
+
+#*Visualize the sens slope residuals from all three metrics####
+ggplot(data=MohonkIce_resids,aes(x=Year,y=iceIn_sens_resids))+geom_point()+
+  geom_point(aes(y=iceOut_sens_resids),col="red")+
+  geom_point(aes(y=duration_sens_resids),col="blue")+
+  theme_bw()
+
+#*Visualize the residuals from the mean from all three metrics####
+ggplot(data=MohonkIce_resids,aes(x=Year,y=iceIn_resids))+geom_point()+
+  geom_point(aes(y=iceOut_resids),col="red")+
+  geom_point(aes(y=duration_resids),col="blue")+
+  theme_bw()
+
 #STOPPED HERE######
+#**GENERATE NAO and ENSO indices for certain months
+#**CORRELATE THE SEN SLOPE OR MEAN RESIDUALS WITH THOSE INDICES
+#**INCLUDE CLIMATE ANOMALY??
+
 #Questions remain:
   #periodicity in the residuals? Is it a residuals of the rolling window?
   #GARCH models in econ get at volatility: https://www.idrisstsafack.com/post/garch-models-with-r-programming-a-practical-example-with-tesla-stock
