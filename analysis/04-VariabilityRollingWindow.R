@@ -9,11 +9,13 @@ source('00_main.R')
 if (!require(zoo)) {install.packages("zoo")}
 if(!require(patchwork)){install.packages("patchwork")}
 if(!require(forecast)){install.packages("forecast")}
+if(!require(corrplot)){install.packages("corrplot")}
 
 #Try using zoo package
 library(zoo)
 library(patchwork) #laying out multipanel plots with the same size
 library(forecast)
+library(corrplot)
 
 
 #Rolling CV using zoo package####
@@ -348,6 +350,241 @@ ggplot(data=MohonkIce_resids,aes(x=Year,y=iceIn_resids))+geom_point()+
   geom_point(aes(y=iceOut_resids),col="red")+
   geom_point(aes(y=duration_resids),col="blue")+
   theme_bw()
+
+#Next steps. Figure out ENSO/NAO for fall and spring####
+  #Calculate fall,winter, Oct/Nov/Dec,Nov/Dec, Feb/Mar/Apr,Feb/Mar averages
+ENSO_reduced<-ENSO_summary%>%
+  dplyr::select(Year,water_year,ENSO_index_fall,ENSO_index_winter,ENSO_Oct,ENSO_Nov,ENSO_Dec,ENSO_Feb,ENSO_Mar,ENSO_Apr)%>%
+  mutate(ENSO_OND=(ENSO_Oct+ENSO_Nov+ENSO_Dec)/3,ENSO_ND=(ENSO_Nov+ENSO_Dec)/2,ENSO_FMA=(ENSO_Feb+ENSO_Mar+ENSO_Apr)/3,ENSO_FM=(ENSO_Feb+ENSO_Mar)/2)
+#NAO only has seasonal
+NAO_reduced<-NAO_summary%>%
+  dplyr::select(Year,water_year,NAO_index_fall,NAO_index_winter,NAO_index_spring)
+#Convert the daily values into monthly averages
+NAO_monthly<-NAO_daily%>%group_by(Year,Month)%>%summarize(NAO_index_monthly=mean(NAO_index))%>%
+  mutate(water_year=ifelse(Month>=10,Year,Year-1))%>%print(n=25)
+
+#Get out some needed months ONDFMA
+NAO_Oct<-NAO_monthly%>%ungroup()%>%filter(Month==10)%>%mutate(NAO_Oct=NAO_index_monthly)%>%dplyr::select(water_year,NAO_Oct)
+NAO_Nov<-NAO_monthly%>%ungroup()%>%filter(Month==11)%>%mutate(NAO_Nov=NAO_index_monthly)%>%dplyr::select(water_year,NAO_Nov)
+NAO_Dec<-NAO_monthly%>%ungroup()%>%filter(Month==12)%>%mutate(NAO_Dec=NAO_index_monthly)%>%dplyr::select(water_year,NAO_Dec)
+NAO_Feb<-NAO_monthly%>%ungroup()%>%filter(Month==2)%>%mutate(NAO_Feb=NAO_index_monthly)%>%dplyr::select(water_year,NAO_Feb)
+NAO_Mar<-NAO_monthly%>%ungroup()%>%filter(Month==3)%>%mutate(NAO_Mar=NAO_index_monthly)%>%dplyr::select(water_year,NAO_Mar)
+NAO_Apr<-NAO_monthly%>%ungroup()%>%filter(Month==4)%>%mutate(NAO_Apr=NAO_index_monthly)%>%dplyr::select(water_year,NAO_Apr)
+
+#merge all those months together
+NAO_Monthly_wide<-left_join(NAO_Oct,NAO_Nov,by="water_year")%>%
+  left_join(.,NAO_Dec,by="water_year")%>%
+  left_join(.,NAO_Feb,by="water_year")%>%
+  left_join(.,NAO_Mar,by="water_year")%>%
+  left_join(.,NAO_Apr,by="water_year")%>%
+  mutate(NAO_OND=(NAO_Oct+NAO_Nov+NAO_Nov)/3,NAO_ND=(NAO_Nov+NAO_Nov)/2,NAO_FMA=(NAO_Feb+NAO_Mar+NAO_Apr)/3,NAO_FM=(NAO_Feb+NAO_Mar)/2) #Create new multi-month indices 
+
+
+#Global climate anomaly
+ClimateAnom_Oct<-NOAA_anomaly_monthly%>%ungroup()%>%filter(Month==10)%>%mutate(Anomaly_Oct=GlobalTempanomaly_C,water_year=ifelse(Month>=10,Year,Year-1))%>%dplyr::select(water_year,Anomaly_Oct)
+ClimateAnom_Nov<-NOAA_anomaly_monthly%>%ungroup()%>%filter(Month==11)%>%mutate(Anomaly_Nov=GlobalTempanomaly_C,water_year=ifelse(Month>=10,Year,Year-1))%>%dplyr::select(water_year,Anomaly_Nov)
+ClimateAnom_Dec<-NOAA_anomaly_monthly%>%ungroup()%>%filter(Month==12)%>%mutate(Anomaly_Dec=GlobalTempanomaly_C,water_year=ifelse(Month>=10,Year,Year-1))%>%dplyr::select(water_year,Anomaly_Dec)
+ClimateAnom_Jan<-NOAA_anomaly_monthly%>%ungroup()%>%filter(Month==1)%>%mutate(Anomaly_Jan=GlobalTempanomaly_C,water_year=ifelse(Month>=10,Year,Year-1))%>%dplyr::select(water_year,Anomaly_Jan)
+ClimateAnom_Feb<-NOAA_anomaly_monthly%>%ungroup()%>%filter(Month==2)%>%mutate(Anomaly_Feb=GlobalTempanomaly_C,water_year=ifelse(Month>=10,Year,Year-1))%>%dplyr::select(water_year,Anomaly_Feb)
+ClimateAnom_Mar<-NOAA_anomaly_monthly%>%ungroup()%>%filter(Month==3)%>%mutate(Anomaly_Mar=GlobalTempanomaly_C,water_year=ifelse(Month>=10,Year,Year-1))%>%dplyr::select(water_year,Anomaly_Mar)
+ClimateAnom_Apr<-NOAA_anomaly_monthly%>%ungroup()%>%filter(Month==4)%>%mutate(Anomaly_Apr=GlobalTempanomaly_C,water_year=ifelse(Month>=10,Year,Year-1))%>%dplyr::select(water_year,Anomaly_Apr)
+
+#merge all those months together
+ClimateAnom_Monthly_wide<-left_join(ClimateAnom_Oct,ClimateAnom_Nov,by="water_year")%>%
+  left_join(.,ClimateAnom_Dec,by="water_year")%>%
+  left_join(.,ClimateAnom_Jan,by="water_year")%>%
+  left_join(.,ClimateAnom_Feb,by="water_year")%>%
+  left_join(.,ClimateAnom_Mar,by="water_year")%>%
+  left_join(.,ClimateAnom_Apr,by="water_year")%>%
+  mutate(Anomaly_OND=(Anomaly_Oct+Anomaly_Nov+Anomaly_Nov)/3,Anomaly_ND=(Anomaly_Nov+Anomaly_Nov)/2,Anomaly_FMA=(Anomaly_Feb+Anomaly_Mar+Anomaly_Apr)/3,Anomaly_FM=(Anomaly_Feb+Anomaly_Mar)/2) #Create new multi-month indices 
+
+###########BELLA NEEDS TO CHECK HERE TO MAKE SURE I AM DOING THE WATER YEAR STUFF CONSISTENTLY#####################
+#Merge with the seasonal data
+NAO_reduced2<-left_join(NAO_reduced,NAO_Monthly_wide,by="water_year")
+
+#Join the resids together with the ENSO and NAO results####
+MohonkIce_resids_tele<-left_join(MohonkIce_resids%>%mutate(water_year=Year-1),ENSO_reduced,by=c("water_year","Year"))%>%
+  left_join(.,NAO_reduced2,by=c("water_year","Year"))%>%
+  left_join(.,ClimateAnom_Monthly_wide,by=c("water_year"))
+
+#Visualize some of the relationships
+#Check Ice In residuals vs. fall teleconnections
+ggplot(data=MohonkIce_resids_tele,aes(x=NAO_ND,y=iceIn_sens_resids))+geom_point()+geom_smooth(method="lm")
+cor.test(MohonkIce_resids_tele$iceIn_sens_resids,MohonkIce_resids_tele$NAO_ND)
+  #For Ice In - look at ENSO_ND and NAO_ND in auto_arima
+#Check Ice out residuals vs. spring teleconnections
+ggplot(data=MohonkIce_resids_tele,aes(x=ENSO_FM,y=iceOut_sens_resids))+geom_point()+geom_smooth(method="lm")
+cor.test(MohonkIce_resids_tele$iceIn_sens_resids,MohonkIce_resids_tele$ENSO_Feb)
+#For Ice In - look at ENSO_FM, ENSO_Feb and NAO_Apr in auto_arima
+
+#Check duration residuals vs. spring teleconnections
+ggplot(data=MohonkIce_resids_tele,aes(x=NAO_Nov,y=duration_sens_resids))+geom_point()+geom_smooth(method="lm")
+cor.test(MohonkIce_resids_tele$duration_sens_resids,MohonkIce_resids_tele$NAO_Nov)
+#For Ice In - look at ENSO_FM, ENSO_Feb and NAO_Apr in auto_arima
+
+#Ice in Fit auto.arima with xreg as year####
+arima.IceIn<-auto.arima(MohonkIce_resids_tele$iceIn_sens_resids,
+#xreg=c(iceDuration_temporary$year_median),
+ xreg=cbind(MohonkIce_resids_tele$ENSO_ND,
+            MohonkIce_resids_tele$NAO_ND),
+seasonal=FALSE,allowdrift = FALSE,
+stationary=TRUE)
+
+arima.IceIn #print out model
+(1-pnorm(abs(arima.IceIn$coef)/sqrt(diag(arima.IceIn$var.coef))))*2 #P-values of coefficients
+
+#Biplot with two different indices and color as Ice In residuals
+ggplot(data=MohonkIce_resids_tele,aes(x=NAO_ND,y=ENSO_ND,fill=iceIn_sens_resids,size=iceIn_sens_resids))+geom_point(shape=21,color="black")+
+  scale_fill_gradientn(colours=c("blue","cyan","white", "yellow","red"))
+
+
+#Ice out Fit auto.arima with xreg as year####
+arima.IceOut<-auto.arima(MohonkIce_resids_tele$iceOut_sens_resids,
+           #xreg=c(iceDuration_temporary$year_median),
+           xreg=cbind(MohonkIce_resids_tele$ENSO_Apr,
+                      MohonkIce_resids_tele$NAO_Apr),
+           seasonal=FALSE,allowdrift = FALSE,
+           stationary=TRUE)
+arima.IceOut
+(1-pnorm(abs(arima.IceOut$coef)/sqrt(diag(arima.IceOut$var.coef))))*2
+
+
+#Ice out Fit auto.arima with xreg as year####
+arima.duration<-auto.arima(MohonkIce_resids_tele$duration_sens_resids,
+                         #xreg=c(iceDuration_temporary$year_median),
+                         xreg=cbind(
+                                    MohonkIce_resids_tele$NAO_Nov,
+                                    
+                                    
+                                    
+                                    ),
+                         seasonal=FALSE,allowdrift = FALSE,
+                         stationary=TRUE)
+arima.duration
+(1-pnorm(abs(arima.duration$coef)/sqrt(diag(arima.duration$var.coef))))*2
+
+#Biplot with two different indices and color as Ice In residuals
+ggplot(data=MohonkIce_resids_tele,aes(x=NAO_ND,y=ENSO_ND,fill=duration_sens_resids,size=duration_sens_resids))+geom_point(shape=21,color="black")+
+  scale_fill_gradientn(colours=rev(c("blue","cyan","white", "yellow","red")))
+
+
+
+#Examine all the pairwise correlations of each of the different plots with our climate metrics####
+#*Duration correlations####
+duration.correlation <- MohonkIce_resids_tele %>% 
+  select_if(is.numeric) %>%
+  gather(Column, Value, -duration_resids) %>%
+  group_by(Column) %>%
+  nest() %>%
+  mutate(Cor = map(data, ~cor.test(.x$Value, .x$duration_resids, method = "spearman"))) %>%
+  mutate(Estimate = round(map_dbl(Cor, "estimate"), 2), 
+         P_Value = map_dbl(Cor, "p.value"))%>% 
+  select(-data, -Cor)%>%
+  mutate(Significance = case_when(
+    P_Value < 0.001  ~ "*** <0,001",
+    P_Value < 0.01   ~ "** <0,01",
+    P_Value < 0.05   ~ "*<0,05",
+    TRUE             ~ "Not Significant"
+  ))%>%arrange(-abs(Estimate))%>%print(n=Inf) #Rank by the correlation coefficient
+
+#*put in some of the candidates for auto.arima####
+#Ice out Fit auto.arima with xreg as year####
+arima.duration<-auto.arima(MohonkIce_resids_tele$duration_resids,
+                           #xreg=c(iceDuration_temporary$year_median),
+                           xreg=cbind(
+                             MohonkIce_resids_tele$NAO_ND,
+                             MohonkIce_resids_tele$Anomaly_FMA
+                             
+                             
+                           ),
+                           seasonal=FALSE,allowdrift = FALSE,
+                           stationary=TRUE)
+arima.duration
+(1-pnorm(abs(arima.duration$coef)/sqrt(diag(arima.duration$var.coef))))*2
+
+#Biplot with two different indices and color as ice duration residuals
+ggplot(data=MohonkIce_resids_tele,aes(x=NAO_ND,y=Anomaly_FMA,fill=duration_resids,size=duration_resids))+geom_point(shape=21,color="black")+
+  scale_fill_gradientn(colours=rev(c("blue","cyan","white", "yellow","red")))+theme_bw()
+ggplot(data=MohonkIce_resids_tele,aes(x=NAO_ND,y=duration_resids))+geom_point()+theme_bw()
+ggplot(data=MohonkIce_resids_tele,aes(x=Anomaly_FMA,y=duration_resids))+geom_point()+theme_bw()
+
+
+#*Ice In correlations####
+iceIn.correlation <- MohonkIce_resids_tele %>% 
+  select_if(is.numeric) %>%
+  gather(Column, Value, -iceIn_resids) %>%
+  group_by(Column) %>%
+  nest() %>%
+  mutate(Cor = map(data, ~cor.test(.x$Value, .x$iceIn_resids, method = "spearman"))) %>%
+  mutate(Estimate = round(map_dbl(Cor, "estimate"), 2), 
+         P_Value = map_dbl(Cor, "p.value"))%>% 
+  select(-data, -Cor)%>%
+  mutate(Significance = case_when(
+    P_Value < 0.001  ~ "*** <0,001",
+    P_Value < 0.01   ~ "** <0,01",
+    P_Value < 0.05   ~ "*<0,05",
+    TRUE             ~ "Not Significant"
+  ))%>%arrange(-abs(Estimate))%>%print(n=Inf) #Rank by the correlation coefficient
+
+#*put in some of the candidates for auto.arima####
+#Ice out Fit auto.arima with xreg as year####
+arima.iceIn<-auto.arima(MohonkIce_resids_tele$iceIn_resids,
+                           #xreg=c(iceDuration_temporary$year_median),
+                           xreg=cbind(
+                             MohonkIce_resids_tele$NAO_Nov,
+                             MohonkIce_resids_tele$NAO_Dec
+                             
+                             
+                           ),
+                           seasonal=FALSE,allowdrift = FALSE,
+                           stationary=TRUE)
+arima.iceIn
+(1-pnorm(abs(arima.iceIn$coef)/sqrt(diag(arima.iceIn$var.coef))))*2
+
+#Biplot with two different indices and color as ice duration residuals
+ggplot(data=MohonkIce_resids_tele,aes(x=NAO_Nov,y=NAO_Dec,fill=iceIn_resids,size=iceIn_resids))+geom_point(shape=21,color="black")+
+  scale_fill_gradientn(colours=c("blue","cyan","white", "yellow","red"))+theme_bw()
+ggplot(data=MohonkIce_resids_tele,aes(x=NAO_Nov,y=iceIn_resids))+geom_point()+theme_bw()
+ggplot(data=MohonkIce_resids_tele,aes(x=NAO_Dec,y=iceIn_resids))+geom_point()+theme_bw()
+
+
+#*Ice out correlations####
+iceOut.correlation <- MohonkIce_resids_tele %>% 
+  select_if(is.numeric) %>%
+  gather(Column, Value, -iceOut_resids) %>%
+  group_by(Column) %>%
+  nest() %>%
+  mutate(Cor = map(data, ~cor.test(.x$Value, .x$iceOut_resids, method = "spearman"))) %>%
+  mutate(Estimate = round(map_dbl(Cor, "estimate"), 2), 
+         P_Value = map_dbl(Cor, "p.value"))%>% 
+  select(-data, -Cor)%>%
+  mutate(Significance = case_when(
+    P_Value < 0.001  ~ "*** <0,001",
+    P_Value < 0.01   ~ "** <0,01",
+    P_Value < 0.05   ~ "*<0,05",
+    TRUE             ~ "Not Significant"
+  ))%>%arrange(-abs(Estimate))%>%print(n=Inf) #Rank by the correlation coefficient
+
+#*put in some of the candidates for auto.arima####
+#Ice out Fit auto.arima with xreg as year####
+arima.iceIn<-auto.arima(MohonkIce_resids_tele$iceIn_resids,
+                        #xreg=c(iceDuration_temporary$year_median),
+                        xreg=cbind(
+                          MohonkIce_resids_tele$NAO_Nov,
+                          MohonkIce_resids_tele$NAO_Dec
+                          
+                          
+                        ),
+                        seasonal=FALSE,allowdrift = FALSE,
+                        stationary=TRUE)
+arima.iceIn
+(1-pnorm(abs(arima.iceIn$coef)/sqrt(diag(arima.iceIn$var.coef))))*2
+
+#Biplot with two different indices and color as ice duration residuals
+ggplot(data=MohonkIce_resids_tele,aes(x=NAO_Nov,y=NAO_Dec,fill=iceIn_resids,size=iceIn_resids))+geom_point(shape=21,color="black")+
+  scale_fill_gradientn(colours=c("blue","cyan","white", "yellow","red"))+theme_bw()
+ggplot(data=MohonkIce_resids_tele,aes(x=NAO_Nov,y=iceIn_resids))+geom_point()+theme_bw()
+ggplot(data=MohonkIce_resids_tele,aes(x=NAO_Dec,y=iceIn_resids))+geom_point()+theme_bw()
 
 #STOPPED HERE######
 #**GENERATE NAO and ENSO indices for certain months
