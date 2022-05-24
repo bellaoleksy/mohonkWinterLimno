@@ -586,10 +586,129 @@ ggplot(data=MohonkIce_resids_tele,aes(x=NAO_Nov,y=NAO_Dec,fill=iceIn_resids,size
 ggplot(data=MohonkIce_resids_tele,aes(x=NAO_Nov,y=iceIn_resids))+geom_point()+theme_bw()
 ggplot(data=MohonkIce_resids_tele,aes(x=NAO_Dec,y=iceIn_resids))+geom_point()+theme_bw()
 
-#STOPPED HERE######
-#**GENERATE NAO and ENSO indices for certain months
-#**CORRELATE THE SEN SLOPE OR MEAN RESIDUALS WITH THOSE INDICES
-#**INCLUDE CLIMATE ANOMALY??
+#Alternative window analysis######
+  #consecutive windows##
+
+#Create a data list####
+#Create dataframe non-rolling windows####
+datalist_sequential=list()  #initialize empty list for storing a bunch of ice duration variabilities of different lengths
+datalist_index=1 #initialize counter to tick through datalist
+
+#how many years are in each segment
+  #segment_length=30
+for(segment_length in 3:30){
+#Creates a grouping variable that is a wee bit bigger than the original by rounding up
+grouping_var<-tibble(grouping_var=rep(1:ceiling((length(iceDuration_days_withNAs$Year)+segment_length-1)/segment_length), each=segment_length))
+#loop through all possible arrangements of the segment_length
+#debug j.index=20
+for(j.index in 1:segment_length){
+  #start at j.index, remove the last segment_length-j.index
+  grouping_var_sub<-slice(grouping_var,(j.index):(length(iceDuration_days_withNAs$Year)+j.index-1))
+  #Merge with the data of interest
+  temp_segments<-bind_cols(iceDuration_days_withNAs,grouping_var_sub)%>%
+                  group_by(grouping_var)%>%
+                  summarize(segment_start_year=min(Year),segment_end_year=max(Year),sd_segment=sd(LengthOfIceCover_days,na.rm=TRUE),number_nonNA=sum(!is.na(LengthOfIceCover_days)),prop_nonNA=number_nonNA/segment_length)%>%
+                  mutate(sd_segment=ifelse(prop_nonNA>=0.75,sd_segment,NA),
+                         segment_midpoint_year=(segment_start_year+segment_end_year)/2)
+  #ggplot(data=temp_segments,aes(x=segment_midpoint_year,y=sd_segment))+geom_point()
+  
+  
+  #Calculate slope
+  sensSlope_sequential<-MTCC.sensSlope(temp_segments$segment_midpoint_year,temp_segments$sd_segment)
+  #Store the residuals and other sens slope fit stats in iceDuration_temporary  
+  sensSlopes_temporaryStats<-temp_segments%>%
+    mutate(sensSlope_fit=segment_midpoint_year*sensSlope_sequential$coefficients["Year"]+sensSlope_sequential$coefficients["Intercept"],
+           sensSlope_slope=sensSlope_sequential$coefficients["Year"],
+           sensSlope_intercept=sensSlope_sequential$coefficients["Intercept"],
+           sensSlope_residuals=sensSlope_sequential$residuals,
+           sensSlope_pval=sensSlope_sequential$pval,
+           sensSlope_z_stat=sensSlope_sequential$z_stat,
+           sensSlope_n=sensSlope_sequential$n,
+           segment_length=segment_length,
+           starting_index=j.index)
+  #Export each Rollingwindow length to the datalist  
+  datalist_sequential[[datalist_index]]<-sensSlopes_temporaryStats
+  datalist_index<-datalist_index+1 #increment datalist forward by 1
+} #End of looping through the various starting positions
+} #End of looping through the different segment lengths
+#*compile them all in one data frame####    
+iceDuration_variability_sequential<-do.call(bind_rows,datalist_sequential) 
+
+#Unpack some results
+#Plot segment sd with starting position as a color
+#this kind of gets at the rolling sd with all of them together
+iceDuration_variability_sequential%>%filter(segment_length==4)%>%ggplot(.,aes(x=segment_midpoint_year,y=sd_segment,color=as.factor(starting_index)))+geom_point()
+iceDuration_variability_sequential%>%filter(segment_length==10)%>%ggplot(.,aes(x=segment_midpoint_year,y=sd_segment,color=as.factor(starting_index)))+geom_point()
+iceDuration_variability_sequential%>%filter(segment_length==20)%>%ggplot(.,aes(x=segment_midpoint_year,y=sd_segment,color=as.factor(starting_index)))+geom_point()
+
+#Plot segment sd fit with starting position as a color
+iceDuration_variability_sequential%>%filter(segment_length==4)%>%ggplot(.,aes(x=segment_midpoint_year,y=sensSlope_fit,color=as.factor(starting_index)))+geom_line()
+iceDuration_variability_sequential%>%filter(segment_length==10)%>%ggplot(.,aes(x=segment_midpoint_year,y=sensSlope_fit,color=as.factor(starting_index)))+geom_line()
+iceDuration_variability_sequential%>%filter(segment_length==20)%>%ggplot(.,aes(x=segment_midpoint_year,y=sensSlope_fit,color=as.factor(starting_index)))+geom_line()
+
+#Plot segment sd with facet wrap by starting position
+#plot with points and slope together
+#13 seems to be the cutoff for having 5+ points
+iceDuration_variability_sequential%>%filter(segment_length==4)%>%ggplot(.,aes(x=segment_midpoint_year,y=sd_segment))+geom_point()+geom_line(aes(y=sensSlope_fit))+facet_wrap(vars(starting_index))
+iceDuration_variability_sequential%>%filter(segment_length==10)%>%ggplot(.,aes(x=segment_midpoint_year,y=sd_segment))+geom_point()+geom_line(aes(y=sensSlope_fit))+facet_wrap(vars(starting_index))
+iceDuration_variability_sequential%>%filter(segment_length==13)%>%ggplot(.,aes(x=segment_midpoint_year,y=sd_segment))+geom_point()+geom_line(aes(y=sensSlope_fit))+facet_wrap(vars(starting_index))
+
+#Find the significant sens slopes
+  #note, there are only 2
+iceDuration_variability_sequential%>%filter(sensSlope_pval<0.05)%>%ggplot(.,aes(x=segment_midpoint_year,y=sensSlope_fit,color=as.factor(segment_length)))+geom_line()
+
+#Graph them all, facet_wrap by segment length, filter to 13 years segment length or less
+iceDuration_variability_sequential%>%filter(segment_length<=13)%>%ggplot(.,aes(x=segment_midpoint_year,y=sensSlope_fit,color=as.factor(starting_index)))+geom_line()+facet_wrap(vars(segment_length))
+
+#Summarize the stats and visualize
+iceDuration_variability_sequential%>%
+  group_by(segment_length)%>%
+  summarize(sensSlope_median=median(sensSlope_slope,na.rm=TRUE))%>%
+  print(n=Inf)%>%ggplot(.,aes(x=segment_length,y=sensSlope_median))+geom_point()
+
+#Group by segment_length and starting index, 
+#slice takes the first row of each to avoid redundancy as there are many slopes in each
+#cut to 3 to 13 segment lengths, longer and there are just too few points in each slope
+iceDuration_variability_sequential%>%
+  group_by(segment_length,starting_index)%>%slice(1)%>%
+  filter(segment_length<=13)%>%
+  ggplot(.,aes(x=as.factor(segment_length),y=sensSlope_slope))+geom_boxplot()+geom_jitter()+theme_bw()
+
+#Summarize one row for each segment_length and starting index
+iceDuration_variability_sequential_fits<-
+  iceDuration_variability_sequential%>%
+  group_by(segment_length,starting_index)%>%slice(1)%>%
+  filter(segment_length<=13)
+
+datalist_sensfits=list()  #initialize empty list for storing a bunch of ice duration variabilities of different lengths
+#model.index=1
+#loop through to generate sens slope fits for each year, each segment_length, each fit location####
+for(model.index in 1:length(iceDuration_variability_sequential_fits$sensSlope_slope)){
+  year=seq(min(iceDuration_days_withNAs$Year),max(iceDuration_days_withNAs$Year))
+  datalist_sensfits[[model.index]]<-tibble(year=year,sensSlope_fit_interpolate=iceDuration_variability_sequential_fits$sensSlope_slope[model.index]*year+iceDuration_variability_sequential_fits$sensSlope_intercept[model.index],segment_length=iceDuration_variability_sequential_fits$segment_length[model.index],starting_index=iceDuration_variability_sequential_fits$starting_index[model.index])
+}
+
+#*bind all the interpolated sens slope fits####
+iceDuration_sensSlopeFitsInterpolated_sequential<-do.call(bind_rows,datalist_sensfits)
+#calculate fit stats for each segment length
+#median, and percentiles
+temp<-iceDuration_sensSlopeFitsInterpolated_sequential%>%
+  group_by(segment_length,year)%>%
+  summarize(median_sensSlope_fit=median(sensSlope_fit_interpolate,na.rm=TRUE),
+            q5_sensSlope_fit=quantile(sensSlope_fit_interpolate,probs=0.05,na.rm=TRUE),
+            q25_sensSlope_fit=quantile(sensSlope_fit_interpolate,probs=0.25,na.rm=TRUE),
+            q75_sensSlope_fit=quantile(sensSlope_fit_interpolate,probs=0.75,na.rm=TRUE),
+            q95_sensSlope_fit=quantile(sensSlope_fit_interpolate,probs=0.95,na.rm=TRUE))
+#*plot the median sens slope fits surrounded by 25, 75 and 5 and 95 ribbons####
+ggplot(temp,aes(x=year,y=median_sensSlope_fit))+
+  facet_wrap(vars(segment_length))+
+  geom_ribbon(aes(ymin=q5_sensSlope_fit,ymax=q95_sensSlope_fit),alpha=0.1,fill="grey",color="dark grey")+
+  #geom_ribbon(aes(ymin=q25_sensSlope_fit,ymax=q75_sensSlope_fit),alpha=0.1,fill="light grey",color="grey")+
+  geom_line(size=1.2)+
+  theme_bw()
+
+
+
 
 #Questions remain:
   #periodicity in the residuals? Is it a residuals of the rolling window?
