@@ -279,7 +279,7 @@ str(MohonkDailyWeatherFull.upload)
 
 
 
-##Upload Mohonk Ice on and Ice off data####    
+##Upload Mohonk Ice on and Ice off data####
 MohonkIce.upload<-read.csv("data/MohonkLake-IceOnIceOff-1932-2017.csv", fill = TRUE) 
 MohonkIce.upload$Year<-seq(1932,2019,by=1) #Corrected the script to include 2019
 
@@ -358,7 +358,6 @@ MohonkWeeklySecchi<-MohonkWeeklyProfilesMetric[,c("Date","Secchi_m")]
 rm(find.errors2)
 rm(MohonkDailyWeatherFull.upload) #Can remove beause MohonkDailyWeatherFull.upload includes data back to 1930s
 rm(MohonkDailyWeather.upload) #Can remove beause MohonkDailyWeatherFull.upload includes data back to 1930s
-rm(MohonkDailyWeather) #Can remove beause MohonkDailyWeatherFull includes data back to 1930s
 rm(MohonkIce.upload)
 rm(MohonkWeeklyProfilesSensor)
 rm(MohonkWeeklyProfiles)
