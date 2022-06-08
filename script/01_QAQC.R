@@ -256,8 +256,10 @@ MohonkDailyWeatherFull.upload <- MohonkDailyWeatherFull.upload %>%
          SnowDepth_mm = SNWD,
          TempMax_degC = TMAX,
          TempMin_degC = TMIN) %>%
-  mutate(TempMean_degC = (TempMax_degC+TempMin_degC)/2) %>%
+  mutate(TempMean_degC = (TempMax_degC+TempMin_degC)/2)
+
 #Keep relevant columns for weather data frame
+MohonkDailyWeatherFull<- MohonkDailyWeatherFull.upload %>%
   dplyr::select(c("Date","Precip_mm","Snow_mm",
                   "SnowDepth_mm","TempMax_degC",
                   "TempMin_degC","TempMean_degC"))
