@@ -236,27 +236,6 @@ NAO_daily$Date <- paste(NAO_daily$Year, NAO_daily$Month, NAO_daily$Day, sep="-")
 NAO_daily<-NAO_daily %>%
   mutate(DOY=yday(Date))
 
-# Seasonal ENSO indices ----------------------------------------------------
-
-#Read in data
-# ENSO_monthly<-read.csv("data/ONI_index_monthly.csv")
-
-##Upload Mohonk NOAA National Weather Service Temp and Precip daily data####    
-MohonkDailyWeather.upload<-read.csv("data/MohonkPreserveWeatherData-1985-2017-NOAA-NCEI.csv", fill = TRUE) 
-MohonkDailyWeather.upload$Date<-as.Date(as.character(MohonkDailyWeather.upload$DATE))
-MohonkDailyWeather.upload$Precip_mm<-MohonkDailyWeather.upload$PRCP_in*25.4
-MohonkDailyWeather.upload$Snow_mm<-MohonkDailyWeather.upload$SNOW_in*25.4
-MohonkDailyWeather.upload$SnowDepth_mm<-MohonkDailyWeather.upload$SNWD_in*25.4
-MohonkDailyWeather.upload$TempMax_degC<-(MohonkDailyWeather.upload$TMAX_degF-32)*5/9
-MohonkDailyWeather.upload$TempMin_degC<-(MohonkDailyWeather.upload$TMIN_degF-32)*5/9
-MohonkDailyWeather.upload$TempMean_degC<-(MohonkDailyWeather.upload$TempMax_degC+MohonkDailyWeather.upload$TempMin_degC)/2
-
-#Keep relevant columns for weather data frame
-MohonkDailyWeather<-MohonkDailyWeather.upload[,c("Date","Precip_mm","Snow_mm",
-                                                 "SnowDepth_mm","TempMax_degC",
-                                                 "TempMin_degC","TempMean_degC")]
-
-
 # Seasonal ENSO - MEI indices ----------------------------------------------------
 #2020-12-10 IAO: Uploading new ENSO data 
 ####Source: ENSO (MEI v2) - 1979 to present, monthly
@@ -266,22 +245,37 @@ MohonkDailyWeather<-MohonkDailyWeather.upload[,c("Date","Precip_mm","Snow_mm",
 ENSO_monthly<-read.csv("data/ONI_index_monthly_1950-2022.csv")
 
 
-##Upload Mohonk FULL RECORD NOAA National Weather Service Temp and Precip daily data ####   
+## Local weather ####   
 #2020-12-01 IAO downloaded wx data going back to 1930
-MohonkDailyWeatherFull.upload<-read.csv("data/MohonkPreserveWeatherData-1930-2020-NOAA-NCEI.csv", fill = TRUE) 
-head(MohonkDailyWeatherFull.upload)
-MohonkDailyWeatherFull.upload$Date<-as.Date(as.character(MohonkDailyWeatherFull.upload$DATE))
-MohonkDailyWeatherFull.upload$Precip_mm<-MohonkDailyWeatherFull.upload$PRCP*25.4 #convert to mm
-MohonkDailyWeatherFull.upload$Snow_mm<-MohonkDailyWeatherFull.upload$SNOW*25.4 #convert to m
-MohonkDailyWeatherFull.upload$SnowDepth_mm<-MohonkDailyWeatherFull.upload$SNWD*25.4 #convert to mm
-MohonkDailyWeatherFull.upload$TempMax_degC<-(MohonkDailyWeatherFull.upload$TMAX-32)*5/9 #convert to C
-MohonkDailyWeatherFull.upload$TempMin_degC<-(MohonkDailyWeatherFull.upload$TMIN-32)*5/9 #convert to C
-MohonkDailyWeatherFull.upload$TempMean_degC<-(MohonkDailyWeatherFull.upload$TempMax_degC+MohonkDailyWeatherFull.upload$TempMin_degC)/2
-
+#2022-07-08 IAO added 1930-2021 data in metric units
+MohonkDailyWeatherFull.upload<-read.csv("data/MohonkPreserveWeatherData-1930-2021-NOAA-NCEI-metric.csv", fill = TRUE) 
+MohonkDailyWeatherFull.upload <- MohonkDailyWeatherFull.upload %>%
+  mutate(Date = as.Date(as.character(MohonkDailyWeatherFull.upload$DATE))) %>%
+  rename(Precip_mm = PRCP, 
+         Snow_mm = SNOW,#check units-- is this m or mm? 
+         SnowDepth_mm = SNWD,
+         TempMax_degC = TMAX,
+         TempMin_degC = TMIN) %>%
+  mutate(TempMean_degC = (TempMax_degC+TempMin_degC)/2) %>%
 #Keep relevant columns for weather data frame
-MohonkDailyWeatherFull<-MohonkDailyWeatherFull.upload[,c("Date","Precip_mm","Snow_mm",
-                                                 "SnowDepth_mm","TempMax_degC",
-                                                 "TempMin_degC","TempMean_degC")]
+  dplyr::select(c("Date","Precip_mm","Snow_mm",
+                  "SnowDepth_mm","TempMax_degC",
+                  "TempMin_degC","TempMean_degC"))
+str(MohonkDailyWeatherFull.upload)
+
+# Old from before we had metric data -- can be deleted at some point
+# MohonkDailyWeatherFull.upload$Date<-as.Date(as.character(MohonkDailyWeatherFull.upload$DATE))
+# MohonkDailyWeatherFull.upload$Precip_mm<-MohonkDailyWeatherFull.upload$PRCP*25.4 #convert to mm
+# MohonkDailyWeatherFull.upload$Snow_mm<-MohonkDailyWeatherFull.upload$SNOW*25.4 #convert to m
+# MohonkDailyWeatherFull.upload$SnowDepth_mm<-MohonkDailyWeatherFull.upload$SNWD*25.4 #convert to mm
+# MohonkDailyWeatherFull.upload$TempMax_degC<-(MohonkDailyWeatherFull.upload$TMAX-32)*5/9 #convert to C
+# MohonkDailyWeatherFull.upload$TempMin_degC<-(MohonkDailyWeatherFull.upload$TMIN-32)*5/9 #convert to C
+# MohonkDailyWeatherFull.upload$TempMean_degC<-(MohonkDailyWeatherFull.upload$TempMax_degC+MohonkDailyWeatherFull.upload$TempMin_degC)/2
+# 
+# 
+# MohonkDailyWeatherFull<-MohonkDailyWeatherFull.upload[,c("Date","Precip_mm","Snow_mm",
+#                                                  "SnowDepth_mm","TempMax_degC",
+#                                                  "TempMin_degC","TempMean_degC")]
 
 
 
