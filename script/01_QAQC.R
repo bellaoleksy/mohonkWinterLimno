@@ -279,6 +279,26 @@ str(MohonkDailyWeatherFull.upload)
 #                                                  "SnowDepth_mm","TempMax_degC",
 #                                                  "TempMin_degC","TempMean_degC")]
 
+# Seasonal ENSO indices ----------------------------------------------------
+
+#Read in data
+# ENSO_monthly<-read.csv("data/ONI_index_monthly.csv")
+
+##Upload Mohonk NOAA National Weather Service Temp and Precip daily data####    
+MohonkDailyWeather.upload<-read.csv("data/MohonkPreserveWeatherData-1985-2017-NOAA-NCEI.csv", fill = TRUE) 
+MohonkDailyWeather.upload$Date<-as.Date(as.character(MohonkDailyWeather.upload$DATE))
+MohonkDailyWeather.upload$Precip_mm<-MohonkDailyWeather.upload$PRCP_in*25.4
+MohonkDailyWeather.upload$Snow_mm<-MohonkDailyWeather.upload$SNOW_in*25.4
+MohonkDailyWeather.upload$SnowDepth_mm<-MohonkDailyWeather.upload$SNWD_in*25.4
+MohonkDailyWeather.upload$TempMax_degC<-(MohonkDailyWeather.upload$TMAX_degF-32)*5/9
+MohonkDailyWeather.upload$TempMin_degC<-(MohonkDailyWeather.upload$TMIN_degF-32)*5/9
+MohonkDailyWeather.upload$TempMean_degC<-(MohonkDailyWeather.upload$TempMax_degC+MohonkDailyWeather.upload$TempMin_degC)/2
+
+#Keep relevant columns for weather data frame
+MohonkDailyWeather<-MohonkDailyWeather.upload[,c("Date","Precip_mm","Snow_mm",
+                                                 "SnowDepth_mm","TempMax_degC",
+                                                 "TempMin_degC","TempMean_degC")]
+
 
 
 ##Upload Mohonk Ice on and Ice off data####
