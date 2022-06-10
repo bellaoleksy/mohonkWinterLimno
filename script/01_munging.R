@@ -358,7 +358,8 @@ AnnualData$Year <- as.numeric(levels(factor(DailyInterpol$year)))
 AnnualData <-
   left_join(
     AnnualData,
-    MohonkIcePost1985 %>% dplyr::select(Year, IceOutDayofYear, LengthOfIceCover_days),
+    MohonkIcePost1985 %>%
+      dplyr::select(Year, IceOutDayofYear, LengthOfIceCover_days),
     by = c("Year")
   )
 
@@ -368,8 +369,10 @@ AnnualData <-
 AnnualData <-
   left_join(
     AnnualData,
-    MohonkIcePost1985 %>% filter(Year > 1985) %>% dplyr::select(Year, IceInDayofYear) %>%
-      mutate(Year = Year - 1) %>% mutate(
+    MohonkIcePost1985 %>% filter(Year > 1985) %>%
+      dplyr::select(Year, IceInDayofYear) %>%
+      mutate(Year = Year - 1) %>%
+      mutate(
         IceInDayofYear = if_else(IceInDayofYear < 35, 365 + IceInDayofYear, IceInDayofYear)
       )
   )
@@ -683,66 +686,6 @@ AnnualData$MixingAction_gigaJday <-
 AnnualData$MixingAction.OpenWater_gigaJday <-
   AnnualData$AUC.Stability.openwater_Jperm2day * 69000 / (10 ^ 9)
 
-#*Summarize NAO data in the following ways####
-# * "spring" mean (21 March to 21 June, DOY 81 - 172)
-# * mean of spring and summer (21 March to 21 Sept, DOY 81 - 265)
-# * spring through MA period (DOY 81 through.... end of stratification DOY)
-# * summer MA period (mean over start and end of stratification DOY)
-
-#IAO 2022-Feb-18  I commented out this summary NAO which was used for the original Mohonk Analysis
-#Below that, I calculated new NAO indices that go back to 1950
-
-# #**NAO spring mean -----------------------
-# NAO_springmean <- NAO_daily %>%
-#   # filter(Year>=1985)%>%
-#   dplyr::select(Year, DOY, NAO_index)%>%
-#   filter(DOY>=80 & DOY <172) %>%
-#   group_by(Year)%>%
-#   summarize_at(vars(NAO_index), mean, na.rm=TRUE)%>%
-#   rename(NAO_Spring=NAO_index)
-#
-# #**NAO Summer mean -----------------------
-# NAO_summermean <- NAO_daily %>%
-#   # filter(Year>=1985)%>%
-#   dplyr::select(Year, DOY, NAO_index)%>%
-#   filter(DOY>=172 & DOY <265) %>%
-#   group_by(Year)%>%
-#   summarize_at(vars(NAO_index), mean, na.rm=TRUE)%>%
-#   rename(NAO_Summer=NAO_index)
-#
-# #**NAO stratified period --------
-# NAO_stratifiedperiod <- NAO_daily %>%
-#   left_join(.,AnnualData%>%
-#               dplyr::select(Year,StartOfStratification_Day,
-#                      EndOfStratification_Day,IceOutDayofYear),
-#             by="Year") %>%
-#   mutate(StratifiedPeriod=ifelse(DOY>=StartOfStratification_Day
-#                                  &
-#                                 DOY<EndOfStratification_Day,NAO_index,NA)) %>%
-#   group_by(Year) %>%
-#   summarize(NAO_StratifiedPeriod=mean(StratifiedPeriod, na.rm=TRUE))
-#
-# #**NAO SpringMixed -----------------------
-# NAO_springmixed <- NAO_daily%>%
-#   # filter(Year>=1985)%>%
-#   left_join(.,AnnualData%>%
-#               dplyr::select(Year,StartOfStratification_Day,
-#                      EndOfStratification_Day,IceOutDayofYear),
-#             by="Year") %>%
-#   mutate(SpringMixedPeriod=ifelse(DOY>IceOutDayofYear
-#                                   &
-#                                   DOY<=StartOfStratification_Day,
-#                                   NAO_index,NA))%>%
-#   group_by(Year) %>%
-#   summarize(NAO_SpringMixed=mean(SpringMixedPeriod, na.rm=TRUE))
-#
-#
-# #***Merge all NAO indices  -----------------------
-# NAO_summary <- left_join(NAO_springmean, NAO_summermean, by="Year")
-# NAO_summary <- left_join(NAO_summary, NAO_stratifiedperiod, by="Year")
-# NAO_summary <- left_join(NAO_summary, NAO_springmixed, by="Year")
-
-
 # NAO dataframe 1950-present ----------------------------------------------
 
 NAO_summary <- NAO_daily %>%
@@ -762,24 +705,63 @@ NAO_summary <- NAO_daily %>%
         )
       ),
     water_year = ifelse(
-      season %in% c("winter", "spring") &
-        Month %in% c("10", "11", "12", "1", "2", "3", "4"),
-      Year - 1,
+      season %in% c("fall", "winter") &
+        Month %in% c("9","10","11","12"),
+      # season %in% c("winter", "spring") &
+      #   Month %in% c("10", "11", "12", "1", "2", "3", "4"),
+      Year + 1, #IAO 2022-07-08 changed to +1 instead of -1!!!
       Year
     )
   ) %>% #this water_year term is only relevent for winter
   #metrics. We want 1 Oct-30 April to all correspond to the same water year
   group_by(water_year, season) %>%
   dplyr::summarize(NAO_index = mean(NAO_index)) %>%
-  # filter(season%in%c("winter","spring")) %>% #where winter is [1oct-28feb]  & spring is [1march-30april]
   pivot_wider(
     names_from = "season",
     names_sep = "_",
     names_prefix = "NAO_index_",
     values_from = "NAO_index"
   ) %>%
-  ungroup() %>%
-  mutate(Year = water_year + 1)
+  ungroup() 
+  # mutate(Year = water_year + 1) # Consider dropping Year because we want to join with water_year on other dataframes. 
+
+
+# Why not just use the dataRetrieval package calcWaterYear function and see if the answers differ
+# library(dataRetrieval)
+# NAO_summary_alt <- NAO_daily %>%
+#   mutate(
+#     season =
+#       ifelse(
+#         Month %in% c(12, 1, 2),
+#         "winter",
+#         ifelse(
+#           Month %in% c(3, 4, 5),
+#           "spring",
+#           ifelse(
+#             Month %in% c(6, 7, 8),
+#             "summer",
+#             ifelse(Month %in% c(9, 10, 11), "fall", "error")
+#           )
+#         )
+#       ),
+#     water_year = calcWaterYear(Date)
+#   )  %>%#this water_year term is only relevent for winter
+#   #metrics. We want 1 Oct-30 April to all correspond to the same water year
+#   group_by(water_year, season) %>%
+#   dplyr::summarize(NAO_index = mean(NAO_index)) %>%
+#   # filter(season%in%c("winter","spring")) %>% #where winter is [1oct-28feb]  & spring is [1march-30april]
+#   pivot_wider(
+#     names_from = "season",
+#     names_sep = "_",
+#     names_prefix = "NAO_index_",
+#     values_from = "NAO_index"
+#   ) %>%
+#   ungroup() %>%
+#   mutate(Year = water_year + 1)
+# 
+# test<- NAO_summary_alt %>%
+#   filter(Date>="2018-09-01" & Date <= "2018-11-30")
+
 
 #**Seasonal ENSO indices ----------------------------------------------------
 
@@ -846,12 +828,19 @@ ENSO_summary <- ENSO_monthly %>%
         )
       ),
     water_year = ifelse(
-      season %in% c("winter", "spring") &
-        month %in% c("10", "11", "12", "1", "2", "3", "4"),
-      year - 1,
+      season %in% c("fall", "winter") &
+        month %in% c("9","10","11","12"),
+      year + 1, #IAO 2022-07-08 changed to +1 instead of -1!!!
       year
     )
   ) %>% #this water_year term is only relevent for winter
+  #   water_year = ifelse(
+  #     season %in% c("winter", "spring") &
+  #       month %in% c("10", "11", "12", "1", "2", "3", "4"),
+  #     year - 1,
+  #     year
+  #   )
+  # ) %>% #this water_year term is only relevent for winter
   #metrics. We want 1 Oct-30 April to all correspond to the same water year
   group_by(water_year, season) %>%
   dplyr::summarize(ENSO_index = mean(ENSO_index)) %>%
@@ -861,15 +850,16 @@ ENSO_summary <- ENSO_monthly %>%
     names_prefix = "ENSO_index_",
     values_from = "ENSO_index"
   ) %>%
-  ungroup() %>%
-  mutate(Year = water_year + 1)
+  ungroup()
+  # mutate(Year = water_year + 1)
 
 
 ENSO_monthly_trim <- ENSO_monthly %>%
   mutate(
     water_year = ifelse(
-        month %in% c("10", "11", "12", "1", "2", "3", "4"),
-      year - 1,
+        # month %in% c("10", "11", "12", "1", "2", "3", "4"),
+      month %in% c("10", "11", "12"),
+      year + 1,
       year
     ),
     MonthAbb = month.abb[month]
@@ -885,15 +875,16 @@ ENSO_monthly_trim <- ENSO_monthly %>%
     values_from = "ENSO"
   ) %>%
   ungroup() %>%
-  mutate(Year = water_year + 1,
+  mutate(
+    # Year = water_year + 1,
          ENSO_Oct_to_Mar = ENSO_Oct+ENSO_Nov+ENSO_Dec+
                                  ENSO_Jan+ENSO_Feb+ENSO_Mar)
 
-ENSO_summary<-left_join(ENSO_summary, ENSO_monthly_trim, by=c("Year","water_year"))
+ENSO_summary<-left_join(ENSO_summary, ENSO_monthly_trim, by=c("water_year"))
 
 
 #***Merge with AnnualData by Year####
-AnnualData <- left_join(AnnualData, ENSO_summary, by = c("Year"))
+AnnualData <- left_join(AnnualData, ENSO_summary, by = c("Year"="water_year"))
 
 ##quick QAQC- how do  ENSO and ENSO_MEI compare?
 # ggplot(AnnualData, aes(x=ENSO_Spring.x,y=ENSO_Spring))+geom_point()
@@ -1093,7 +1084,8 @@ AnnualData <-
 #*Air temperature to annual summary####
 #**Truncate to the correct data size (1985-2017)
 MohonkDailyWeatherTruncate <-
-  MohonkDailyWeatherFull %>% filter(Date >= min(DailyInterpol$Date))
+  MohonkDailyWeatherFull %>%
+  filter(Date >= min(DailyInterpol$Date))
 #**Add in columns for all the important dates####
 #Create day of year
 #Get the start spring start of summer and end of summer - those are set for each year
@@ -1280,13 +1272,14 @@ MohonkDailyWeather_monthly <- MohonkDailyWeatherFull %>%
     year = year(Date),
     month = month(Date),
     month_name = month(Date, label = TRUE),
-    water_year = ifelse(month %in% c("1", "2", "3", "4"),
-                        year - 1,
-                        year)
-  ) %>% #this water_year term is only relevent for winter
-  #metrics. We want 1 Oct-30 April to all correspond to the same water year
-  filter(!month %in% c("5", "6", "7", "8")) %>%
-  #exclude May-August, which are *most likely* not directly influencing winter ice phenology
+    water_year = dataRetrieval::calcWaterYear(Date) #IAO - 2022-07-08 - I don't trust myself anymore so just using a function
+    # water_year = ifelse(month %in% c("1", "2", "3", "4"),
+    #                     year - 1,
+    #                     year)
+  ) %>% 
+  filter(!month %in% c("5", "6", "7", "8")) %>%  #exclude May-August, which are *most likely* not directly influencing winter ice phenology
+  mutate(water_year_corrected = case_when(month == '9' ~ water_year + 1,
+                         TRUE ~ water_year)) %>% #This is a little janky but we want to pretend that Sept is part of the same water year as the next month (Oct) for the purposes of summarizing the data below
   group_by(water_year, month_name) %>%
   dplyr::summarize(
     cumMeanDailyT = sum(TempMean_degC, na.rm = TRUE),
@@ -1363,13 +1356,14 @@ MohonkDailyWeather_monthly <- MohonkDailyWeatherFull %>%
     nDaysMinAboveZero_Mar = 31 - nDaysMinBelowZero_Mar,
     nDaysMinAboveZero_FebMar = 59 - (nDaysMinBelowZero_Feb + nDaysMinBelowZero_Mar),
     
-    Year = water_year + 1
+    # Year = water_year + 1
   ) %>% #year = the year of ice-off
   
   ungroup() %>%
   
   #join MohonkIce dataframe with ice on/off days
-  left_join(., MohonkIce, by = "Year") %>%
+  left_join(., MohonkIce, by = c("water_year"="Year")) %>%
+  rename(Year=water_year) %>% #Need to rename water_year as Year
   
   
   # get rid of unnecessary columns
@@ -1380,7 +1374,7 @@ MohonkDailyWeather_monthly <- MohonkDailyWeatherFull %>%
   #front of dataframe, then lists the rest of predictor variables.
   select(
     Year,
-    water_year,
+    # water_year,
     IceInDayofYear,
     IceOutDayofYear,
     LengthOfIceCover_days,
@@ -1396,12 +1390,11 @@ SnowPredictors <- MohonkDailyWeatherFull %>%
     year = year(Date),
     month = month(Date),
     month_name = month(Date, label = TRUE),
-    water_year = ifelse(month %in% c("1", "2", "3", "4"),
-                        year - 1,
-                        year)
+    water_year = dataRetrieval::calcWaterYear(Date) #IAO - 2022-07-08 - I don't trust myself anymore so just using a function
+    # water_year = ifelse(month %in% c("1", "2", "3", "4"),
+    #                     year - 1,
+    #                     year)
   ) %>%
-  filter(!water_year == 1929) %>%
-  # filter(water_year<1954)
   group_by(water_year) %>%
   dplyr::summarize(
     maxSnowDepth_mm = max(SnowDepth_mm, na.rm = FALSE),
@@ -1413,26 +1406,26 @@ SnowPredictors <- MohonkDailyWeatherFull %>%
   filter(row_number() == 1) #There are a handful of years where the summary function calculates duplicate values for some reason. This line selects just the 1st observation
 
 
-colnames <-
-  (intersect(
-    colnames(MohonkDailyWeather_monthly),
-    colnames(SnowPredictors)
-  )) #identify common columns between data.tables
+# colnames <-
+#   (intersect(
+#     colnames(MohonkDailyWeather_monthly),
+#     colnames(SnowPredictors)
+#   )) #identify common columns between data.tables
 MohonkIceWeather <-
-  left_join(MohonkDailyWeather_monthly, SnowPredictors, by = colnames)
+  left_join(MohonkDailyWeather_monthly, SnowPredictors, by = c("Year"="water_year"))
 
-colnames <-
-  (intersect(
-    colnames(MohonkDailyWeather_monthly),
-    colnames(ENSO_summary)
-  )) #identify common columns between data.tables
+# colnames <-
+#   (intersect(
+#     colnames(MohonkDailyWeather_monthly),
+#     colnames(ENSO_summary)
+#   )) #identify common columns between data.tables
 MohonkIceWeather <-
-  left_join(MohonkIceWeather, ENSO_summary, by = colnames)
+  left_join(MohonkIceWeather, ENSO_summary,  by = c("Year"="water_year"))
 
-colnames <-
-  (intersect(colnames(MohonkDailyWeather_monthly),  colnames(NAO_summary))) #identify common columns between data.tables
+# colnames <-
+#   (intersect(colnames(MohonkDailyWeather_monthly),  colnames(NAO_summary))) #identify common columns between data.tables
 MohonkIceWeather <-
-  left_join(MohonkIceWeather, NAO_summary, by = colnames)
+  left_join(MohonkIceWeather, NAO_summary,  by = c("Year"="water_year"))
 
 colnames <-
   (intersect(
@@ -1464,11 +1457,12 @@ MohonkDailyWeatherFull<-MohonkDailyWeatherFull %>%
           )
         )
       ),
-    water_year = ifelse(
-      season %in% c("winter", "spring") &
-        Month %in% c("10", "11", "12", "1", "2", "3", "4"),
-      Year - 1,
-      Year
-    )
+    water_year = dataRetrieval::calcWaterYear(Date)
+        # water_year = ifelse(
+    #   season %in% c("winter", "spring") &
+    #     Month %in% c("10", "11", "12", "1", "2", "3", "4"),
+    #   Year - 1,
+    #   Year
+    
   )
 
