@@ -1,3 +1,4 @@
+
 #Read in Bathymetry Data####
 # setwd(BathyDir2014)
 if(!require(tidyverse)){install.packages("tidyverse")}
@@ -248,15 +249,14 @@ ENSO_monthly<-read.csv("data/ONI_index_monthly_1950-2022.csv")
 ## Local weather ####   
 #2020-12-01 IAO downloaded wx data going back to 1930
 #2022-07-08 IAO added 1930-2021 data in metric units
-MohonkDailyWeatherFull.upload<-read.csv("data/MohonkPreserveWeatherData-1930-2021-NOAA-NCEI-metric.csv", fill = TRUE) 
+MohonkDailyWeatherFull.upload<-read.csv("data/MohonkPreserveWeatherData-1896-2022-NOAA-NCEI-metric.csv", fill = TRUE) 
+str(MohonkDailyWeatherFull.upload)
 MohonkDailyWeatherFull.upload <- MohonkDailyWeatherFull.upload %>%
-  mutate(Date = as.Date(as.character(MohonkDailyWeatherFull.upload$DATE))) %>%
-  rename(Precip_mm = PRCP, 
-         Snow_mm = SNOW,#check units-- is this m or mm? 
-         SnowDepth_mm = SNWD,
-         TempMax_degC = TMAX,
-         TempMin_degC = TMIN) %>%
-  mutate(TempMean_degC = (TempMax_degC+TempMin_degC)/2)
+  mutate(Date = ymd(Date)) %>%
+  rename(Precip_mm = Precipitation_mm, 
+         Snow_mm = Snowfall_mm,#check units-- is this m or mm? 
+         SnowDepth_mm = SnowDepth_mm,
+         TempMean_degC = TempAvg_degC) 
 
 #Keep relevant columns for weather data frame
 MohonkDailyWeatherFull<- MohonkDailyWeatherFull.upload %>%
@@ -393,3 +393,4 @@ rm(MohonkWeeklyProfiles_2018_19,
    MohonkWeeklyProfiles2017metric.sensor,
    MohonkWeeklyProfiles2017metric.manual,
    MohonkWeeklyProfiles2017metric.sensor.daily)
+
