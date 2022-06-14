@@ -805,7 +805,7 @@ NAO_summary <- NAO_daily %>%
 
 
 #***Merge with AnnualData by Year####
-AnnualData <- left_join(AnnualData, NAO_summary, by = c("Year"))
+AnnualData <- left_join(AnnualData, NAO_summary, by = c("Year"="water_year"))
 # AnnualData<-left_join(AnnualData,ENSO_summary,by=c("Year"))
 
 #**Seasonal and monthly ENSO- ONI indices ----------------------------------------------------
@@ -1252,7 +1252,7 @@ AnnualData <-
 
 # Winter metrics ----------------------------------------------------------
 
-#IAO- added 2022-Feb-18
+#IAO- added 2022-Feb-18 and updated 2022-06-08
 
 #here I am using a function for calculating water-year DOY. This will help facilitate plotting and analysizing trends in ice-in since they span either side of the winter-year (e.g., 2011-2012). For example, an IceInDayofYear_fed value of 150 means Ice-In occured 150 days after the start of the water-year (Oct1)
 MohonkIce <- MohonkIce %>%
