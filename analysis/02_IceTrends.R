@@ -164,10 +164,11 @@ write_csv(MohonkIce_top10, "data/exported/MohonkIce_CorrMatrix.csv")
 
 
 #Visualize correlations with IceInDayofYear_fed
-MohonkIceWeather_trim %>%
+MohonkIceWeather %>%
   select(IceInDayofYear_fed, all_of(IceInVars)) %>%
   ggpairs() 
 median(MohonkIceWeather$IceInDayofYear,na.rm=T)
+
 # December 14th median ice-in DOY
 # cumMeanDailyT_OctNovDec & nDaysMinBelowZero_OctNovDec -0.79 Keep the former since the latter had *slightly* weaker corr. w/ ice-in
 # cumMeanDailyT_OctNovDec & cumMeanDailyT_Dec r=0.77. Keep the former since the latter had *slightly* weaker corr. w/ ice-in
@@ -180,6 +181,7 @@ median(MohonkIceWeather$IceInDayofYear,na.rm=T)
 # cumMeanDailyT_OctNovDec & nDaysMeanBelowZero_Nov r=-0.54. Keeping cumMeanDailyT_OctNovDec since it is much more highly correlated with IceIn.
 ## This basically only leaves us with one predictor variable...
 ## What about keeping nDaysMinBelowZero_Nov too since it isn't too strongly colinear with cumMeanDailyT_OctNovDec?
+
 MohonkIceWeather %>%
   select(IceInDayofYear_fed, cumMeanDailyT_OctNovDec, nDaysMinBelowZero_Nov) %>%
   ggpairs() 
@@ -384,8 +386,8 @@ modIceOn0 <- gam(IceInDayofYear_fed ~ s(Year),
                   method = "REML")
 summary(modIceOn0)
 ## summary object
-modIceOn0_S <- summary(modIceOn0$gam)
-modIceOn0_S #Gives you the P values, degrees of freedom...
+# modIceOn0_S <- summary(modIceOn0$gam)
+# modIceOn0_S #Gives you the P values, degrees of freedom...
 
 #PLOT Autocorrelation function of residuals from the additive model with AR(1) errors
 ACF <- acf(resid(modIceOn0$lme, type = "normalized"), plot = FALSE)
@@ -447,7 +449,7 @@ ggplot(IceOnPred,aes(x=Year,y=fit))+
 
 ### IceInDayofYear_fed~nDaysMeanBelowZero_OctNovDec
 modIceOn1 <- gam(IceInDayofYear_fed ~  s(nDaysMeanBelowZero_OctNovDec),
-                 family=Gamma(link="log"),
+                 # family=Gamma(link="log"),
                  data = MohonkIceWeather,
                  correlation = corCAR1(form = ~ Year),
                  method = "REML")
@@ -458,10 +460,14 @@ summary(modIceOn1)
 draw(modIceOn1, residuals = TRUE)
 #Partial plots of estimated smooth functions with partial residuals
 
+plot(modIceOn1,
+     shift = coef(modIceOn1)[1],
+     pages =1, all.terms=TRUE)
+
 
 ### IceInDayofYear_fed~cumMeanDailyT_OctNovDec
 modIceOn2 <- gam(IceInDayofYear_fed ~ s(cumMeanDailyT_OctNovDec) ,
-                 family=Gamma(link="log"),
+                 # family=Gamma(link="log"),
                  data = MohonkIceWeather,
                  correlation = corCAR1(form = ~ Year),
                  method = "REML")
@@ -472,15 +478,25 @@ summary(modIceOn2)
 draw(modIceOn2, residuals = TRUE)
 #Partial plots of estimated smooth functions with partial residuals
 
+plot(modIceOn2,
+     shift = coef(modIceOn2)[1],
+     pages =1, all.terms=TRUE)
+
+
 ### IceInDayofYear_fed~Sept + Oct + Nov + Dec
 modIceOn3 <- gam(IceInDayofYear_fed ~  s(cumMeanDailyT_Sep) + s(cumMeanDailyT_Oct) + s(cumMeanDailyT_Nov) + s(cumMeanDailyT_Dec),
-                 family=Gamma(link="log"),
+                 # family=Gamma(link="log"),
                  data = MohonkIceWeather,
                  correlation = corCAR1(form = ~ Year),
                  method = "REML")
 summary(modIceOn3)
 # summary(modIceOn3$gam)
 #Fit improves substantially over null model
+
+plot(modIceOn3,
+     shift = coef(modIceOn3)[1],
+     pages =1, all.terms=TRUE)
+
 
 #A few visuals
 vis.gam(modIceOn3, view=c("cumMeanDailyT_Nov","cumMeanDailyT_Dec"), plot.type="contour", color="cm", type="response")
@@ -495,20 +511,22 @@ vis.gam(modIceOn3, view=c("cumMeanDailyT_Nov","cumMeanDailyT_Dec"),
         ylab="Dec. cumulative temp (°C)") #Adjust theta to get a different view
 
 
-draw(modIceOn3$gam, residuals = TRUE)
-#Partial plots of estimated smooth functions with partial residuals
-
 ### IceInDayofYear_fed~Nov + Dec
 ### Last model contains only Nov + Dec since individually Sep and Oct were not statistically significantly. 
 modIceOn4 <- gam(IceInDayofYear_fed ~  s(cumMeanDailyT_Nov) + s(cumMeanDailyT_Dec),
-                 family=Gamma(link="log"),
+                 # family=Gamma(link="log"),
                  data = MohonkIceWeather,
                  correlation = corCAR1(form = ~ Year),
                  method = "REML")
 summary(modIceOn4)
-# modIceOn4_S<-summary(modIceOn4$gam)
-# modIceOn4_S
 #Fit improves substantially over null model
+
+plot(modIceOn4,
+     shift = coef(modIceOn4)[1],
+     pages =1, all.terms=TRUE)
+
+appraise(modIceOn4)
+
 
 #A few visuals
 vis.gam(modIceOn4, view=c("cumMeanDailyT_Nov","cumMeanDailyT_Dec"), type="response")
@@ -518,7 +536,14 @@ vis.gam(modIceOn4,theta= -100, type="response")
 
 draw(modIceOn4, residuals = TRUE)
 #Partial plots of estimated smooth functions with partial residuals
-
+qq_plot(modIceOn4)
+draw(modIceOn4,
+     residuals = TRUE,
+     scales="free",
+     ci_level=0.95,
+     rug=FALSE,
+     smooth_col="navyblue",
+     resid_col="navyblue")
 
 #How to compare the fits of multiple GAMs models? 
 #Would be worth digging into more but found this as a solution:
@@ -532,6 +557,76 @@ compareML(modIceOn0, modIceOn4)
 
 
 visreg::visreg2d(modIceOn4, xvar='cumMeanDailyT_Nov', yvar='cumMeanDailyT_Dec', scale='response')
+
+
+#Final variables for paper--
+#Draw plots by hand
+#https://gavinsimpson.github.io/gratia/articles/custom-plotting.html
+
+load_mgcv()
+fittedValues_IceOn <- fitted_values(modIceOn4)
+
+
+### Panel A -- Ice On vs. cumMeanDailyT_Dec
+new_data <-
+  with(MohonkIceWeather,
+       expand.grid(
+         cumMeanDailyT_Dec = seq(
+           min(cumMeanDailyT_Dec, na.rm = TRUE),
+           max(cumMeanDailyT_Dec, na.rm =
+                 TRUE),
+           length = 200
+         ),
+         cumMeanDailyT_Nov = median(cumMeanDailyT_Nov, na.rm =
+                                      TRUE)
+       ))
+
+ilink <- family(modIceOn4)$linkinv
+pred <- predict(modIceOn4, new_data, type = "link", se.fit = TRUE)
+pred <- cbind(pred, new_data)
+pred <- transform(pred, lwr_ci = ilink(fit - (2 * se.fit)),
+                  upr_ci = ilink(fit + (2 * se.fit)),
+                  fitted = ilink(fit))
+
+IceIn_CumuDec<-ggplot(pred, aes(x = cumMeanDailyT_Dec, y = fitted)) +
+  geom_ribbon(aes(ymin = lwr_ci, ymax = upr_ci), alpha = 0.2) +
+  geom_line() +
+  geom_point(data=MohonkIceWeather, aes(x=cumMeanDailyT_Dec,
+                                        y=IceInDayofYear_fed))+
+  labs(x="Dec. cumulative mean daily temperature (°C)",
+       y="Ice on (days since Oct 1)")
+
+### Panel B -- Ice On vs. cumMeanDailyT_Nov
+new_data <-
+  with(MohonkIceWeather,
+       expand.grid(
+         cumMeanDailyT_Nov = seq(
+           min(cumMeanDailyT_Nov, na.rm = TRUE),
+           max(cumMeanDailyT_Nov, na.rm =
+                 TRUE),
+           length = 200
+         ),
+         cumMeanDailyT_Dec = median(cumMeanDailyT_Dec, na.rm =
+                                      TRUE)
+       ))
+
+ilink <- family(modIceOn4)$linkinv
+pred <- predict(modIceOn4, new_data, type = "link", se.fit = TRUE)
+pred <- cbind(pred, new_data)
+pred <- transform(pred, lwr_ci = ilink(fit - (2 * se.fit)),
+                  upr_ci = ilink(fit + (2 * se.fit)),
+                  fitted = ilink(fit))
+
+IceIn_CumuNov<-ggplot(pred, aes(x = cumMeanDailyT_Nov, y = fitted)) +
+  geom_ribbon(aes(ymin = lwr_ci, ymax = upr_ci), alpha = 0.2) +
+  geom_line() +
+  geom_point(data=MohonkIceWeather, aes(x=cumMeanDailyT_Nov,
+                                        y=IceInDayofYear_fed))+
+  labs(x="Nov. cumulative mean daily temperature (°C)",
+       y="Ice on (days since Oct 1)")
+
+
+IceIn_CumuDec+IceIn_CumuNov
 
 # Fitting GAMs for IceOutDayofYear -------------------------------------------
 
