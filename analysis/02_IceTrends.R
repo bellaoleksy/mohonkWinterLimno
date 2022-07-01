@@ -560,6 +560,7 @@ visreg::visreg2d(modIceOn4, xvar='cumMeanDailyT_Nov', yvar='cumMeanDailyT_Dec', 
 
 
 #Final variables for paper--
+summary(modIceOn4)
 
 ### Panel A -- Ice On vs. cumMeanDailyT_Dec
 new_data <-
@@ -1065,7 +1066,7 @@ Row2<-cowplot::plot_grid(IceOut_FebMarT,
 Figure2<-Row1/Row2
 Figure2
 
-ggsave("figures/FigureX.GamPredictions.png", plot=Figure2, width=9, height=5,units="in", dpi=300)
+ggsave("figures/FigureX.GamPredictions_IceOnIceOff.png", plot=Figure2, width=9, height=5,units="in", dpi=300)
 
 # Fitting GAMs for iceDuration_days -------------------------------------------
 
