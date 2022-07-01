@@ -844,7 +844,6 @@ modIceOut8 <- gam(IceOutDayofYear ~  s(cumMeanDailyT_FebMar) +
                   # correlation = corCAR1(form = ~ Year),
                   method = "REML")
 summary(modIceOut8)
-#Shows that there is probably some benefit in keeping April in the model. 
 
 draw(modIceOut8, residuals = TRUE)
 #Partial plots of estimated smooth functions with partial residuals
@@ -927,49 +926,92 @@ vis.gam(modIceOut2, view=c("cumMeanDailyT_FebMar","cumSnow_FebMar"),
 
 
 #Final variables for paper--
-modIceOut8_summary
+modIceOut7_summary
 
-### Panel C -- Ice Out vs. cumMeanDailyT_FebMar
+### Panel C -- Ice Out vs. cumMeanDailyT_Feb
 new_data <-
   with(MohonkIceWeather,
        expand.grid(
-         cumMeanDailyT_FebMar = seq(
-           min(cumMeanDailyT_FebMar, na.rm = TRUE),
-           max(cumMeanDailyT_FebMar, na.rm =
+         cumMeanDailyT_Feb = seq(
+           min(cumMeanDailyT_Feb, na.rm = TRUE),
+           max(cumMeanDailyT_Feb, na.rm =
                  TRUE),
            length = 200
          ),
+         cumMeanDailyT_Mar = median(cumMeanDailyT_Mar, na.rm =
+                                      TRUE),
          cumSnow_FebMarApr = median(cumSnow_FebMarApr, na.rm =
                                       TRUE),
          LengthOfIceCover_days = median(LengthOfIceCover_days, na.rm =
                                       TRUE)
        ))
 
-ilink <- family(modIceOut8)$linkinv
-pred_FebMarT <- predict(modIceOut8, new_data, type = "link", se.fit = TRUE)
-pred_FebMarT <- cbind(pred_FebMarT, new_data)
-pred_FebMarT <- transform(pred_FebMarT, lwr_ci = ilink(fit - (2 * se.fit)),
+ilink <- family(modIceOut7)$linkinv
+pred_FebT <- predict(modIceOut7, new_data, type = "link", se.fit = TRUE)
+pred_FebT <- cbind(pred_FebT, new_data)
+pred_FebT <- transform(pred_FebT, lwr_ci = ilink(fit - (2 * se.fit)),
                       upr_ci = ilink(fit + (2 * se.fit)),
                       fitted = ilink(fit))
-pred_FebMarT <- pred_FebMarT %>%
-  select(cumMeanDailyT_FebMar, lwr_ci:fitted) %>%
-  rename(lwr_ci_FebMarT = lwr_ci,
-         upr_ci_FebMarT = upr_ci,
-         fitted_FebMarT = fitted)
+pred_FebT <- pred_FebT %>%
+  select(cumMeanDailyT_Feb, lwr_ci:fitted) %>%
+  rename(lwr_ci_FebT = lwr_ci,
+         upr_ci_FebT = upr_ci,
+         fitted_FebT = fitted)
 
-IceOut_FebMarT<-ggplot(pred_FebMarT, aes(x = cumMeanDailyT_FebMar, y = fitted_FebMarT)) +
-  geom_ribbon(aes(ymin = lwr_ci_FebMarT, ymax = upr_ci_FebMarT), alpha = 0.2) +
+IceOut_FebT<-ggplot(pred_FebT, aes(x = cumMeanDailyT_Feb, y = fitted_FebT)) +
+  geom_ribbon(aes(ymin = lwr_ci_FebT, ymax = upr_ci_FebT), alpha = 0.2) +
   geom_line() +
-  geom_point(data=MohonkIceWeather, aes(x=cumMeanDailyT_FebMar,
+  geom_point(data=MohonkIceWeather, aes(x=cumMeanDailyT_Feb,
                                         y=IceOutDayofYear))+
-  labs(x="Feb+Mar cumulative mean daily temperature (°C)",
+  labs(x="Feb cumulative mean daily temperature (°C)",
        y="Ice Off (Julian Day)")+
   scale_y_continuous(breaks = seq(70, 120, by = 10) )+
   coord_cartesian(ylim = c(70, 120), expand = TRUE)
 
-### Panel D -- Ice Out vs. cumSnow_FebMarApr
-modIceOut8_summary
+### Panel D -- Ice Out vs. cumMeanDailyT_Mar
+modIceOut7_summary
 
+new_data <-
+  with(MohonkIceWeather,
+       expand.grid(
+         cumMeanDailyT_Mar = seq(
+           min(cumMeanDailyT_Mar, na.rm = TRUE),
+           max(cumMeanDailyT_Mar, na.rm =
+                 TRUE),
+           length = 200
+         ),
+         cumMeanDailyT_Feb = median(cumMeanDailyT_Feb, na.rm =
+                                      TRUE),
+         cumSnow_FebMarApr = median(cumSnow_FebMarApr, na.rm =
+                                      TRUE),
+         LengthOfIceCover_days = median(LengthOfIceCover_days, na.rm =
+                                          TRUE)
+       ))
+
+ilink <- family(modIceOut7)$linkinv
+pred_MarT <- predict(modIceOut7, new_data, type = "link", se.fit = TRUE)
+pred_MarT <- cbind(pred_MarT, new_data)
+pred_MarT <- transform(pred_MarT, lwr_ci = ilink(fit - (2 * se.fit)),
+                       upr_ci = ilink(fit + (2 * se.fit)),
+                       fitted = ilink(fit))
+pred_MarT <- pred_MarT %>%
+  select(cumMeanDailyT_Mar, lwr_ci:fitted) %>%
+  rename(lwr_ci_MarT = lwr_ci,
+         upr_ci_MarT = upr_ci,
+         fitted_MarT = fitted)
+
+IceOut_MarT<-ggplot(pred_MarT, aes(x = cumMeanDailyT_Mar, y = fitted_MarT)) +
+  geom_ribbon(aes(ymin = lwr_ci_MarT, ymax = upr_ci_MarT), alpha = 0.2) +
+  geom_line() +
+  geom_point(data=MohonkIceWeather, aes(x=cumMeanDailyT_Mar,
+                                        y=IceOutDayofYear))+
+  labs(x="Mar cumulative mean daily temperature (°C)",
+       y="Ice Off (Julian Day)")+
+  scale_y_continuous(breaks = seq(70, 120, by = 10) )+
+  coord_cartesian(ylim = c(70, 120), expand = TRUE)
+
+
+#Panel E -- Ice Out vs. FebMarAprSnow
 new_data <-
   with(MohonkIceWeather,
        expand.grid(
@@ -979,14 +1021,17 @@ new_data <-
                  TRUE),
            length = 200
          ),
-         cumMeanDailyT_FebMar = median(cumMeanDailyT_FebMar, na.rm =
+         cumMeanDailyT_Feb = median(cumMeanDailyT_Feb, na.rm =
+                                      TRUE),
+         cumMeanDailyT_Mar = median(cumMeanDailyT_Mar, na.rm =
                                       TRUE),
          LengthOfIceCover_days = median(LengthOfIceCover_days, na.rm =
-                                         TRUE)
+                                          TRUE)
        ))
 
-ilink <- family(modIceOut8)$linkinv
-pred_FebMarAprSnow <- predict(modIceOut8, new_data, type = "link", se.fit = TRUE)
+
+ilink <- family(modIceOut7)$linkinv
+pred_FebMarAprSnow <- predict(modIceOut7, new_data, type = "link", se.fit = TRUE)
 pred_FebMarAprSnow <- cbind(pred_FebMarAprSnow, new_data)
 pred_FebMarAprSnow <- transform(pred_FebMarAprSnow, lwr_ci = ilink(fit - (2 * se.fit)),
                       upr_ci = ilink(fit + (2 * se.fit)),
@@ -1010,8 +1055,8 @@ IceOut_FebMarAprSnow<-ggplot(pred_FebMarAprSnow, aes(x = cumSnow_FebMarApr, y = 
 
 
 
-### Panel E -- Ice Out vs. LengthOfIceCover_days
-modIceOut8_summary
+### Panel eff -- Ice Out vs. LengthOfIceCover_days
+modIceOut7_summary
 
 new_data <-
   with(MohonkIceWeather,
@@ -1022,14 +1067,16 @@ new_data <-
                  TRUE),
            length = 200
          ),
-         cumMeanDailyT_FebMar = median(cumMeanDailyT_FebMar, na.rm =
-                                         TRUE),
+         cumMeanDailyT_Feb = median(cumMeanDailyT_Feb, na.rm =
+                                      TRUE),
+         cumMeanDailyT_Mar = median(cumMeanDailyT_Mar, na.rm =
+                                      TRUE),
          cumSnow_FebMarApr = median(cumSnow_FebMarApr, na.rm =
                                           TRUE)
        ))
 
-ilink <- family(modIceOut8)$linkinv
-pred_IceCover <- predict(modIceOut8, new_data, type = "link", se.fit = TRUE)
+ilink <- family(modIceOut7)$linkinv
+pred_IceCover <- predict(modIceOut7, new_data, type = "link", se.fit = TRUE)
 pred_IceCover <- cbind(pred_IceCover, new_data)
 pred_IceCover <- transform(pred_IceCover, lwr_ci = ilink(fit - (2 * se.fit)),
                                 upr_ci = ilink(fit + (2 * se.fit)),
@@ -1057,17 +1104,19 @@ IceOut_IceCover<-ggplot(pred_IceCover, aes(x = LengthOfIceCover_days, y = fitted
 
 
 
-Row2<-cowplot::plot_grid(IceOut_FebMarT,
-                   IceOut_FebMarAprSnow + 
+Row2<-cowplot::plot_grid(IceOut_FebT,
+                         IceOut_MarT
+                    + 
                      theme(axis.text.y = element_blank(),
                            # axis.ticks.y = element_blank(),
                            axis.title.y = element_blank() ), 
+                    IceOut_FebMarAprSnow,
                    IceOut_IceCover + 
                      theme(axis.text.y = element_blank(),
                            # axis.ticks.y = element_blank(),
                            axis.title.y = element_blank() ), 
                    nrow = 1,
-                   labels = c("c","d","e"),
+                   labels = c("c","d","e","f"),
                    align = "v")
 
 Figure2<-Row1/Row2
@@ -1273,6 +1322,7 @@ appraise(modIceDuration1)
 
 #Final variables for paper--
 modIceDuration1_summary
+
 
 ### Panel A -- Ice Duration vs. GlobalTempanomaly_C
 new_data <-
