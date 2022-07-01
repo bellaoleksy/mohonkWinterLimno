@@ -361,7 +361,8 @@ AnnualData <-
     MohonkIcePost1985 %>%
       dplyr::select(Year, IceOutDayofYear, LengthOfIceCover_days),
     by = c("Year")
-  )
+  ) %>%
+  arrange(Year)
 
 #*Also include the ice on date that ends the open water season.####
 #Have to clear out the first row and then reset years by 1 to frame around the open water season.
