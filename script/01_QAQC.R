@@ -302,8 +302,8 @@ MohonkDailyWeather<-MohonkDailyWeather.upload[,c("Date","Precip_mm","Snow_mm",
 
 
 ##Upload Mohonk Ice on and Ice off data####
-MohonkIce.upload<-read.csv("data/MohonkLake-IceOnIceOff-1932-2017.csv", fill = TRUE) 
-MohonkIce.upload$Year<-seq(1932,2019,by=1) #Corrected the script to include 2019
+MohonkIce.upload<-read.csv("data/MohonkLake-IceOnIceOff-1932-2022.csv", fill = TRUE) 
+MohonkIce.upload$Year<-seq(1932,2022,by=1) #Corrected the script to include 2019
 
 
 #Create new column of ice in date. Replace "No Date" with NA, format the others to dates
