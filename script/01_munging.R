@@ -356,7 +356,7 @@ AnnualData$Year <- as.numeric(levels(factor(DailyInterpol$year)))
 
 #Merge AnnualData with IceOff and ice length data
 AnnualData <-
-  left_join(
+  full_join(
     AnnualData,
     MohonkIcePost1985 %>%
       dplyr::select(Year, IceOutDayofYear, LengthOfIceCover_days),
