@@ -251,6 +251,10 @@ AnnualData %>%
 
 
 
+
+
+
+# ~~FIGURE 1~~ Ice in phenology timeseries ------------------------------------------------------------
 # Sen slope trends in ice phenology --------------------------------------------------
 #Sen slopes using DCR defined function that is drawn from zyp and trend functions#
 #No longer need to impute values or use zyp.sen
@@ -265,19 +269,15 @@ Ice.SensSlopeSummary<-
   pivot_longer(-1) %>%
   group_by(name)%>%
   dplyr::summarize(Sens_Slope=MTCC.sensSlope(x=Year,y=value)$coefficients["Year"],
-            Sens_Intercept=MTCC.sensSlope(x=Year,y=value)$coefficients["Intercept"],
-            Sens_pval=MTCC.sensSlope(x=Year,y=value)$pval,
-            Sens_z_stat=MTCC.sensSlope(x=Year,y=value)$z_stat,
-            Sens_n=MTCC.sensSlope(x=Year,y=value)$n) %>%
+                   Sens_Intercept=MTCC.sensSlope(x=Year,y=value)$coefficients["Intercept"],
+                   Sens_pval=MTCC.sensSlope(x=Year,y=value)$pval,
+                   Sens_z_stat=MTCC.sensSlope(x=Year,y=value)$z_stat,
+                   Sens_n=MTCC.sensSlope(x=Year,y=value)$n) %>%
   mutate(Significance=ifelse(Sens_pval<0.05,"*","NS"))
 
 
 #Visualize
 glimpse(MohonkIce)
-
-
-
-# ~~FIGURE 1~~ Ice in phenology timeseries ------------------------------------------------------------
 
 #**Phenology of stratification plot####
 #Immitate the figure from our GRL paper
@@ -366,7 +366,7 @@ ggplot() +
   xlab("Year") +
   ylab("Days since Oct 1 (beginning of water-year)")
 ggsave(
-  "figures/FigX.IcePhenology.png",
+  "figures/Fig1.IcePhenology.png",
   width = 6,
   height = 4,
   units = "in",
@@ -526,6 +526,10 @@ plot(modIceOn4,
      pages =1, all.terms=TRUE)
 
 appraise(modIceOn4)
+
+gam.check(modIceOn4)
+#Suggests that default k values are fine
+
 
 
 #A few visuals
@@ -832,7 +836,9 @@ draw(modIceOut7, residuals = TRUE)
 
 ### IceInDayofYear~ cumMeanDailyT_Feb + cumMeanDailyT_Mar +  cumSnow_FebMarApr + LengthOfIceCover_days
 ### Identical to model 2 but includes length of ice cover as a proxy for ice thickness...?
-modIceOut8 <- gam(IceOutDayofYear ~  s(cumMeanDailyT_FebMar) + s(cumSnow_FebMarApr) + s(LengthOfIceCover_days),
+modIceOut8 <- gam(IceOutDayofYear ~  s(cumMeanDailyT_FebMar) + 
+                    s(cumSnow_FebMarApr) +
+                    s(LengthOfIceCover_days),
                   # family=Gamma(link="log"),
                   data = MohonkIceWeather,
                   # correlation = corCAR1(form = ~ Year),
@@ -843,7 +849,8 @@ summary(modIceOut8)
 draw(modIceOut8, residuals = TRUE)
 #Partial plots of estimated smooth functions with partial residuals
 
-
+gam.check(modIceOut8)
+#Suggests that default k values are fine
 
 #How to compare the fits of multiple GAMs models? 
 #Would be worth digging into more but found this as a solution:
@@ -1066,7 +1073,7 @@ Row2<-cowplot::plot_grid(IceOut_FebMarT,
 Figure2<-Row1/Row2
 Figure2
 
-ggsave("figures/FigureX.GamPredictions_IceOnIceOff.png", plot=Figure2, width=9, height=5,units="in", dpi=300)
+ggsave("figures/Figure2.GamPredictions_IceOnIceOff.png", plot=Figure2, width=9, height=5,units="in", dpi=300)
 
 # Fitting GAMs for iceDuration_days -------------------------------------------
 
@@ -1257,7 +1264,7 @@ modIceDuration2_summary<- summary.gam(modIceDuration2)
 modIceDuration2_summary$dev.expl
 modIceDuration1_summary$dev.expl
 
-
+appraise(modIceDuration1)
 
 
 # ~~FIGURE X ~~ IceCoverDuration vs.  XYZ (Model 1) ---------------------------------
