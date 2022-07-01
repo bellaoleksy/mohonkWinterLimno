@@ -651,6 +651,20 @@ Row1<-cowplot::plot_grid(IceIn_CumuDec,
                    align = "v")
 
 
+Row1a<-cowplot::plot_grid(IceIn_CumuNov, 
+                          IceIn_CumuDec + 
+                           theme(axis.text.y = element_blank(),
+                                 # axis.ticks.y = element_blank(),
+                                 axis.title.y = element_blank() ), 
+                         nrow = 1,
+                         labels = c("a","b"),
+                         align = "v")
+
+ggsave("figures/Figure2.GamPredictions_IceOn.png", plot=Row1a, width=6, height=4,units="in", dpi=300)
+
+
+
+
 # Fitting GAMs for IceOutDayofYear -------------------------------------------
 
 #Distribution of y
@@ -1122,7 +1136,24 @@ Row2<-cowplot::plot_grid(IceOut_FebT,
 Figure2<-Row1/Row2
 Figure2
 
-ggsave("figures/Figure2.GamPredictions_IceOnIceOff.png", plot=Figure2, width=9, height=5,units="in", dpi=300)
+ggsave("figures/Figurex.GamPredictions_IceOnIceOff.png", plot=Figure2, width=9, height=5,units="in", dpi=300)
+
+
+Row2a<-cowplot::plot_grid(IceOut_FebT,
+                         IceOut_MarT
+                         + 
+                           theme(axis.text.y = element_blank(),
+                                 # axis.ticks.y = element_blank(),
+                                 axis.title.y = element_blank() ), 
+                         IceOut_FebMarAprSnow,
+                         IceOut_IceCover + 
+                           theme(axis.text.y = element_blank(),
+                                 # axis.ticks.y = element_blank(),
+                                 axis.title.y = element_blank() ), 
+                         nrow = 2,
+                         labels = c("a","b","c","d"),
+                         align = "v")
+ggsave("figures/Figure3.GamPredictions_IceOff.png", plot=Row2a, width=6, height=4,units="in", dpi=300)
 
 # Fitting GAMs for iceDuration_days -------------------------------------------
 
