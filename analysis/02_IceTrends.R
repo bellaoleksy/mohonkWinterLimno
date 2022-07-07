@@ -106,32 +106,6 @@ MohonkIceWeather_correlations_trim <- MohonkIceWeather_correlations %>%
 
 head(MohonkIceWeather_correlations_trim)
 
-##Quite a few variables highly correlated ( r > 0.90 ) 
-## so I am filtering those out prior to further analyses, but you can welcome to change this!
-# MohonkIceWeather_trim <- MohonkIceWeather %>%
-#   select(-cumSnow_SepOct, -cumSnow_SepOctNov, #never any snow in Sept
-#          -nDaysMeanBelowZero_SepOct, -nDaysMeanBelowZero_SepOctNov, #never any days below zero Sept
-#          -nDaysMinBelowZero_SepOct, -nDaysMinBelowZero_SepOctNov,
-#          -cumSnow_FebMarApr, #probablyy not much snow in April
-#          -cumSnow_OctNov, #but keep cumSnow_Nov, almost never snows in Oct
-#          -nDaysMinAboveZero_FebMar, #keep nDaysMinAboveZero_Mar
-#          -nDaysMinBelowZero_Jan, #keep nDaysMeanBelowZero_Jan
-#          -cumRain_Oct, #but drop cumRain_OctNov since we have
-#                        #cumSnow_Nov
-#          -cumRain_JanFebMar, #probably little rain in Jan
-#          -cumMeanDailyT_JanFebMar, #but keep cumMeanDailyT_FebMar
-#          -cumMeanDailyT_MarApr, #but keep cumMeanDailyT_Mar
-#          -cumSnow_JanFebMar, #but keep cumSnow_FebMar
-#          -nDaysMinAboveZero_MarApr, #but keep nDaysMinAboveZero_Mar
-#          -cumRain_MarApr, #but keep cumRain_Mar
-#   )
-
-## UNSURE about the following pairs, so I am keeping those in for now:
-# 	nDaysMeanBelowZero_Dec	nDaysMinBelowZero_Dec	0.86
-# 	cumMeanDailyT_Mar	nDaysMinAboveZero_Mar	0.86
-# 	cumMeanDailyT_MarApr	nDaysMinAboveZero_MarApr	0.86
-# 	cumMeanDailyT_Mar	nDaysMeanAboveZero_Mar	0.83
-
 #Look for potentially spurious correlations
 res3 <- rcorr(as.matrix(MohonkIceWeather[,3:ncol(MohonkIceWeather)]))
 # res3 <- rcorr(as.matrix(MohonkIceWeather[,3:ncol(MohonkIceWeather)]))
@@ -150,9 +124,9 @@ MohonkIceWeather_trim_correlations %>%
 #Look at the top 10 strongest correlations for each predictor variable
 MohonkIce_top10<-MohonkIceWeather_trim_correlations %>%
   mutate(cor_abs=abs(cor)) %>%
-  arrange(desc(cor_abs)) %>%
-  group_by(row) %>%
-  slice(1:10)
+  arrange(desc(cor_abs)) 
+  # group_by(row) %>%
+  # slice(1:10)
 
 #Extract variable names 
 IceInVars <- MohonkIce_top10 %>% filter(row=="IceInDayofYear_fed") %>% pull(column)
@@ -837,7 +811,8 @@ draw(modIceOut6, residuals = TRUE)
 
 ### IceInDayofYear~ cumMeanDailyT_Feb + cumMeanDailyT_Mar +  cumSnow_FebMarApr + LengthOfIceCover_days
 ### Identical to model 6 but includes length of ice cover as a proxy for ice thickness...?
-modIceOut7 <- gam(IceOutDayofYear ~  s(cumMeanDailyT_Feb) + s(cumMeanDailyT_Mar) + s(cumSnow_FebMarApr) + s(LengthOfIceCover_days),
+modIceOut7 <- gam(IceOutDayofYear ~  s(cumMeanDailyT_Feb) + s(cumMeanDailyT_Mar) + s(cumSnow_FebMarApr) 
+                  + s(LengthOfIceCover_days),
                   # family=Gamma(link="log"),
                   data = MohonkIceWeather,
                   # correlation = corCAR1(form = ~ Year),
@@ -1217,7 +1192,7 @@ lines(unlist(m1.dsig$decr) ~ Year, data = IceDurationPred, col = "red", lwd = 3)
 #the first derivative didn't overlap the horizontal black line.
 plot.Deriv(m1.d)
 
-#Plot Ice off DOY vs. year pretty
+#Plot ice duration vs. year
 ggplot(IceDurationPred,aes(x=Year,y=fit))+
   geom_point(data=MohonkIceWeather,
              mapping=aes(x=Year, y=LengthOfIceCover_days), size=2.5, alpha=0.7) +
@@ -1226,7 +1201,7 @@ ggplot(IceDurationPred,aes(x=Year,y=fit))+
   labs(x="Year",y="Ice Duration (days)")+
   coord_cartesian(xlim=c(1930,2020))+
   scale_x_continuous(breaks=seq(1930, 2020, 15))
-## BUT the fit is poor. Can we add in additional predictors to improve the model fit? 
+
 
 
 ## Create model that includes climate anomoly and some climate teleconnections
@@ -1235,10 +1210,12 @@ ggplot(IceDurationPred,aes(x=Year,y=fit))+
 #All variables
 IceCover_Vars<-MohonkIceWeather %>%
   filter(Year >= 1950) %>% #When the teleconnection data start
-  select(LengthOfIceCover_days, GlobalTempanomaly_C, contains("ENSO"), contains("NAO"))
+  select(LengthOfIceCover_days, GlobalTempanomaly_C, contains("NAO"))
   
 IceCover_Vars %>%
   ggpairs() 
+#Global temp anomaly, NAO_winter, NAO_Nov, and Nov_Dec all have a significant correlation
+
 
 #Create table
 res4 <- rcorr(as.matrix(IceCover_Vars))
@@ -1246,19 +1223,20 @@ res4 <- rcorr(as.matrix(IceCover_Vars))
 IceCover_correlations<-flattenCorrMatrix(res4$r, res4$P) %>%
   filter(row %in% "LengthOfIceCover_days") %>%
   arrange(p) 
-# GlobalTempanomaly_C & NAO_index_winter only values with p < 0.05
-# NAO_index_fall p=0.08 so may consider throwing it in the model in case it also explains some variation.
 
 
 hist(MohonkIceWeather$GlobalTempanomaly_C)
 hist(MohonkIceWeather$LengthOfIceCover_days)
 hist(MohonkIceWeather$NAO_index_winter)
+hist(MohonkIceWeather$NAO_index_Nov)
+hist(MohonkIceWeather$NAO_index_Dec)
+
 
 ### Mod1
 set.seed(11)
 modIceDuration1 <- gam(LengthOfIceCover_days ~ s(GlobalTempanomaly_C, k=50) +
-                         s(NAO_index_winter, k=3)+
-                         s(NAO_index_fall),
+                         s(NAO_index_Nov, k=10)+
+                         s(NAO_index_Dec, k=10),
                   # family=Gamma(link="log"),
                   family=scat(link="identity"), #for heavy tail
                   data = MohonkIceWeather,
@@ -1274,16 +1252,16 @@ draw(modIceDuration1, residuals = TRUE)
 # OVerfitting problem with NAO_index_winter?
 
 plot(modIceDuration1,
-     shift = coef(modIceOn1)[1],
+     shift = coef(modIceDuration1)[1],
      pages =1)
 
 
 
-# I got to thinking, can we include an interaction? Such as between NAO_index_winter and NAO_index_fall?
+# I got to thinking, can we include an interaction? Such as between NAO_index_Nov and NAO_index_Dec?
 # http://r.qcbs.ca/workshop08/book-en/gam-with-interaction-terms.html#interaction-between-smoothed-and-factor-variables
 ### Mod2
 modIceDuration2 <- gam(LengthOfIceCover_days ~  s(GlobalTempanomaly_C, k=30) +
-                         s(NAO_index_winter, NAO_index_fall),
+                         s(NAO_index_Nov, NAO_index_Dec),
                        # s(NAO_index_fall, k=30),
                        # family=Gamma(link="log"),
                        family=scat(link="identity"), #for heavy tail
@@ -1291,15 +1269,16 @@ modIceDuration2 <- gam(LengthOfIceCover_days ~  s(GlobalTempanomaly_C, k=30) +
                        # correlation = corCAR1(form = ~ Year),
                        method = "REML")
 summary(modIceDuration2)
-#Fit improves substantially over null model
+#Doesn't improve things
 
 
 gam.check(modIceDuration2)
 #Want to set k sufficiently high. At default, was getting low p-value for GlobalTempanomaly_C
 
 plot(modIceDuration2,
-     shift = coef(modIceOn1)[1],
-     pages =1, select=1)
+     shift = coef(modIceDuration2)[1],
+     pages =1)
+#Basically uninterpretable
 
 draw(modIceDuration2, residuals = TRUE)
 #Partial plots of estimated smooth functions with partial residuals
@@ -1316,7 +1295,7 @@ modIceDuration3 <- gam(LengthOfIceCover_days ~  s(GlobalTempanomaly_C, k=50) +
                        # correlation = corCAR1(form = ~ Year),
                        method = "REML")
 summary(modIceDuration3)
-#Fit improves substantially over null model
+#Worse fit than NAO_Nov and NAO_Dec separately. 
 
 gam.check(modIceDuration3)
 #Want to set k sufficiently high. At default, was getting low p-value for GlobalTempanomaly_C
@@ -1325,7 +1304,7 @@ draw(modIceDuration3, residuals = TRUE)
 #Partial plots of estimated smooth functions with partial residuals
 
 plot(modIceDuration3,
-     shift = coef(modIceOn1)[1],
+     shift = coef(modIceDuration3)[1],
      pages =1)
 
 
@@ -1337,7 +1316,7 @@ modIceDuration1_summary<- summary.gam(modIceDuration1)
 modIceDuration3_summary<- summary.gam(modIceDuration3)
 modIceDuration1_summary$dev.expl
 modIceDuration3_summary$dev.expl
-# Including the non-significant fall NAO term explains ~4% more variabilty. 
+# Including NAO_Nov and NAO_Dec separately leads to more variance explained though still low!
 
 compareML(modIceDuration2, modIceDuration1) # Similar performance-- could pick based on %Dev explained?
 modIceDuration2_summary<- summary.gam(modIceDuration2)
@@ -1365,9 +1344,9 @@ new_data <-
                  TRUE),
            length = 200
          ),
-         NAO_index_winter = median(NAO_index_winter, na.rm =
+         NAO_index_Dec = median(NAO_index_Dec, na.rm =
                                       TRUE),
-         NAO_index_fall = median(NAO_index_fall, na.rm =
+         NAO_index_Nov = median(NAO_index_Nov, na.rm =
                                           TRUE)
        ))
 
@@ -1393,138 +1372,100 @@ IceDuration_GlobalT<-ggplot(pred_GlobalT, aes(x = GlobalTempanomaly_C, y = Lengt
   scale_y_continuous(breaks = seq(30, 150, by = 30) )+
   coord_cartesian(ylim = c(30, 150), expand = TRUE)
 
-### Panel B-- Ice Duration vs. NAO_index_winter
+### Panel B-- Ice Duration vs. NAO_index_Dec
 modIceDuration1_summary
 
 new_data <-
   with(MohonkIceWeather,
        expand.grid(
-         NAO_index_winter = seq(
-           min(NAO_index_winter, na.rm = TRUE),
-           max(NAO_index_winter, na.rm =
+         NAO_index_Dec = seq(
+           min(NAO_index_Dec, na.rm = TRUE),
+           max(NAO_index_Dec, na.rm =
                  TRUE),
            length = 200
          ),
          GlobalTempanomaly_C = median(GlobalTempanomaly_C, na.rm =
                                      TRUE),
-         NAO_index_fall = median(NAO_index_fall, na.rm =
+         NAO_index_Nov = median(NAO_index_Nov, na.rm =
                                    TRUE)
        ))
 
 ilink <- family(modIceDuration1)$linkinv
-pred_winterNAO <- predict(modIceDuration1, new_data, type = "link", se.fit = TRUE)
-pred_winterNAO <- cbind(pred_winterNAO, new_data)
-pred_winterNAO <- transform(pred_winterNAO, lwr_ci = ilink(fit - (2 * se.fit)),
+pred_DecNAO <- predict(modIceDuration1, new_data, type = "link", se.fit = TRUE)
+pred_DecNAO <- cbind(pred_DecNAO, new_data)
+pred_DecNAO <- transform(pred_DecNAO, lwr_ci = ilink(fit - (2 * se.fit)),
                           upr_ci = ilink(fit + (2 * se.fit)),
                           fitted = ilink(fit))
-pred_winterNAO <- pred_winterNAO %>%
-  select(NAO_index_winter, lwr_ci:fitted) %>%
-  rename(lwr_ci_winterNAO = lwr_ci,
-         upr_ci_winterNAO = upr_ci,
+pred_DecNAO <- pred_DecNAO %>%
+  select(NAO_index_Dec, lwr_ci:fitted) %>%
+  rename(lwr_ci_DecNAO = lwr_ci,
+         upr_ci_DecNAO = upr_ci,
          LengthOfIceCover_days = fitted)
 
-IceDuration_winterNAO<-ggplot(pred_winterNAO, aes(x = NAO_index_winter, y = LengthOfIceCover_days)) +
-  geom_ribbon(aes(ymin = lwr_ci_winterNAO, ymax = upr_ci_winterNAO), alpha = 0.2) +
+IceDuration_DecNAO<-ggplot(pred_DecNAO, aes(x = NAO_index_Dec, y = LengthOfIceCover_days)) +
+  geom_ribbon(aes(ymin = lwr_ci_DecNAO, ymax = upr_ci_DecNAO), alpha = 0.2) +
   geom_line() +
-  geom_point(data=MohonkIceWeather, aes(x=NAO_index_winter,
+  geom_point(data=MohonkIceWeather, aes(x=NAO_index_Dec,
                                         y=LengthOfIceCover_days))+
-  labs(x="Winter NAO index",
+  labs(x="Dec NAO index",
        y="Length of ice cover (days)")+
   scale_y_continuous(breaks = seq(30, 150, by = 30) )+
   coord_cartesian(ylim = c(30, 150), expand = TRUE)
 
-### Panel C-- Ice Duration vs. NAO_index_fall
+### Panel C-- Ice Duration vs. NAO_index_Nov
 modIceDuration1_summary
 
 new_data <-
   with(MohonkIceWeather,
        expand.grid(
-         NAO_index_fall = seq(
-           min(NAO_index_fall, na.rm = TRUE),
-           max(NAO_index_fall, na.rm =
+         NAO_index_Nov = seq(
+           min(NAO_index_Nov, na.rm = TRUE),
+           max(NAO_index_Nov, na.rm =
                  TRUE),
            length = 200
          ),
          GlobalTempanomaly_C = median(GlobalTempanomaly_C, na.rm =
                                         TRUE),
-         NAO_index_winter = median(NAO_index_winter, na.rm =
+         NAO_index_Dec = median(NAO_index_Dec, na.rm =
                                    TRUE)
        ))
 
 ilink <- family(modIceDuration1)$linkinv
-pred_fallNAO <- predict(modIceDuration1, new_data, type = "link", se.fit = TRUE)
-pred_fallNAO <- cbind(pred_fallNAO, new_data)
-pred_fallNAO <- transform(pred_fallNAO, lwr_ci = ilink(fit - (2 * se.fit)),
+pred_NovNAO <- predict(modIceDuration1, new_data, type = "link", se.fit = TRUE)
+pred_NovNAO <- cbind(pred_NovNAO, new_data)
+pred_NovNAO <- transform(pred_NovNAO, lwr_ci = ilink(fit - (2 * se.fit)),
                             upr_ci = ilink(fit + (2 * se.fit)),
                             fitted = ilink(fit))
-pred_fallNAO <- pred_fallNAO %>%
-  select(NAO_index_fall, lwr_ci:fitted) %>%
-  rename(lwr_ci_fallNAO = lwr_ci,
-         upr_ci_fallNAO = upr_ci,
+pred_NovNAO <- pred_NovNAO %>%
+  select(NAO_index_Nov, lwr_ci:fitted) %>%
+  rename(lwr_ci_NovNAO = lwr_ci,
+         upr_ci_NovNAO = upr_ci,
          LengthOfIceCover_days = fitted)
 
-IceDuration_fallNAO<-ggplot(pred_fallNAO, aes(x = NAO_index_fall, y = LengthOfIceCover_days)) +
-  geom_ribbon(aes(ymin = lwr_ci_fallNAO, ymax = upr_ci_fallNAO), alpha = 0.2) +
+IceDuration_NovNAO<-ggplot(pred_NovNAO, aes(x = NAO_index_Nov, y = LengthOfIceCover_days)) +
+  geom_ribbon(aes(ymin = lwr_ci_NovNAO, ymax = upr_ci_NovNAO), alpha = 0.2) +
   geom_line() +
-  geom_point(data=MohonkIceWeather, aes(x=NAO_index_fall,
+  geom_point(data=MohonkIceWeather, aes(x=NAO_index_Nov,
                                         y=LengthOfIceCover_days))+
-  labs(x="Fall NAO index",
+  labs(x="Nov NAO index",
        y="Length of ice cover (days)")+
   scale_y_continuous(breaks = seq(30, 150, by = 30) )+
   coord_cartesian(ylim = c(30, 150), expand = TRUE)
 
 
-
-# May for fun, draw a plot of NAO_index_fall vs NAO_index_winter with color and shape size 
-# for LengthOfIceCover_days
-
-FallWinterNAO<-MohonkIceWeather %>%
-  drop_na(LengthOfIceCover_days) %>%
-  ggplot(aes(x=NAO_index_fall,y=NAO_index_winter,
-             # size=LengthOfIceCover_days,
-             fill=LengthOfIceCover_days))+
-  geom_point(shape=21)+
-  scale_fill_continuous(high = "green", low = "red",
-                        name = "Ice cover duration (days)") +
-  # scale_size_continuous(name = "Ice cover duration (days)") +
-  labs(x="Fall NAO index",
-       y="Winter NAO index")+
-  scale_y_continuous(breaks = seq(-250, 150, by = 100) )+
-  coord_cartesian(ylim = c(-250, 150),
-                  xlim = c(-100, 100), expand = TRUE)+
-  scale_x_continuous(breaks = seq(-100, 100, by = 50) )
-
-
-
-
 composite_noLegend<-cowplot::plot_grid(IceDuration_GlobalT,
-                   IceDuration_winterNAO + 
+                                       IceDuration_DecNAO + 
                      theme(axis.text.y = element_blank(),
                            # axis.ticks.y = element_blank(),
                            axis.title.y = element_blank() ),
-                   IceDuration_fallNAO, 
-                   FallWinterNAO +
+                   IceDuration_NovNAO +
                      theme(legend.position="none"), 
-                   nrow = 2,
-                   labels = c("a","b","c","d"),
+                   nrow = 1,
+                   labels = c("a","b","c"),
                    align = "hv") 
 
 
-# extract a legend that is laid out horizontally
-legend_d <- get_legend(
-  FallWinterNAO + 
-    guides(color = guide_legend(nrow = 1)) +
-    theme(legend.position = "bottom")
-)
-
-# add the legend underneath the row we made earlier. Give it 10%
-# of the height of one plot (via rel_heights).
-plot_grid(composite_noLegend, legend_d, ncol = 1, rel_heights = c(1, .1)) +
-  theme(plot.background = element_rect(fill="white"))
-
-#Still not absolutely positive that the 4th panel (interaction) adds much since this model didn't include an interaction. 
-
-ggsave("figures/FigureX.GamPredictions_IceDuration_model1.png", width=6, height=5,units="in", dpi=300)
+ggsave("figures/FigureX.GamPredictions_IceDuration_model1.png", width=8, height=3,units="in", dpi=600)
 
 
 
