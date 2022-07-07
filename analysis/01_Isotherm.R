@@ -230,7 +230,7 @@ IsothermSummary_IceOut <-
   arrange(desc(r.squared))
 
 
-#*Exploring the relationships with highest r squared values####
+#~~~Exploring the relationships with highest r squared values####
 head(IsothermSummary_IceOut)
 
 ggplot(data = Isotherm_WaterYear_dates_IceOut, aes(x = IceOutDayofYear_fed, y = isotherm_TempMean_degC_29_days_4_degC_WaterYear_date)) +
@@ -263,7 +263,7 @@ ggplot(data = Isotherm_WaterYear_dates_IceOut, aes(x = IceOutDayofYear_fed, y = 
   scale_y_continuous(breaks = c(160, 180, 200, 220), labels = c("Mar 9", "Mar 29", "Apr 18", "May 8"))  +
   geom_abline(intercept=0, slope=1)
 
-#Remove dataframes, lists, and values that are no longer necessary####
+#Remove dataframes, lists, and values that are no longer necessary
 rm(IsothermFormula,
    IceIn_ObservedDates,
    IceOut_ObservedDates,
