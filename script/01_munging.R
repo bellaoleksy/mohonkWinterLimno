@@ -689,6 +689,28 @@ AnnualData$MixingAction.OpenWater_gigaJday <-
 
 # NAO dataframe 1950-present ----------------------------------------------
 
+NAO_monthly <- NAO_daily %>%
+  mutate(
+    water_year = ifelse(
+        Month %in% c("9","10","11","12"),
+      # season %in% c("winter", "spring") &
+      #   Month %in% c("10", "11", "12", "1", "2", "3", "4"),
+      Year + 1, #IAO 2022-07-08 changed to +1 instead of -1!!!
+      Year
+    ),
+    month = month(Month, label=TRUE)
+  ) %>% #this water_year term is only relevent for winter
+  #metrics. We want 1 Oct-30 April to all correspond to the same water year
+  group_by(water_year, month) %>%
+  dplyr::summarize(NAO_index = mean(NAO_index)) %>%
+  pivot_wider(
+    names_from = "month",
+    names_sep = "_",
+    names_prefix = "NAO_index_",
+    values_from = "NAO_index"
+  ) %>%
+  ungroup() 
+
 NAO_summary <- NAO_daily %>%
   mutate(
     season =
@@ -725,6 +747,9 @@ NAO_summary <- NAO_daily %>%
   ) %>%
   ungroup() 
   # mutate(Year = water_year + 1) # Consider dropping Year because we want to join with water_year on other dataframes. 
+
+#Combine monthly and seasonal estimates
+NAO_summary<-full_join(NAO_summary,NAO_monthly, by="water_year")
 
 
 # Why not just use the dataRetrieval package calcWaterYear function and see if the answers differ
@@ -879,7 +904,7 @@ ENSO_monthly_trim <- ENSO_monthly %>%
   mutate(
     # Year = water_year + 1,
          ENSO_Oct_to_Mar = ENSO_Oct+ENSO_Nov+ENSO_Dec+
-                                 ENSO_Jan+ENSO_Feb+ENSO_Mar)
+                           ENSO_Jan+ENSO_Feb+ENSO_Mar)
 
 ENSO_summary<-left_join(ENSO_summary, ENSO_monthly_trim, by=c("water_year"))
 
