@@ -752,83 +752,6 @@ NAO_summary <- NAO_daily %>%
 NAO_summary<-full_join(NAO_summary,NAO_monthly, by="water_year")
 
 
-# Why not just use the dataRetrieval package calcWaterYear function and see if the answers differ
-# library(dataRetrieval)
-# NAO_summary_alt <- NAO_daily %>%
-#   mutate(
-#     season =
-#       ifelse(
-#         Month %in% c(12, 1, 2),
-#         "winter",
-#         ifelse(
-#           Month %in% c(3, 4, 5),
-#           "spring",
-#           ifelse(
-#             Month %in% c(6, 7, 8),
-#             "summer",
-#             ifelse(Month %in% c(9, 10, 11), "fall", "error")
-#           )
-#         )
-#       ),
-#     water_year = calcWaterYear(Date)
-#   )  %>%#this water_year term is only relevent for winter
-#   #metrics. We want 1 Oct-30 April to all correspond to the same water year
-#   group_by(water_year, season) %>%
-#   dplyr::summarize(NAO_index = mean(NAO_index)) %>%
-#   # filter(season%in%c("winter","spring")) %>% #where winter is [1oct-28feb]  & spring is [1march-30april]
-#   pivot_wider(
-#     names_from = "season",
-#     names_sep = "_",
-#     names_prefix = "NAO_index_",
-#     values_from = "NAO_index"
-#   ) %>%
-#   ungroup() %>%
-#   mutate(Year = water_year + 1)
-# 
-# test<- NAO_summary_alt %>%
-#   filter(Date>="2018-09-01" & Date <= "2018-11-30")
-
-
-#**Seasonal ENSO indices ----------------------------------------------------
-
-#Summarizing ENSO data slightly different from NAO since we only have monthly times steps:
-# * spring mean (april + may + june)
-# * summer mean (july + august + sept)
-
-
-# ENSO_seasonal <- ENSO_monthly %>%
-#   #Adds a category for season
-#   mutate(Season =
-#            ifelse(MON %in% c(4, 5, 6), "spring",
-#                   ifelse(MON %in% c(7, 8, 9), "summer",
-#                          ifelse(MON %in% c(1, 2, 3, 10, 11, 12), "other", "ERROR")))) %>%
-#   filter(Season %in% c("spring","summer"))%>%
-#   rename(Year=YR)
-#
-# ENSO_seasonal <- ENSO_monthly %>%
-#   #Adds a category for season
-#   mutate(Season =
-#            ifelse(MON %in% c(4, 5, 6), "spring",
-#                   ifelse(MON %in% c(7, 8, 9), "summer",
-#                          ifelse(MON %in% c(1, 2, 3, 10, 11, 12), "other", "ERROR")))) %>%
-#   filter(Season %in% c("spring","summer"))%>%
-#   rename(Year=YR)
-#
-# ENSO_spring <- ENSO_seasonal %>%
-#   filter(Season=="spring")%>%
-#   group_by(Year)%>%
-#   summarize_at(vars(ANOM), mean, na.rm=TRUE)%>%
-#   rename(ENSO_Spring=ANOM)
-#
-# ENSO_summer <- ENSO_seasonal %>%
-#   filter(Season=="summer")%>%
-#   group_by(Year)%>%
-#   summarize_at(vars(ANOM), mean, na.rm=TRUE)%>%
-#   rename(ENSO_Summer=ANOM)
-#
-#
-# ENSO_summary <- left_join(ENSO_spring,ENSO_summer, by="Year" )
-
 
 #***Merge with AnnualData by Year####
 AnnualData <- left_join(AnnualData, NAO_summary, by = c("Year"="water_year"))
@@ -860,14 +783,6 @@ ENSO_summary <- ENSO_monthly %>%
       year
     )
   ) %>% #this water_year term is only relevent for winter
-  #   water_year = ifelse(
-  #     season %in% c("winter", "spring") &
-  #       month %in% c("10", "11", "12", "1", "2", "3", "4"),
-  #     year - 1,
-  #     year
-  #   )
-  # ) %>% #this water_year term is only relevent for winter
-  #metrics. We want 1 Oct-30 April to all correspond to the same water year
   group_by(water_year, season) %>%
   dplyr::summarize(ENSO_index = mean(ENSO_index)) %>%
   pivot_wider(
@@ -883,7 +798,6 @@ ENSO_summary <- ENSO_monthly %>%
 ENSO_monthly_trim <- ENSO_monthly %>%
   mutate(
     water_year = ifelse(
-        # month %in% c("10", "11", "12", "1", "2", "3", "4"),
       month %in% c("10", "11", "12"),
       year + 1,
       year
