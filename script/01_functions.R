@@ -15,8 +15,12 @@ if (!require(rLakeAnalyzer)) {
 if (!require(lfstat)) {
   install.packages("lfstat")
 }
+if (!require(purrr)) {
+  install.packages("purrr")
+}
 library(rLakeAnalyzer)
 library("lfstat") #for water_year function
+library(purrr)
 
 
 #Functions####
@@ -594,3 +598,105 @@ plot.Deriv <- function(x,
   layout(1)
   invisible(x)
 }
+
+
+# Forecasting functions ---------------------------------------------------
+
+
+#Trailing Moving Average Function####
+trailing_movavg <-
+  function(x, n = n){ #must set n = number of days in rolling window every time this function is used
+    stats::filter(x, rep(1 / n, n), sides = 1)
+  }
+
+
+#Isotherm Ice In function####
+isotherm_mdays_thresh_IceIn <-
+  function(airTemp, mdays, threshold){
+    temp_IceIn_forfunction$trailing_moving_avg = trailing_movavg(airTemp, n = mdays) 
+    dates_returned <-
+      temp_IceIn_forfunction %>%
+      filter(Month == "Oct" |
+               Month == "Nov" |
+               Month == "Dec" |
+               Month == "Jan", #filter to months that are relevant for ice in
+             trailing_moving_avg <= threshold) %>% #filter to dates where movavg is <= threshold
+      group_by(WaterYear) %>% #group by water year
+      mutate(IceIn_Date = min(Date)) %>% #create column for first day of each water year where movavg is <= threshold
+      ungroup() %>% #remove groupings by water year
+      filter(Date == IceIn_Date) %>%
+      select(WaterYear, IceIn_Date)
+    return(dates_returned)
+  }    
+
+#Isotherm Ice In Water Year Date function####
+isotherm_mdays_thresh_IceIn_WaterYear_date <-
+  function(airTemp, mdays, threshold){
+    temp_IceIn_forfunction$trailing_moving_avg = trailing_movavg(airTemp, n = mdays) 
+    dates_returned <-
+      temp_IceIn_forfunction %>%
+      filter(Month == "Oct" |
+               Month == "Nov" |
+               Month == "Dec" |
+               Month == "Jan", #filter to months that are relevant for ice in
+             trailing_moving_avg <= threshold) %>% #filter to dates where movavg is <= threshold
+      group_by(WaterYear) %>% #group by water year
+      mutate(IceIn_Date = min(Date)) %>% #create column for first day of each water year where movavg is <= threshold
+      ungroup() %>% #remove groupings by water year
+      filter(Date == IceIn_Date) %>%
+      select(WaterYear, WaterYear_date)
+    return(dates_returned)
+  }    
+
+#Isotherm Ice Out function####
+isotherm_mdays_thresh_IceOut <- 
+  function(airTemp, mdays, threshold){
+    temp_IceOut_forfunction$trailing_moving_avg = trailing_movavg(airTemp, n = mdays)
+    dates_returned <-
+      temp_IceOut_forfunction %>%
+      filter(Month == "Mar" |
+               Month == "Apr" |
+               Month == "May",#filter to months that are relevant for ice out
+             trailing_moving_avg >= threshold) %>% #filter to dates where movavg is >= threshold
+      group_by(WaterYear) %>%
+      mutate(IceIn_Date = min(Date)) %>% #create column for first day of each water year where movavg is <= threshold
+      ungroup() %>% #remove groupings by water year
+      filter(Date == IceIn_Date) %>%
+      select(WaterYear, IceIn_Date)
+    return(dates_returned)
+  }
+
+#Isotherm Ice Out Water Year Date function####
+isotherm_mdays_thresh_IceOut_WaterYear_date <- 
+  function(airTemp, mdays, threshold){
+    temp_IceOut_forfunction$trailing_moving_avg = trailing_movavg(airTemp, n = mdays)
+    dates_returned <-
+      temp_IceOut_forfunction %>%
+      filter(Month == "Mar" |
+               Month == "Apr" |
+               Month == "May",#filter to months that are relevant for ice out
+             trailing_moving_avg >= threshold) %>% #filter to dates where movavg is >= threshold
+      group_by(WaterYear) %>%
+      mutate(IceIn_Date = min(Date)) %>% #create column for first day of each water year where movavg is <= threshold
+      ungroup() %>% #remove groupings by water year
+      filter(Date == IceIn_Date) %>%
+      select(WaterYear, WaterYear_date)
+    return(dates_returned)
+  }
+
+#Isotherm summary function####
+isotherm_summary <-
+  function(IsothermFormula, ObservedDates){
+    sum <- summary(lm(unlist(IsothermFormula)~unlist(ObservedDates)))
+    summary_returned <- data.frame(sum$coefficients)
+    summary_returned <- 
+      summary_returned %>%
+      mutate(Variables = c("intercept", "slope")) %>%
+      select(Variables, Estimate)
+    rownames(summary_returned) <- NULL
+    summary_returned <-
+      summary_returned %>%
+      pivot_wider(names_from = Variables, values_from = Estimate) %>%
+      mutate(r.squared = sum$r.squared)
+    return(summary_returned)
+  }
