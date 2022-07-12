@@ -14,8 +14,10 @@ MohonkBathy<-read.csv('data/Mohonk_area_bathymetry_csv2.csv', fill = TRUE)
 
 #READ Temperature data 1980-2016#### 
 MohonkWeeklyProfiles<-read.csv("data/2016_MohonkLake_tblSecchi-Thermistor.csv", fill = TRUE)
-#2020-11-30 IAO: Added in new data
+#2020-11-30 IAO: Added in new data####
 MohonkWeeklyProfiles_2018_19<-read.csv("data/2018_2019_Mohonklake_Secchi_Thermistor.csv", fill = TRUE)
+#2022-07-12 DCR: Added in new data####
+MohonkWeeklyProfiles_2020_22<-read.csv("data/MohonkLake_Secchi_Thermistor2020-2022.csv", fill = TRUE)
 
 #Bind the dataframes together
 MohonkWeeklyProfiles<-bind_rows(MohonkWeeklyProfiles,MohonkWeeklyProfiles_2018_19)
@@ -120,13 +122,24 @@ MohonkWeeklyProfilesMetric[MohonkWeeklyProfilesMetric$Date %in% as.Date("2012-05
 MohonkWeeklyProfilesMetric[MohonkWeeklyProfilesMetric$Date %in% as.Date("2012-05-11"),"Temp_0m"]<-NA
 MohonkWeeklyProfilesMetric[MohonkWeeklyProfilesMetric$Date %in% as.Date("2012-05-17"),"Temp_0m"]<-NA
 
+#Convert to m from feet
+MohonkWeeklyProfilesMetric$Secchi_m<-MohonkWeeklyProfiles$SECCHI*0.3048  
+
+#Clean up the 2020-2022 data####
+#*rename column headers####
+names(MohonkWeeklyProfiles_2020_22)<-names(MohonkWeeklyProfilesMetric)[1:19]
+#*Make the Date column into a date
+MohonkWeeklyProfiles_2020_22<-MohonkWeeklyProfiles_2020_22%>%mutate(Date=dmy(Date))
+#*Check each of the depthsby plotting to look for anomalies
+plot(MohonkWeeklyProfiles_2020_22$Temp_12m~MohonkWeeklyProfiles_2020_22$Date)
+
+#Bind the 2020-2022 to the other years###################
+MohonkWeeklyProfilesMetric<-bind_rows(MohonkWeeklyProfilesMetric,MohonkWeeklyProfiles_2020_22)
+
 #Loop through all the temperature readings for quality control histograms
 for(j in 5:18){
   hist(MohonkWeeklyProfilesMetric[,j],main=names(MohonkWeeklyProfilesMetric)[j])
 }  
-
-#Convert to m from feet
-MohonkWeeklyProfilesMetric$Secchi_m<-MohonkWeeklyProfiles$SECCHI*0.3048  
 
 #Any secchi with 0 gets converted to NA
 MohonkWeeklyProfilesMetric$Secchi_m[MohonkWeeklyProfilesMetric$Secchi_m==0]<-NA
