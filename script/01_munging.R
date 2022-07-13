@@ -378,9 +378,6 @@ AnnualData <-
       )
   )
 
-AnnualData <- AnnualData %>%
-  filter(!Year == "2019")
-##TEMPORAILY GET RID OF 2019. Seems to be giving issue with calculating MA because of NA for 'IceInDayOfYear'
 
 #Stability cutoff for defining stratified period - in units of J/m2
 #*Caluclate stability cutoff####
@@ -462,7 +459,7 @@ AnnualData$DeltaSurfaceDeepTemp_intercept_degC <- NA
 
 #*Get the area under the curve for the stability FOR each year####
 #k<-31 for debugging
-for (k in 1:length(AnnualData$Year)) {
+for (k in 2:length(AnnualData$Year)) {
   year.tmp <- AnnualData$Year[k]
   #Pull out relevant data for that year
   dayofyear.tmp <-
@@ -502,7 +499,7 @@ for (k in 1:length(AnnualData$Year)) {
   #**Calculations of the total stratified stability####
   #Area under the curve for first time above cutoff from above to first time below
   #Exclude 1984,1997,2014 because of incomplete curves
-  if (year.tmp == 1984 | year.tmp == 1997 | year.tmp == 2014) {
+  if (year.tmp == 1984 | year.tmp == 1997 | year.tmp == 2014|year.tmp==2022) {
   } else{
     #Pull out the day which is the first >cutoff reading, pull datasets for day of year, stability, and thermocline depth
     dayofyear.tmp2 <-
@@ -614,7 +611,7 @@ for (k in 1:length(AnnualData$Year)) {
     dayofyear.tmp[dayofyear.tmp >= AnnualData$IceOutDayofYear[k] &
                     dayofyear.tmp < AnnualData$StartOfStratification_Day[k]]
   #Exclude 1997, 2014 because of the paucity of data, 2015 has stratification date happen before ice off day
-  if (year.tmp == 1997 | year.tmp == 2014 | year.tmp == 2015) {
+  if (year.tmp == 1997 | year.tmp == 2014 | year.tmp == 2015|year.tmp==2020|year.tmp==2022) {
   } else{
     lm.deltaSpringMix <- summary(lm(deltaSpringMix ~ dayofYearSpringMix))
     AnnualData$DeltaSurfaceDeepTemp_slope_degCpDay[k] <-
@@ -1188,6 +1185,8 @@ AnnualData <-
   left_join(AnnualData, AnnualData_precipPeriods, by = "Year")
 
 
+##############STOPPED HERE: DCR ON 13JUL2022####
+#Water year: https://water.usgs.gov/nwc/explain_data.html#:~:text=The%20term%20U.S.Geological%20Survey,9%20of%20the%2012%20months.###
 
 
 # Winter metrics ----------------------------------------------------------
