@@ -1249,6 +1249,7 @@ DailyInterpol_winter%>%filter(wateryear==2001&DailyIceRecord_binomial)%>%as_tibb
 #Inverse stratification according to Woolway paper? Temp_1m-Temp_11m seems to go negative
 #calculate the density gradient under the curve?
 #Figure out other questions
+#Create ridgeline plot in a new script
 
 
 #Starting with the 'MohonkDailyWeatherFull' dataframe which has daily min, mean, max temps and precip as snow or rain, I created a dataframe with monthly to seasonal cumulative metrics.
