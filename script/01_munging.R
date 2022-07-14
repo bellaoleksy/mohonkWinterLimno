@@ -1184,13 +1184,7 @@ AnnualData_precipPeriods <-
 AnnualData <-
   left_join(AnnualData, AnnualData_precipPeriods, by = "Year")
 
-
-##############STOPPED HERE: DCR ON 13JUL2022####
-#Water year: https://water.usgs.gov/nwc/explain_data.html#:~:text=The%20term%20U.S.Geological%20Survey,9%20of%20the%2012%20months.###
-
-
 # Winter metrics ----------------------------------------------------------
-
 #IAO- added 2022-Feb-18 and updated 2022-06-08
 
 #here I am using a function for calculating water-year DOY. This will help facilitate plotting and analysizing trends in ice-in since they span either side of the winter-year (e.g., 2011-2012). For example, an IceInDayofYear_fed value of 150 means Ice-In occured 150 days after the start of the water-year (Oct1)
@@ -1204,6 +1198,58 @@ MohonkIce <- MohonkIce %>%
 MohonkIce %>%
   ggplot(aes(x = Year, y = IceInDayofYear)) +
   geom_point(size = 3, shape = 21, fill = "white")
+
+
+#Water year: https://water.usgs.gov/nwc/explain_data.html#:~:text=The%20term%20U.S.Geological%20Survey,9%20of%20the%2012%20months.###
+
+#*Steps: create a winter daily interpolate with Create a water day and water year column####
+DailyInterpol_winter<-DailyInterpol%>%mutate(HydroDay=hydro.day(Date),
+                       wateryear=ifelse(month(Date)>=10,year(Date)+1,year(Date)))
+
+#*Create a column for ice in (1 otherwise NA), ice out (1 otherwise NA)####
+MohonkIce_IceInvector<-MohonkIce%>%dplyr::select(IceInDate)%>%
+                        rename(Date=IceInDate)%>%
+                        na.omit()%>%
+                        mutate(IceIn_binomial=1)
+
+MohonkIce_IceOutvector<-MohonkIce%>%dplyr::select(IceOutDate)%>%
+                        rename(Date=IceOutDate)%>%
+                        na.omit()%>%
+                        mutate(IceOut_binomial=1)
+
+#*Join those columns into the Daily Interpol data
+DailyInterpol_winter<-left_join(DailyInterpol_winter,MohonkIce_IceInvector,by="Date")%>%
+                      left_join(.,MohonkIce_IceOutvector,by="Date")
+
+#*Create column of ice record with 0s for no ice, 1s for ice.#### 
+DailyInterpol_winter<-DailyInterpol_winter%>%
+                        mutate(DailyIceRecord_binomial=case_when(   #counts ice in as 1 and ice out as 0
+                                              IceIn_binomial==1~1,
+                                              IceOut_binomial==1~0
+                                              ))%>%
+                        fill(DailyIceRecord_binomial)%>% #Fills values to generate a square wave of 1s (ice on the lake) and 0s (ice off the lake)
+                        mutate(DailyIceRecord_binomial=ifelse(is.na(DailyIceRecord_binomial),0,DailyIceRecord_binomial))
+
+#Graph  each water year with ice in/out as vertical lines, and temperature as spaghetti plot####
+ggplot(data=DailyInterpol_winter%>%filter(wateryear==2001),aes(x=Date,y=DailyIceRecord_binomial*5))+geom_line()+
+  geom_line(data=DailyInterpol_winter%>%filter(wateryear==2001)%>%dplyr::select(Date:Temp_12m)%>%gather("Depth","Temperature",-Date),aes(x=Date,y=Temperature,color=Depth))+
+  scale_y_continuous(limit=c(0,15))+
+  theme_bw()
+
+#Graph  each water year with ice in/out as vertical lines, and other variables as points####  
+ggplot(data=DailyInterpol_winter%>%filter(wateryear==2001),aes(x=Date,y=DailyIceRecord_binomial))+geom_line()+
+  geom_point(aes(x=Date,y=Temp_1m-Temp_11m))+
+  scale_y_continuous(limit=c(-5,15))+
+  theme_bw()
+
+DailyInterpol_winter%>%filter(wateryear==2001&DailyIceRecord_binomial)%>%as_tibble()%>%print(n=130)
+
+
+##############STOPPED HERE: DCR ON 14JUL2022####
+#Inverse stratification according to Woolway paper? Temp_1m-Temp_11m seems to go negative
+#calculate the density gradient under the curve?
+#Figure out other questions
+
 
 #Starting with the 'MohonkDailyWeatherFull' dataframe which has daily min, mean, max temps and precip as snow or rain, I created a dataframe with monthly to seasonal cumulative metrics.
 MohonkDailyWeather_monthly <- MohonkDailyWeatherFull %>%
