@@ -160,7 +160,8 @@ for (jj in 1:length(YearAvail)) {
                  AllDays[, VarsOfInterest[-1]],
                  x = AllDays$Date,
                  xout = AllDays$Date,
-                 na.rm = F
+                 na.rm = F,
+                 maxgap=16 #pick the maximum gap
                ))
   #Replace day of year with uninterpolated value
   zoo.temp$dayofyear <-
@@ -200,7 +201,8 @@ for (kk in 1:(length(YearAvail) - 1)) {
           tempCross[, VarsOfInterest[-1]],
           x = tempCross$Date,
           xout = tempCross$Date,
-          na.rm = F
+          na.rm = F,
+          maxgap=16
         )
       )
     #Replace day of year with uninterpolated value
@@ -217,9 +219,9 @@ for (kk in 1:(length(YearAvail) - 1)) {
 # #Calculate the average from the surface (1-3m) and hypolimnion ( --------
 #Calculate the average from the surface (1-3m) and hypolimnion (10-12m) for that peak day
 DailyInterpol$EpiTemp_degC <-
-  rowMeans(DailyInterpol[, c("Temp_1m", "Temp_2m", "Temp_3m")])
+  rowMeans(DailyInterpol[, c("Temp_1m", "Temp_2m", "Temp_3m")],na.rm=TRUE)
 DailyInterpol$HypoTemp_degC <-
-  rowMeans(DailyInterpol[, c("Temp_10m", "Temp_11m", "Temp_12m")])
+  rowMeans(DailyInterpol[, c("Temp_10m", "Temp_11m", "Temp_12m")],na.rm=TRUE)
 
 #Create a data frame that gets the proportion of volume at each depth
 cx <- c(0, cumsum(MohonkBathy$SurfaceAreaAtThatDepth_m2))
@@ -1230,27 +1232,14 @@ DailyInterpol_winter<-DailyInterpol_winter%>%
                         fill(DailyIceRecord_binomial)%>% #Fills values to generate a square wave of 1s (ice on the lake) and 0s (ice off the lake)
                         mutate(DailyIceRecord_binomial=ifelse(is.na(DailyIceRecord_binomial),0,DailyIceRecord_binomial))
 
-#Graph  each water year with ice in/out as vertical lines, and temperature as spaghetti plot####
-ggplot(data=DailyInterpol_winter%>%filter(wateryear==2001),aes(x=Date,y=DailyIceRecord_binomial*5))+geom_line()+
-  geom_line(data=DailyInterpol_winter%>%filter(wateryear==2001)%>%dplyr::select(Date:Temp_12m)%>%gather("Depth","Temperature",-Date),aes(x=Date,y=Temperature,color=Depth))+
-  scale_y_continuous(limit=c(0,15))+
-  theme_bw()
-
-#Graph  each water year with ice in/out as vertical lines, and other variables as points####  
-ggplot(data=DailyInterpol_winter%>%filter(wateryear==2001),aes(x=Date,y=DailyIceRecord_binomial))+geom_line()+
-  geom_point(aes(x=Date,y=Temp_1m-Temp_11m))+
-  scale_y_continuous(limit=c(-5,15))+
-  theme_bw()
-
-DailyInterpol_winter%>%filter(wateryear==2001&DailyIceRecord_binomial)%>%as_tibble()%>%print(n=130)
+#*Check the record for a single year####
+#DailyInterpol_winter%>%filter(wateryear==2001&DailyIceRecord_binomial)%>%as_tibble()%>%print(n=130)
 
 
-##############STOPPED HERE: DCR ON 14JUL2022####
-#Inverse stratification according to Woolway paper? Temp_1m-Temp_11m seems to go negative
-#calculate the density gradient under the curve?
-#Figure out other questions
-#Create ridgeline plot in a new script
 
+##############STOPPED HERE: DCR ON 15JUL2022####
+#Could calculate annual stats for each winter, e.g., average epi temp under ice, average hypo temp
+#Calculate the predicted ice on, ice off date for each from Bruesewitz and Pierson methods to match with visual
 
 #Starting with the 'MohonkDailyWeatherFull' dataframe which has daily min, mean, max temps and precip as snow or rain, I created a dataframe with monthly to seasonal cumulative metrics.
 MohonkDailyWeather_monthly <- MohonkDailyWeatherFull %>%
