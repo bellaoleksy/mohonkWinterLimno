@@ -613,7 +613,7 @@ for (k in 2:length(AnnualData$Year)) {
     dayofyear.tmp[dayofyear.tmp >= AnnualData$IceOutDayofYear[k] &
                     dayofyear.tmp < AnnualData$StartOfStratification_Day[k]]
   #Exclude 1997, 2014 because of the paucity of data, 2015 has stratification date happen before ice off day
-  if (year.tmp == 1997 | year.tmp == 2014 | year.tmp == 2015|year.tmp==2020|year.tmp==2022) {
+  if (year.tmp == 1997 | year.tmp == 2014 | year.tmp == 2015|year.tmp == 2017|year.tmp == 2019|year.tmp==2020|year.tmp==2022) {
   } else{
     lm.deltaSpringMix <- summary(lm(deltaSpringMix ~ dayofYearSpringMix))
     AnnualData$DeltaSurfaceDeepTemp_slope_degCpDay[k] <-
@@ -1235,6 +1235,8 @@ DailyInterpol_winter<-DailyInterpol_winter%>%
 #*Check the record for a single year####
 #DailyInterpol_winter%>%filter(wateryear==2001&DailyIceRecord_binomial)%>%as_tibble()%>%print(n=130)
 
+#Calculate the difference in stability
+DailyInterpol_winter<-DailyInterpol_winter%>%group_by(wateryear)%>%mutate(FirstDerv_stability_Jperm2perday=stability_Jperm2-lag(stability_Jperm2))
 
 
 ##############STOPPED HERE: DCR ON 15JUL2022####
