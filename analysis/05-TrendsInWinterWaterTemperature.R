@@ -41,6 +41,13 @@ ggplot(data=DailyInterpol_winter%>%as_tibble(),aes(x=Date,y=DailyIceRecord_binom
   theme_bw()+
   facet_wrap(vars(as.factor(wateryear)),scale="free")
 
+#Plot schmidt stability all years####
+ggplot(data=DailyInterpol_winter%>%as_tibble(),aes(x=Date,y=DailyIceRecord_binomial*5))+geom_line()+
+  geom_point(aes(x=Date,y=stability_Jperm2),color="pale green")+
+  scale_y_continuous(limit=c(-5,30))+
+  theme_bw()+
+  facet_wrap(vars(as.factor(wateryear)),scale="free")
+
 #Plot first derviative of stability all years####
 ggplot(data=DailyInterpol_winter%>%as_tibble(),aes(x=Date,y=DailyIceRecord_binomial*1.5))+geom_line()+
   geom_point(aes(x=Date,y=FirstDerv_stability_Jperm2perday),color="violet")+
