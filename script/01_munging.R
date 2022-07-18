@@ -1238,6 +1238,26 @@ DailyInterpol_winter<-DailyInterpol_winter%>%
 #Calculate the difference in stability
 DailyInterpol_winter<-DailyInterpol_winter%>%group_by(wateryear)%>%mutate(FirstDerv_stability_Jperm2perday=stability_Jperm2-lag(stability_Jperm2))
 
+#Create an annual data frame for winter stats for water temperature metrics####
+DailyInterpol_winter%>%group_by(wateryear)%>%filter(DailyIceRecord_binomial==1)%>%
+        summarize(
+        TotalSchmidtStabilityUnderIce_Jdayspm2=sum(DailyIceRecord_binomial*stability_Jperm2),
+        MeanUnderIce_EpiTemp_degC=mean(EpiTemp_degC,na.rm=TRUE),
+        MeanUnderIce_HypoTemp_degC=mean(HypoTemp_degC,na.rm=TRUE),
+        MeanDelta1_11mTemp_degC=mean(Temp_1m-Temp_11m,na.rm=TRUE)
+        )%>%
+        print(n=Inf)%>%ggplot(.,aes(x=wateryear,y=MeanDelta1_11mTemp_degC))+geom_point()
+
+DailyInterpol_winter%>%filter(wateryear==2016,DailyIceRecord_binomial==1)%>%dplyr::select(DailyIceRecord_binomial,stability_Jperm2)%>%mutate(test=DailyIceRecord_binomial*stability_Jperm2)%>%print(n=Inf)%>%summarize(sum=sum(test))
+
+#FInd the ice on/off dates from Pierson method
+#Find the first day each year where the bottom logger is >0.4C of the top logger
+DailyInterpol_winter%>%group_by(wateryear)%>%mutate(DeltaTop0mBottom11mTemp=Temp_0m-Temp_11m,InverseStratified=ifelse(DeltaTop0mBottom11mTemp<-0.4,1,0))%>%print(n=100)
+####STOPPED HERE - THIS NEEDS TO BE COMPLETED####  
+
+#Merge with ice data from Mohonk ice#####
+MohonkIce%>%rename(wateryear=Year)%>%dplyr::select(wateryear,IceInDayofYear_fed,IceOutDayofYear_fed,LengthOfIceCover_days)%>%
+
 
 ##############STOPPED HERE: DCR ON 15JUL2022####
 #Could calculate annual stats for each winter, e.g., average epi temp under ice, average hypo temp
