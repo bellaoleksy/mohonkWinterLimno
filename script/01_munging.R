@@ -1209,15 +1209,23 @@ DailyInterpol_winter<-DailyInterpol%>%mutate(HydroDay=hydro.day(Date),
                        wateryear=ifelse(month(Date)>=10,year(Date)+1,year(Date)))
 
 #*Create a column for ice in (1 otherwise NA), ice out (1 otherwise NA)####
-MohonkIce_IceInvector<-MohonkIce%>%dplyr::select(IceInDate)%>%
+MohonkIce_IceInvector<-MohonkIce%>%
+                        mutate(IceInDate=if_else(is.na(IceInDate),ymd(paste(Year-1,"-11-01",sep="")),ymd(IceInDate)))%>% #Put in Nov 01 for missing ice in dates, earliest ice in is december 01, this gives 1 month of lead time
+                        dplyr::select(IceInDate)%>%
                         rename(Date=IceInDate)%>%
                         na.omit()%>%
-                        mutate(IceIn_binomial=1)
+                        mutate(IceIn_binomial=case_when(
+                          month(Date)==11~-1,
+                          TRUE~1))
 
-MohonkIce_IceOutvector<-MohonkIce%>%dplyr::select(IceOutDate)%>%
+MohonkIce_IceOutvector<-MohonkIce%>%
+                        mutate(IceOutDate=if_else(is.na(IceOutDate),ymd(paste(Year,"-02-28",sep="")),ymd(IceOutDate)))%>% #Put in Feb 28 for missing ice in dates, Earliest ice out is march 9, this guaruntees we have no days with ice prior to the earliest ice out day
+                        dplyr::select(IceOutDate)%>%
                         rename(Date=IceOutDate)%>%
                         na.omit()%>%
-                        mutate(IceOut_binomial=1)
+                        mutate(IceOut_binomial=case_when(
+                          month(Date)==02~-1,
+                          TRUE~1))
 
 #*Join those columns into the Daily Interpol data
 DailyInterpol_winter<-left_join(DailyInterpol_winter,MohonkIce_IceInvector,by="Date")%>%
@@ -1225,43 +1233,104 @@ DailyInterpol_winter<-left_join(DailyInterpol_winter,MohonkIce_IceInvector,by="D
 
 #*Create column of ice record with 0s for no ice, 1s for ice.#### 
 DailyInterpol_winter<-DailyInterpol_winter%>%
-                        mutate(DailyIceRecord_binomial=case_when(   #counts ice in as 1 and ice out as 0
-                                              IceIn_binomial==1~1,
-                                              IceOut_binomial==1~0
-                                              ))%>%
+                            mutate(DailyIceRecord_binomial=case_when(   #counts ice in as 1 and ice out as 0
+                              IceIn_binomial==1~1,
+                              IceIn_binomial==-1~-1,
+                              IceOut_binomial==1~0,
+                              IceOut_binomial==-1~-1
+                            ))%>%
                         fill(DailyIceRecord_binomial)%>% #Fills values to generate a square wave of 1s (ice on the lake) and 0s (ice off the lake)
-                        mutate(DailyIceRecord_binomial=ifelse(is.na(DailyIceRecord_binomial),0,DailyIceRecord_binomial))
+                        mutate(DailyIceRecord_binomial=ifelse(is.na(DailyIceRecord_binomial),0,DailyIceRecord_binomial))%>%
+                        mutate(DailyIceRecord_binomial=ifelse(DailyIceRecord_binomial==-1,NA,DailyIceRecord_binomial)) #convert those unknown seasons back into NAs
+
 
 #*Check the record for a single year####
 #DailyInterpol_winter%>%filter(wateryear==2001&DailyIceRecord_binomial)%>%as_tibble()%>%print(n=130)
 
-#Calculate the difference in stability
-DailyInterpol_winter<-DailyInterpol_winter%>%group_by(wateryear)%>%mutate(FirstDerv_stability_Jperm2perday=stability_Jperm2-lag(stability_Jperm2))
+#*Graph overall square wave of ice####
+#ggplot(data=DailyInterpol_winter%>%group_by(wateryear),aes(x=HydroDay,y=DailyIceRecord_binomial))+geom_line()+theme_bw()+facet_wrap(vars(wateryear))
+
+
+#Calculate the difference in stability and some delta densities####
+DailyInterpol_winter<-DailyInterpol_winter%>%group_by(wateryear)%>%
+  mutate(FirstDerv_stability_Jperm2perday=stability_Jperm2-lag(stability_Jperm2))%>%
+  mutate(Delta1_9mWaterDensity_kgperm3=water.density(Temp_1m)-water.density(Temp_9m),
+         Delta1_11mWaterDensity_kgperm3=water.density(Temp_1m)-water.density(Temp_11m),
+         Delta0_11mWaterDensity_kgperm3=water.density(Temp_0m)-water.density(Temp_11m))
+
+
+internal.energy(DailyInterpol%>%dplyr::select(Temp_0m:Temp_12m)%>%slice(150),0:12,MohonkBathy$SurfaceAreaAtThatDepth_m2,MohonkBathy$Depth_m_LowerLimit)
+
+#Calcuate the heat content in calories, convert to MJoules
+DailyInterpol_winter<-left_join(DailyInterpol_winter,
+          DailyInterpol_winter%>%
+  ungroup()%>%
+  dplyr::select(Date,Temp_0m:Temp_12m)%>% #get temperature data out
+  mutate(Temp_13m=NA,Temp_14m=NA,Temp_15m=NA,Temp_16m=NA,Temp_17m=NA)%>%
+  pivot_longer(cols = starts_with("Temp"),names_to='Depth_m',values_to='Temp_C')%>% #pivot to convert into columms
+  group_by(Date)%>% #Group by date
+  mutate(RollingTemp_C=rollmeanr(Temp_C,2,fill=NA,align="left"), #Rolling average of first depth + second depth
+         UpperDepth_m=0:17)%>% #calculate a values
+
+  left_join(.,MohonkBathy.volume,by="UpperDepth_m")%>% #merge with volume dataframe
+  mutate(Temp_C=zoo::na.locf(Temp_C,na.rm=FALSE,maxgap=11))%>% #Fills all the lower temperatures with the bottom most temperature
+  mutate(RollingTemp_C=ifelse(is.na(RollingTemp_C),Temp_C,RollingTemp_C))%>% #replace all NA values with the lowest temperature measurement
+  mutate(HeatContent_calories=Volume_m3*water.density(RollingTemp_C)*1000*RollingTemp_C)%>% #Calculate the heat content in calories
+  summarize(HeatContent_MegaJoules=sum(HeatContent_calories)/239000), #Calculate heat content in mega joules
+  by="Date")
+
+#Plot the heat contents by year####
+#ggplot(data=DailyInterpol_winter%>%filter(DailyIceRecord_binomial==1),aes(x=HydroDay,y=HeatContent_MegaJoules))+geom_line()+facet_wrap(vars(wateryear),scales="free")+theme(axis.text.y = element_blank())+geom_smooth(method="lm")
+
+
+# DailyInterpol%>%
+#   dplyr::select(Temp_0m:Temp_12m)%>% #get temperature data out
+#   slice(150)%>% #take out a row
+#   pivot_longer(cols = starts_with("Temp"),names_to='Depth_m',values_to='Temp_C')%>% #pivot to convert into columms
+#   mutate(RollingTemp_C=rollmeanr(Temp_C,2,fill=NA,align="left"), #Rolling average of first depth + second depth
+#          UpperDepth_m=0:12)%>% #calculate a value
+#   left_join(MohonkBathy.volume,.,by="UpperDepth_m")%>% #merge with volume dataframe
+#   mutate(Temp_C=zoo::na.locf(Temp_C))%>% #fill the last rolling temp value down
+#   mutate(RollingTemp_C=ifelse(is.na(RollingTemp_C),Temp_C,RollingTemp_C))%>% #replace all NA values with the lowest temperature measurement
+#   mutate(HeatContent_calories=Volume_m3*water.density(RollingTemp_C)*1000*RollingTemp_C)%>% #Calculate the heat content in calories
+#   summarize(HeatContent_calories=sum(HeatContent_calories))
+
 
 #Create an annual data frame for winter stats for water temperature metrics####
-DailyInterpol_winter%>%group_by(wateryear)%>%filter(DailyIceRecord_binomial==1)%>%
+AnnualUnderIceSummary<-DailyInterpol_winter%>%group_by(wateryear)%>%filter(DailyIceRecord_binomial==1)%>%
         summarize(
+        numberOfIceDays=sum(DailyIceRecord_binomial,na.rm=TRUE),
+        numberOfDaysWithData=sum(!is.na(EpiTemp_degC),na.rm=TRUE),
+        proportionOfDaysWithData=sum(!is.na(EpiTemp_degC),na.rm=TRUE)/sum(DailyIceRecord_binomial,na.rm=TRUE), #If this is less than 1, then we need to remove that year because data did not interpolate
         TotalSchmidtStabilityUnderIce_Jdayspm2=sum(DailyIceRecord_binomial*stability_Jperm2),
+        MeanSchmidtStabilityUnderIce_Jdayspm2=mean(stability_Jperm2),
         MeanUnderIce_EpiTemp_degC=mean(EpiTemp_degC,na.rm=TRUE),
         MeanUnderIce_HypoTemp_degC=mean(HypoTemp_degC,na.rm=TRUE),
-        MeanDelta1_11mTemp_degC=mean(Temp_1m-Temp_11m,na.rm=TRUE)
+        MeanDelta1_11mTemp_degC=mean(Temp_1m-Temp_11m,na.rm=TRUE),
+        MeanDelta1_9mWaterDensity_kgperm3=mean(water.density(Temp_1m)-water.density(Temp_9m),na.rm=TRUE),
+        MeanDelta1_11mWaterDensity_kgperm3=mean(water.density(Temp_1m)-water.density(Temp_11m),na.rm=TRUE),
+        MeanDelta0_11mWaterDensity_kgperm3=mean(water.density(Temp_0m)-water.density(Temp_11m),na.rm=TRUE),
+        MeanVolumeWeightedMeanTemp_degC=mean(VolumeWeightedMeanTemp_degC,na.rm=TRUE),
+        TotalVolumeWeightedMeanTemp_degC=sum(VolumeWeightedMeanTemp_degC,na.rm=TRUE),
+        MeanHeatContent_MegaJoules=mean(HeatContent_MegaJoules,na.rm=TRUE),
+        TotalHeatContent_MegaJoules=sum(HeatContent_MegaJoules,na.rm=TRUE),
+        SlopeHeatContent_MegaJoulesperDay=ifelse(proportionOfDaysWithData<1,NA,summary(lm(HeatContent_MegaJoules~HydroDay))$coef[2,1]),
+        FinalHeatContent_MegaJoules=last(HeatContent_MegaJoules)
         )%>%
-        print(n=Inf)%>%ggplot(.,aes(x=wateryear,y=MeanDelta1_11mTemp_degC))+geom_point()
-
-DailyInterpol_winter%>%filter(wateryear==2016,DailyIceRecord_binomial==1)%>%dplyr::select(DailyIceRecord_binomial,stability_Jperm2)%>%mutate(test=DailyIceRecord_binomial*stability_Jperm2)%>%print(n=Inf)%>%summarize(sum=sum(test))
-
-#FInd the ice on/off dates from Pierson method
-#Find the first day each year where the bottom logger is >0.4C of the top logger
-DailyInterpol_winter%>%group_by(wateryear)%>%mutate(DeltaTop0mBottom11mTemp=Temp_0m-Temp_11m,InverseStratified=ifelse(DeltaTop0mBottom11mTemp<-0.4,1,0))%>%print(n=100)
-####STOPPED HERE - THIS NEEDS TO BE COMPLETED####  
-
-#Merge with ice data from Mohonk ice#####
-MohonkIce%>%rename(wateryear=Year)%>%dplyr::select(wateryear,IceInDayofYear_fed,IceOutDayofYear_fed,LengthOfIceCover_days)%>%
+        print(n=Inf)
 
 
-##############STOPPED HERE: DCR ON 15JUL2022####
-#Could calculate annual stats for each winter, e.g., average epi temp under ice, average hypo temp
-#Calculate the predicted ice on, ice off date for each from Bruesewitz and Pierson methods to match with visual
+
+#Graph various facets of under ice vs. year after removing bad with not enough data years####
+#ggplot(AnnualUnderIceSummary%>%filter(proportionOfDaysWithData==1),aes(x=wateryear,y=FinalHeatContent_MegaJoules))+geom_point()
+
+#Graph various facets of under ice vs. ice length after removing bad with not enough data years####
+#ggplot(AnnualUnderIceSummary%>%filter(proportionOfDaysWithData==1),aes(x=numberOfIceDays,y=FinalHeatContent_MegaJoules))+geom_point()+geom_smooth()
+
+
+##############STOPPED HERE: DCR ON 26JUL2022####
+#Incorporate in the timing of spring stratification/number of mixed days from other annual data frame
+#Move some graphics and stats over to the analysis script
 
 #Starting with the 'MohonkDailyWeatherFull' dataframe which has daily min, mean, max temps and precip as snow or rain, I created a dataframe with monthly to seasonal cumulative metrics.
 MohonkDailyWeather_monthly <- MohonkDailyWeatherFull %>%
