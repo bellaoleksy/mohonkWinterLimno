@@ -1312,6 +1312,7 @@ AnnualUnderIceSummary<-DailyInterpol_winter%>%group_by(wateryear)%>%filter(Daily
         MeanDelta0_11mWaterDensity_kgperm3=mean(water.density(Temp_0m)-water.density(Temp_11m),na.rm=TRUE),
         MeanVolumeWeightedMeanTemp_degC=mean(VolumeWeightedMeanTemp_degC,na.rm=TRUE),
         TotalVolumeWeightedMeanTemp_degC=sum(VolumeWeightedMeanTemp_degC,na.rm=TRUE),
+        FinalVolumeWeightedMeanTemp_degC=last(VolumeWeightedMeanTemp_degC),
         MeanHeatContent_MegaJoules=mean(HeatContent_MegaJoules,na.rm=TRUE),
         TotalHeatContent_MegaJoules=sum(HeatContent_MegaJoules,na.rm=TRUE),
         SlopeHeatContent_MegaJoulesperDay=ifelse(proportionOfDaysWithData<1,NA,summary(lm(HeatContent_MegaJoules~HydroDay))$coef[2,1]),
@@ -1319,17 +1320,27 @@ AnnualUnderIceSummary<-DailyInterpol_winter%>%group_by(wateryear)%>%filter(Daily
         )%>%
         print(n=Inf)
 
+#Calculate/pull the day of the onset of stratification and merge with Annual summary####
+AnnualUnderIceSummary<-left_join(AnnualUnderIceSummary,AnnualData%>%dplyr::select(Year,StartOfStratification_Day)%>%
+                              mutate(StartOfStratification_Day=ifelse(Year==2022,131,StartOfStratification_Day), #2022 is not calculated
+                                StartOfStratification_Day=ifelse(Year==2020,NA,StartOfStratification_Day))%>% #2020 should be NA because of missing data
+                              mutate(DateOfStratification=as.Date(StartOfStratification_Day,origin=paste(Year-1,"-12-31",sep="")))%>%
+                              rename(wateryear=Year),
+                      by="wateryear")%>%
+                      mutate(StartOfStratification_HydroDay=hydro.day(DateOfStratification))%>% #Calculate hydro day for start of spring stratification
+                      left_join(.,MohonkIce%>%rename(wateryear=Year)%>%dplyr::select(wateryear,LengthOfIceCover_days,IceInDayofYear_fed,IceOutDayofYear_fed),by="wateryear")%>% #get ice phenology stats back in
+                      mutate(LengthSpringMixedPeriod_days=StartOfStratification_HydroDay-IceOutDayofYear_fed) #calculate length of mixed period
 
 
 #Graph various facets of under ice vs. year after removing bad with not enough data years####
-#ggplot(AnnualUnderIceSummary%>%filter(proportionOfDaysWithData==1),aes(x=wateryear,y=FinalHeatContent_MegaJoules))+geom_point()
+#ggplot(AnnualUnderIceSummary%>%filter(proportionOfDaysWithData==1),aes(x=wateryear,y=StartOfStratification_HydroDay))+geom_point()
 
 #Graph various facets of under ice vs. ice length after removing bad with not enough data years####
-#ggplot(AnnualUnderIceSummary%>%filter(proportionOfDaysWithData==1),aes(x=numberOfIceDays,y=FinalHeatContent_MegaJoules))+geom_point()+geom_smooth()
+ggplot(AnnualUnderIceSummary%>%filter(proportionOfDaysWithData==1),aes(x=numberOfIceDays,y=MeanUnderIce_HypoTemp_degC))+geom_point()+geom_smooth(method='lm')
 
 
-##############STOPPED HERE: DCR ON 26JUL2022####
-#Incorporate in the timing of spring stratification/number of mixed days from other annual data frame
+
+
 #Move some graphics and stats over to the analysis script
 
 #Starting with the 'MohonkDailyWeatherFull' dataframe which has daily min, mean, max temps and precip as snow or rain, I created a dataframe with monthly to seasonal cumulative metrics.
