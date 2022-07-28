@@ -29,6 +29,9 @@ if (!require(Kendall)) {
 if (!require(tidyverse)) {
   install.packages("tidyverse")
 }
+if (!require(dataRetrieval)) {
+  install.packages("dataRetrieval")
+}
 
 library(mblm)
 library(rLakeAnalyzer)
@@ -38,6 +41,7 @@ library(zyp)
 library(Kendall)
 library(tidyverse)
 library(lubridate)
+library(dataRetrieval)
 
 
 
@@ -1304,6 +1308,7 @@ AnnualUnderIceSummary<-DailyInterpol_winter%>%group_by(wateryear)%>%filter(Daily
         proportionOfDaysWithData=sum(!is.na(EpiTemp_degC),na.rm=TRUE)/sum(DailyIceRecord_binomial,na.rm=TRUE), #If this is less than 1, then we need to remove that year because data did not interpolate
         TotalSchmidtStabilityUnderIce_Jdayspm2=sum(DailyIceRecord_binomial*stability_Jperm2),
         MeanSchmidtStabilityUnderIce_Jdayspm2=mean(stability_Jperm2),
+        VarSchmidtStabilityUnderIce_Jdayspm2=var(stability_Jperm2),
         MeanUnderIce_EpiTemp_degC=mean(EpiTemp_degC,na.rm=TRUE),
         MeanUnderIce_HypoTemp_degC=mean(HypoTemp_degC,na.rm=TRUE),
         MeanDelta1_11mTemp_degC=mean(Temp_1m-Temp_11m,na.rm=TRUE),
@@ -1336,7 +1341,7 @@ AnnualUnderIceSummary<-left_join(AnnualUnderIceSummary,AnnualData%>%dplyr::selec
 #ggplot(AnnualUnderIceSummary%>%filter(proportionOfDaysWithData==1),aes(x=wateryear,y=StartOfStratification_HydroDay))+geom_point()
 
 #Graph various facets of under ice vs. ice length after removing bad with not enough data years####
-ggplot(AnnualUnderIceSummary%>%filter(proportionOfDaysWithData==1),aes(x=numberOfIceDays,y=MeanUnderIce_HypoTemp_degC))+geom_point()+geom_smooth(method='lm')
+#ggplot(AnnualUnderIceSummary%>%filter(proportionOfDaysWithData==1),aes(x=numberOfIceDays,y=MeanUnderIce_HypoTemp_degC))+geom_point()+geom_smooth(method='lm')
 
 
 
