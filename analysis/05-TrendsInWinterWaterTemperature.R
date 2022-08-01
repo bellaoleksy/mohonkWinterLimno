@@ -136,6 +136,35 @@ model<-'
       FinalHeatContent_MegaJoules_scale ~ MeanDelta1_11mWaterDensity_kgperm3_scale + LengthOfIceCover_days_scale + IceOutDayofYear_fed_scale+SlopeHeatContent_MegaJoulesperDay_scale+SlopeHeatContent_MegaJoulesperDay_scale
       LengthSpringMixedPeriod_days_scale ~ LengthOfIceCover_days_scale + IceOutDayofYear_fed_scale+FinalHeatContent_MegaJoules_scale
       
+      
+      LengthOfIceCover_days_scale ~~ IceOutDayofYear_fed_scale
+      MeanUnderIce_EpiTemp_degC_scale~~MeanUnderIce_HypoTemp_degC_scale
+      
+      
+      '
+#Model 2 has ice as a latent variable composed of length and ice out####
+model2<-'MeanUnderIce_HypoTemp_degC_scale~LengthOfIceCover_days_scale+ IceOutDayofYear_fed_scale
+        MeanUnderIce_EpiTemp_degC_scale~LengthOfIceCover_days_scale+ IceOutDayofYear_fed_scale
+        MeanDelta1_11mWaterDensity_kgperm3_scale ~ MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
+        MeanHeatContent_MegaJoules_scale~MeanDelta1_11mWaterDensity_kgperm3_scale+LengthOfIceCover_days_scale+ IceOutDayofYear_fed_scale
+        
+        LengthSpringMixedPeriod_days_scale ~ LengthOfIceCover_days_scale+ IceOutDayofYear_fed_scale + MeanHeatContent_MegaJoules_scale
+        
+        
+         LengthOfIceCover_days_scale ~~ IceOutDayofYear_fed_scale
+         MeanUnderIce_EpiTemp_degC_scale~~MeanUnderIce_HypoTemp_degC_scale
+         
+        '
+
+      'MeanUnderIce_HypoTemp_degC_scale~ Ice
+      MeanUnderIce_EpiTemp_degC_scale~Ice
+      MeanDelta1_11mWaterDensity_kgperm3_scale ~ Ice + MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
+      SlopeHeatContent_MegaJoulesperDay_scale~MeanDelta1_11mWaterDensity_kgperm3_scale + Ice
+      FinalHeatContent_MegaJoules_scale ~ MeanDelta1_11mWaterDensity_kgperm3_scale + Ice +SlopeHeatContent_MegaJoulesperDay_scale+SlopeHeatContent_MegaJoulesperDay_scale
+      LengthSpringMixedPeriod_days_scale ~ Ice + FinalHeatContent_MegaJoules_scale
+      #FinalHeatContent_MegaJoules_scale ~ MeanDelta1_11mWaterDensity_kgperm3_scale + SlopeHeatContent_MegaJoulesperDay_scale + LengthOfIceCover_days_scale
+      Ice=~LengthOfIceCover_days_scale+IceInDayofYear_fed_scale + IceOutDayofYear_fed_scale 
+      
       LengthOfIceCover_days_scale ~~ IceOutDayofYear_fed_scale
       MeanUnderIce_EpiTemp_degC_scale~~MeanUnderIce_HypoTemp_degC_scale
       
@@ -159,26 +188,26 @@ AnnualUnderIceSummary_SEM<-AnnualUnderIceSummary%>%
 
 #**Fit the model####
 #From lavaan package
-fit<-sem(model,data=AnnualUnderIceSummary_SEM)
+fit<-sem(model2,data=AnnualUnderIceSummary_SEM)
   varTable(fit)
   
 #***view the results####
 summary(fit, fit.measures = TRUE, standardized=T,rsquare=T)
 
 #**Building a Structural Equation Model (SEM)####
-semPaths(fit,'std',layout='tree')
+semPaths(fit,'std',layout='tree',edge.label.cex = 1.1,label.cex=1.1)
 
 #**correlation plot####
-ggcorr(AnnualUnderIceSummary%>%filter(proportionOfDaysWithData==1)%>%
-         dplyr::select(LengthOfIceCover_days,IceInDayofYear_fed,IceOutDayofYear_fed,MeanDelta1_11mTemp_degC,MeanUnderIce_HypoTemp_degC),
+ggcorr(AnnualUnderIceSummary_SEM%>%
+         dplyr::select(LengthOfIceCover_days_scale,IceInDayofYear_fed_scale,IceOutDayofYear_fed_scale,MeanUnderIce_HypoTemp_degC_scale, MeanUnderIce_EpiTemp_degC_scale,MeanDelta1_11mWaterDensity_kgperm3_scale,FinalHeatContent_MegaJoules_scale,SlopeHeatContent_MegaJoulesperDay_scale),
        nbreaks = 6, label = T, low = "red3", high = "green3", 
 label_round = 2, name = "Correlation Scale", label_alpha = T, hjust = 0.75) +
   ggtitle(label = "Correlation Plot") +
   theme(plot.title = element_text(hjust = 0.6))
   
 #Pull out the strongest relationships from the SEM####
-  ggplot(data=AnnualUnderIceSummary_SEM,aes(x=LengthOfIceCover_days,y=MeanUnderIce_HypoTemp_degC))+geom_point()
-      summary(lm(AnnualUnderIceSummary_SEM$MeanUnderIce_HypoTemp_degC~AnnualUnderIceSummary_SEM$LengthOfIceCover_days))  
+  ggplot(data=AnnualUnderIceSummary_SEM,aes(x=LengthOfIceCover_days_scale,y=MeanUnderIce_HypoTemp_degC_scale))+geom_point()
+      summary(lm(AnnualUnderIceSummary_SEM$MeanUnderIce_HypoTemp_degC_scale~AnnualUnderIceSummary_SEM$LengthOfIceCover_days_scale))  
       #Not sig
   ggplot(data=AnnualUnderIceSummary_SEM,aes(x=LengthOfIceCover_days,y=FinalHeatContent_MegaJoules))+geom_point()+geom_smooth(method="lm")
       summary(lm(AnnualUnderIceSummary_SEM$FinalHeatContent_MegaJoules~AnnualUnderIceSummary_SEM$LengthOfIceCover_days))  
