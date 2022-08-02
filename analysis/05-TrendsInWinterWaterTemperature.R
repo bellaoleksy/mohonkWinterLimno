@@ -143,33 +143,54 @@ model<-'
       
       '
 #Model 2 has ice as a latent variable composed of length and ice out####
-model2<-'MeanUnderIce_HypoTemp_degC_scale~LengthOfIceCover_days_scale+ IceOutDayofYear_fed_scale
-        MeanUnderIce_EpiTemp_degC_scale~LengthOfIceCover_days_scale+ IceOutDayofYear_fed_scale
+model2<-'Ice=~IceInDayofYear_fed_scale + IceOutDayofYear_fed_scale 
+        MeanUnderIce_HypoTemp_degC_scale~Ice
+        MeanUnderIce_EpiTemp_degC_scale~Ice
         MeanDelta1_11mWaterDensity_kgperm3_scale ~ MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
-        MeanHeatContent_MegaJoules_scale~MeanDelta1_11mWaterDensity_kgperm3_scale+LengthOfIceCover_days_scale+ IceOutDayofYear_fed_scale
         
-        LengthSpringMixedPeriod_days_scale ~ LengthOfIceCover_days_scale+ IceOutDayofYear_fed_scale + MeanHeatContent_MegaJoules_scale
+        FinalHeatContent_MegaJoules_scale~Ice
+        LengthSpringMixedPeriod_days_scale ~ Ice + MeanDelta1_11mWaterDensity_kgperm3_scale+FinalHeatContent_MegaJoules_scale
         
         
-         LengthOfIceCover_days_scale ~~ IceOutDayofYear_fed_scale
+         IceInDayofYear_fed_scale ~~ IceOutDayofYear_fed_scale
+         
          MeanUnderIce_EpiTemp_degC_scale~~MeanUnderIce_HypoTemp_degC_scale
          
         '
 
-      'MeanUnderIce_HypoTemp_degC_scale~ Ice
-      MeanUnderIce_EpiTemp_degC_scale~Ice
-      MeanDelta1_11mWaterDensity_kgperm3_scale ~ Ice + MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
-      SlopeHeatContent_MegaJoulesperDay_scale~MeanDelta1_11mWaterDensity_kgperm3_scale + Ice
-      FinalHeatContent_MegaJoules_scale ~ MeanDelta1_11mWaterDensity_kgperm3_scale + Ice +SlopeHeatContent_MegaJoulesperDay_scale+SlopeHeatContent_MegaJoulesperDay_scale
-      LengthSpringMixedPeriod_days_scale ~ Ice + FinalHeatContent_MegaJoules_scale
+
+#Model 3 ignores the heat content####
+model3<-'MeanUnderIce_HypoTemp_degC_scale~LengthOfIceCover_days_scale+ IceOutDayofYear_fed_scale
+        MeanUnderIce_EpiTemp_degC_scale~LengthOfIceCover_days_scale+ IceOutDayofYear_fed_scale
+        MeanDelta1_11mWaterDensity_kgperm3_scale ~ MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
+        
+        LengthSpringMixedPeriod_days_scale ~  IceOutDayofYear_fed_scale+FinalHeatContent_MegaJoules_scale+LengthOfIceCover_days_scale
+        FinalHeatContent_MegaJoules_scale~LengthOfIceCover_days_scale+MeanDelta1_11mWaterDensity_kgperm3_scale
+        SlopeHeatContent_MegaJoulesperDay_scale~MeanDelta1_11mWaterDensity_kgperm3_scale+LengthOfIceCover_days_scale
+          
+         SlopeHeatContent_MegaJoulesperDay_scale~~FinalHeatContent_MegaJoules_scale 
+         IceOutDayofYear_fed_scale~~FinalHeatContent_MegaJoules_scale
+         LengthOfIceCover_days_scale ~~ IceOutDayofYear_fed_scale
+         MeanUnderIce_EpiTemp_degC_scale~~MeanUnderIce_HypoTemp_degC_scale
+         
+        '
+      #MeanSchmidtStabilityUnderIce_Jdayspm2_scale~MeanDelta1_11mWaterDensity_kgperm3_scale
+      #FinalVolumeWeightedMeanTemp_degC_scale~MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale+MeanDelta1_11mWaterDensity_kgperm3_scale
+      #FinalHeatContent_MegaJoules_scale~MeanDelta1_11mWaterDensity_kgperm3_scale+LengthOfIceCover_days_scale+ IceOutDayofYear_fed_scale
+      #MeanUnderIce_HypoTemp_degC_scale~ Ice
+      #MeanUnderIce_EpiTemp_degC_scale~Ice
+      #MeanDelta1_11mWaterDensity_kgperm3_scale ~ Ice + MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
+      #SlopeHeatContent_MegaJoulesperDay_scale~MeanDelta1_11mWaterDensity_kgperm3_scale + Ice
+      #FinalHeatContent_MegaJoules_scale ~ MeanDelta1_11mWaterDensity_kgperm3_scale + Ice +SlopeHeatContent_MegaJoulesperDay_scale+SlopeHeatContent_MegaJoulesperDay_scale
+      #LengthSpringMixedPeriod_days_scale ~ Ice + FinalHeatContent_MegaJoules_scale
       #FinalHeatContent_MegaJoules_scale ~ MeanDelta1_11mWaterDensity_kgperm3_scale + SlopeHeatContent_MegaJoulesperDay_scale + LengthOfIceCover_days_scale
-      Ice=~LengthOfIceCover_days_scale+IceInDayofYear_fed_scale + IceOutDayofYear_fed_scale 
+      #Ice=~LengthOfIceCover_days_scale+IceInDayofYear_fed_scale + IceOutDayofYear_fed_scale 
       
-      LengthOfIceCover_days_scale ~~ IceOutDayofYear_fed_scale
-      MeanUnderIce_EpiTemp_degC_scale~~MeanUnderIce_HypoTemp_degC_scale
+      #LengthOfIceCover_days_scale ~~ IceOutDayofYear_fed_scale
+      #MeanUnderIce_EpiTemp_degC_scale~~MeanUnderIce_HypoTemp_degC_scale
       
       
-      '
+      
       #Ice=~LengthOfIceCover_days_scale+IceInDayofYear_fed_scale + IceOutDayofYear_fed_scale
       #MeanUnderIce_HypoTemp_degC_scale ~ Ice
       #MeanUnderIce_EpiTemp_degC_scale ~ Ice
@@ -188,14 +209,64 @@ AnnualUnderIceSummary_SEM<-AnnualUnderIceSummary%>%
 
 #**Fit the model####
 #From lavaan package
-fit<-sem(model2,data=AnnualUnderIceSummary_SEM)
+fit<-sem(model3,data=AnnualUnderIceSummary_SEM,meanstructure=TRUE)
   varTable(fit)
   
 #***view the results####
 summary(fit, fit.measures = TRUE, standardized=T,rsquare=T)
 
 #**Building a Structural Equation Model (SEM)####
-semPaths(fit,'std',layout='tree',edge.label.cex = 1.1,label.cex=1.1)
+semPaths(fit,'std',layout='tree',edge.label.cex = 1.1,label.cex=1.1,intercepts=FALSE)
+  
+#**Partial residual plots for variables of interest####
+#*https://en.wikipedia.org/wiki/Partial_residual_plot
+#*Calculate the resiudals for the variable using the equation
+#*Calculate the partial residuals by doing the model residuals + Beta1*x and plot vs. x for a variable of interest
+#*use Beta*x for the CCPR - component and compenent plus residual showing where the fitted line would lie
+  #***Plot the partial residuals for the top variable for Length of mixing####
+  AnnualUnderIceSummary_SEM%>%mutate(LengthSpringMixedPeriod_days_scale_Resids=LengthSpringMixedPeriod_days_scale-(-0.806*IceOutDayofYear_fed_scale-0.066*FinalHeatContent_MegaJoules_scale+0.326*LengthOfIceCover_days_scale-0.011))%>%
+    ggplot(.,aes(y=(LengthSpringMixedPeriod_days_scale_Resids-0.806*IceOutDayofYear_fed_scale),x=IceOutDayofYear_fed_scale))+
+    geom_point()+
+    geom_line(aes(y=IceOutDayofYear_fed_scale*-0.806-0.011))+
+    xlab("Ice out doy (z-score)")+
+    ylab("Length mixed period (z-score)")+
+    theme_bw()
+  
+  #***Plot the partial residuals for the top variable for hypo temp####
+  AnnualUnderIceSummary_SEM%>%mutate(MeanUnderIce_HypoTemp_degC_scale_Resids=MeanUnderIce_HypoTemp_degC_scale-(0.878*LengthOfIceCover_days_scale-0.754*IceOutDayofYear_fed_scale+0.046))%>%
+    ggplot(.,aes(y=(MeanUnderIce_HypoTemp_degC_scale_Resids+0.878*LengthOfIceCover_days_scale),x=LengthOfIceCover_days_scale))+
+    geom_point()+
+    geom_line(aes(y=LengthOfIceCover_days_scale*0.878+0.046))+
+    xlab("Length of ice cover (z-score)")+
+    ylab("Under ice hypo temp (z-score)")+
+    theme_bw()
+  
+  #***Plot the partial residuals for the top variable for  water delta####
+  AnnualUnderIceSummary_SEM%>%mutate(MeanDelta1_11mWaterDensity_kgperm3_scale_Resids=MeanDelta1_11mWaterDensity_kgperm3_scale-(-0.852*MeanUnderIce_HypoTemp_degC_scale+1.237*MeanUnderIce_EpiTemp_degC_scale-0.002))%>%
+    ggplot(.,aes(y=(MeanDelta1_11mWaterDensity_kgperm3_scale_Resids-0.852*MeanUnderIce_HypoTemp_degC_scale),x=MeanUnderIce_HypoTemp_degC_scale))+
+    geom_point()+
+    geom_line(aes(y=-0.852*MeanUnderIce_HypoTemp_degC_scale-0.002))+
+    xlab("Under ice hypo temp (z-score)")+
+    ylab("Water density delta (z-score)")+
+    theme_bw()
+  
+  #***Plot the partial residuals for the top variable for  final heat content####
+  AnnualUnderIceSummary_SEM%>%mutate(FinalHeatContent_MegaJoules_scale_Resids=FinalHeatContent_MegaJoules_scale-(0.481*LengthOfIceCover_days_scale-0.006*MeanDelta1_11mWaterDensity_kgperm3_scale+0.019))%>%
+    ggplot(.,aes(y=(FinalHeatContent_MegaJoules_scale_Resids+0.481*LengthOfIceCover_days_scale),x=LengthOfIceCover_days_scale))+
+    geom_point()+
+    geom_line(aes(y=0.481*LengthOfIceCover_days_scale+0.019))+
+    xlab("Length of ice cover (z-score)")+
+    ylab("Final heat content (z-score)")+
+    theme_bw()
+  
+  #***Plot the partial residuals for the top variable for slope heat content####
+  AnnualUnderIceSummary_SEM%>%mutate(SlopeHeatContent_MegaJoulesperDay_scale_Resids=SlopeHeatContent_MegaJoulesperDay_scale-(-0.768*LengthOfIceCover_days_scale-0.215*MeanDelta1_11mWaterDensity_kgperm3_scale-0.036))%>%
+    ggplot(.,aes(y=(SlopeHeatContent_MegaJoulesperDay_scale_Resids-0.768*LengthOfIceCover_days_scale),x=LengthOfIceCover_days_scale))+
+    geom_point()+
+    geom_line(aes(y=-0.768*LengthOfIceCover_days_scale-0.036))+
+    xlab("Length of ice cover (z-score)")+
+    ylab("Slope heat content (z-score)")+
+    theme_bw()
 
 #**correlation plot####
 ggcorr(AnnualUnderIceSummary_SEM%>%
@@ -204,6 +275,10 @@ ggcorr(AnnualUnderIceSummary_SEM%>%
 label_round = 2, name = "Correlation Scale", label_alpha = T, hjust = 0.75) +
   ggtitle(label = "Correlation Plot") +
   theme(plot.title = element_text(hjust = 0.6))
+
+####STOPPED HERE#####
+  #Need to create partial dependency plot of some sort--> or just use SEM to get out some of the more important relationships
+  #https://www.researchgate.net/post/Is_it_possible_to_extract_a_score_for_all_observations_of_a_latent_variable_after_confirmatory_factor_analysis_If_yes_how
   
 #Pull out the strongest relationships from the SEM####
   ggplot(data=AnnualUnderIceSummary_SEM,aes(x=LengthOfIceCover_days_scale,y=MeanUnderIce_HypoTemp_degC_scale))+geom_point()
@@ -228,7 +303,7 @@ label_round = 2, name = "Correlation Scale", label_alpha = T, hjust = 0.75) +
       summary(lm(AnnualUnderIceSummary_SEM$MeanDelta1_11mWaterDensity_kgperm3_scale~AnnualUnderIceSummary_SEM$LengthOfIceCover_days))  
       #NS
 
-      ggplot(data=AnnualUnderIceSummary_SEM,aes(x=LengthOfIceCover_days,y=VarSchmidtStabilityUnderIce_Jdayspm2))+geom_point()  
+      ggplot(data=AnnualUnderIceSummary_SEM,aes(x=MeanUnderIce_HypoTemp_degC,y=MeanDelta1_11mWaterDensity_kgperm3))+geom_point()  
       
       
  
