@@ -1,3 +1,11 @@
+
+
+
+#Run the main script to bring in all data and functions####
+source('00_main.R')
+
+
+
 #Load libraries 
 if(!require(huxtable)){install.packages("huxtable")}
 if(!require(magrittr)){install.packages("magrittr")}
@@ -28,6 +36,7 @@ if(!require(nlme)){install.packages("nlme")}
 if(!require(gratia)){install.packages("gratia")} 
 if(!require(itsadug)){install.packages("itsadug")} 
 if(!require(visreg)){install.packages("visreg")} 
+if(!require(visreg)){install.packages("huxtable")} 
 
 
 library(huxtable) #Pretty tables
@@ -58,6 +67,7 @@ library(nlme)
 library(gratia)
 library(itsadug)
 library(visreg)
+library(huxtable)
 
 
 # Set theme ---------------------------------------------------------------
@@ -81,11 +91,6 @@ theme_MS <- function () {
 }
 
 theme_set(theme_MS())
-
-
-
-#Run the main script to bring in all data and functions####
-source('00_main.R')
 
 
 # Correlations of winter predictor variables -------------------------------------------
@@ -1796,6 +1801,46 @@ propfall_rain_mean %>%
   xlab("7-year rolling window timepoint")+
   ylab("Cum. fall rain (7-year rolling mean)")+
   geom_smooth(method="lm", color="black", size=0.5)
+
+
+
+# Table S1.  Sens slope climate trends ------------------------------------
+options(scipen = 100, digits = 5)
+
+
+Climate.SensSlopeSummary<-
+  MohonkIceWeather %>%
+  select(1,6:ncol(.)) %>%
+  pivot_longer(-1) %>%
+  filter(Year>=1932) %>%
+  group_by(name)%>%
+  dplyr::summarize(Sens_Slope=MTCC.sensSlope(x=Year,y=value)$coefficients["Year"],
+                   Sens_Intercept=MTCC.sensSlope(x=Year,y=value)$coefficients["Intercept"],
+                   Sens_pval=MTCC.sensSlope(x=Year,y=value)$pval,
+                   Sens_z_stat=MTCC.sensSlope(x=Year,y=value)$z_stat,
+                   Sens_n=MTCC.sensSlope(x=Year,y=value)$n) %>%
+  mutate(Significance=case_when(Sens_pval>=0.05 ~ " ",
+                                Sens_pval<0.05 & Sens_pval >0.01 ~ "*",
+                                Sens_pval<=0.01 & Sens_pval >0.001 ~ "**",
+                                Sens_pval<=0.001 ~ "***")) %>%
+  mutate_if(is.numeric, round, 4) %>%
+  # mutate(Significance=ifelse(Sens_pval<0.05,"*",""),
+  mutate(P_value_new=paste(Sens_pval,Significance,sep="")) %>%
+  arrange(name, Significance) %>%
+  select(-Significance,-Sens_pval) %>%
+  filter(!grepl('ENSO|NAO', name)) #There is no evidence of trends in ENSO or
+#NAO variables so taking these out of the table for the sake of space
+
+Climate.SensSlopeSummary_hux <- 
+  hux(Climate.SensSlopeSummary) %>% 
+  # add_colnames() %>% 
+  set_bold(row = 1, col = everywhere, value = TRUE) %>% 
+  set_all_borders(TRUE) 
+
+theme_plain(Climate.SensSlopeSummary_hux)
+# quick_docx(Climate.SensSlopeSummary_hux, file = 'figures/TableS1.SensSlopesClimateVariables.docx')
+
+
 
 
 # ~~~~~~~ Visualize trends ~~~~~~~~ --------------------------------------------------------
