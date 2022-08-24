@@ -2,6 +2,9 @@
 #Explore the winter water temperature and associated metrics for Mohonk Lake
 #Created 15Jul2022, by David Richardson (DCR)
 
+#Run previous code to get in data####
+source('00_main.R')
+
 #Packages####
 if(!require(scales)){install.packages("scales")}
 if(!require(ggridges)){install.packages("ggridges")}
@@ -231,6 +234,11 @@ semPaths(fit,'std',layout='tree',edge.label.cex = 1.1,label.cex=1.1,intercepts=F
     xlab("Ice out doy (z-score)")+
     ylab("Length mixed period (z-score)")+
     theme_bw()
+    #Can modify to actual day here... but is better to get more evenly spaced numbers and then figure out the z-score of those numbers for the breaks
+    #scale_y_continuous(breaks=c(-1,0,1,2),labels=round(c(mean(AnnualUnderIceSummary_SEM$LengthSpringMixedPeriod_days,na.rm=TRUE)-sd(AnnualUnderIceSummary_SEM$LengthSpringMixedPeriod_days,na.rm=TRUE),mean(AnnualUnderIceSummary_SEM$LengthSpringMixedPeriod_days,na.rm=TRUE),mean(AnnualUnderIceSummary_SEM$LengthSpringMixedPeriod_days,na.rm=TRUE)+sd(AnnualUnderIceSummary_SEM$LengthSpringMixedPeriod_days,na.rm=TRUE),mean(AnnualUnderIceSummary_SEM$LengthSpringMixedPeriod_days,na.rm=TRUE)+2*sd(AnnualUnderIceSummary_SEM$LengthSpringMixedPeriod_days,na.rm=TRUE))))
+
+    
+  mean(AnnualUnderIceSummary_SEM$LengthSpringMixedPeriod_days,na.rm=TRUE)+sd(AnnualUnderIceSummary_SEM$LengthSpringMixedPeriod_days,na.rm=TRUE)
   
   #***Plot the partial residuals for the top variable for hypo temp####
   AnnualUnderIceSummary_SEM%>%mutate(MeanUnderIce_HypoTemp_degC_scale_Resids=MeanUnderIce_HypoTemp_degC_scale-(0.878*LengthOfIceCover_days_scale-0.754*IceOutDayofYear_fed_scale+0.046))%>%
