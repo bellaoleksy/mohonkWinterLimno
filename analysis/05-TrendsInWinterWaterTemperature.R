@@ -229,10 +229,20 @@ fit<-sem(model4,data=AnnualUnderIceSummary_SEM,meanstructure=TRUE)
   
 #***view the results####
 summary(fit, fit.measures = TRUE, standardized=T,rsquare=T)
+  
+  parameterEstimates(fit)
 
 #**Building a Structural Equation Model (SEM)####
-semPaths(fit,'std',layout='tree',edge.label.cex = 1.1,label.cex=1.1,intercepts=FALSE)
-  
+SEM.plot<-semPaths(fit,'std',layout='tree2',edge.label.cex = 1.3,label.cex=1.1,intercepts=FALSE,curve=TRUE,nCharNodes = 8,title=FALSE,residuals=FALSE,
+         nodeLabels=c("Hyp Tmp","Epi Tmp","Den Del","Spr Mix","Ice Dur","Ice Out"),node.width=c(2,2,2,2,2,2),node.height=c(1.1,1.1,1.1,1.1,1.1,1.1),shapeMan="rectangle",
+         edge.label.position=c(0.5,0.65,0.35,0.65,0.5,0.5,0.5,0.65,0.5,0.5,0.5,0.5,0.5,0.5))
+
+#Export as a jpg####
+jpeg("figures/SEMplot.jpg",width=3,height=2.5,units="in",res=300)
+semPaths(fit,'std',layout='tree2',edge.label.cex = 1.3,label.cex=1.1,intercepts=FALSE,curve=TRUE,nCharNodes = 8,title=FALSE,residuals=FALSE,
+         nodeLabels=c("Hyp Tmp","Epi Tmp","Den Del","Spr Mix","Ice Dur","Ice Out"),node.width=c(2,2,2,2,2,2),node.height=c(1.1,1.1,1.1,1.1,1.1,1.1),shapeMan="rectangle",
+         edge.label.position=c(0.5,0.65,0.35,0.65,0.5,0.5,0.5,0.65,0.5,0.5,0.5,0.5,0.5,0.5))
+dev.off()
 #**Partial residual plots for variables of interest####
 #*https://en.wikipedia.org/wiki/Partial_residual_plot
 #*Calculate the resiudals for the variable using the equation
@@ -372,5 +382,25 @@ label_round = 2, name = "Correlation Scale", label_alpha = T, hjust = 0.75) +
 
       ggplot(data=AnnualUnderIceSummary_SEM,aes(x=MeanUnderIce_HypoTemp_degC,y=MeanDelta1_11mWaterDensity_kgperm3))+geom_point()  
       
-      
+ 
+####STOPPED HERE - NEED TO CONVERT semPaths object into ggplot or grob to have it be a panel in wrap_plots####      
+#Multiple panel plot for SEM####
+      panel.size<-10
+      List<-list(semPaths(fit,'std',layout='tree2',edge.label.cex = 1.3,label.cex=1.1,intercepts=FALSE,curve=TRUE,nCharNodes = 8,title=FALSE,residuals=FALSE,
+                          nodeLabels=c("Hyp Tmp","Epi Tmp","Den Del","Spr Mix","Ice Dur","Ice Out"),node.width=c(2,2,2,2,2,2),node.height=c(1.1,1.1,1.1,1.1,1.1,1.1),shapeMan="rectangle",
+                          edge.label.position=c(0.5,0.65,0.35,0.65,0.5,0.5,0.5,0.65,0.5,0.5,0.5,0.5,0.5,0.5))
+                   ,
+                 AnnualUnderIceSummary_SEM%>%mutate(MeanDelta1_11mWaterDensity_kgperm3_scale_Resids=MeanDelta1_11mWaterDensity_kgperm3_scale-(-0.852*MeanUnderIce_HypoTemp_degC_scale+1.239*MeanUnderIce_EpiTemp_degC_scale-0.002))%>%
+                   ggplot(.,aes(y=(MeanDelta1_11mWaterDensity_kgperm3_scale_Resids+1.239*MeanUnderIce_EpiTemp_degC_scale),x=MeanUnderIce_EpiTemp_degC_scale))+
+                   geom_point()+
+                   geom_line(aes(y=1.239*MeanUnderIce_EpiTemp_degC_scale-0.002))+
+                   xlab(bquote(Under~ice~epi~temp~(degree*C)))+
+                   ylab(bquote(Water~density~Delta~(kg~m^-3)))+
+                   theme_bw()+
+                   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+                   scale_x_continuous(breaks=breaks_MeanUnderIce_EpiTemp_degC,labels=labels_MeanUnderIce_EpiTemp_degC)+
+                   scale_y_continuous(breaks=breaks_MeanDelta1_11mWaterDensity_kgperm3,labels=labels_MeanDelta1_11mWaterDensity_kgperm3,limits=c(-2.9,2.3))
+      )
+
+      (gg.4panel.SEM<-wrap_plots(List,ncol = 2,nrow = 1)&theme(plot.margin = unit(c(3,3,3,3),"pt")))                 
  
