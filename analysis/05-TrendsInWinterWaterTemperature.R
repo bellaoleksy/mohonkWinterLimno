@@ -11,6 +11,9 @@ if(!require(ggridges)){install.packages("ggridges")}
 if(!require(lavaan)){install.packages("lavaan")}
 if(!require(semPlot)){install.packages("semPlot")}
 if(!require(GGally)){install.packages("GGally")}
+if(!require(patchwork)){install.packages("patchwork")}
+if(!require(ggplotify)){install.packages("ggplotify")}
+if(!require(ggnetwork)){install.packages("ggnetwork")}
 
 
 #Load libraries
@@ -19,6 +22,9 @@ library(ggridges)
 library(lavaan) #for SEM fit
 library(semPlot) #for SEM visualization
 library(GGally) #for corr plot as gg objects
+library(patchwork) #laying out multipanel plots with the same size
+library(ggplotify) #create gg objects or grobs from other graphical systems
+library(ggnetwork) #Makes nice network plots in ggplot from lavaan object
 
 #Graph  each water year with ice in/out as vertical lines, and temperature as spaghetti plot####
 ggplot(data=DailyInterpol_winter%>%filter(wateryear==2001),aes(x=Date,y=DailyIceRecord_binomial*5))+geom_line()+
@@ -239,9 +245,9 @@ SEM.plot<-semPaths(fit,'std',layout='tree2',edge.label.cex = 1.3,label.cex=1.1,i
 
 #Export as a jpg####
 jpeg("figures/SEMplot.jpg",width=3,height=2.5,units="in",res=300)
-semPaths(fit,'std',layout='tree2',edge.label.cex = 1.3,label.cex=1.1,intercepts=FALSE,curve=TRUE,nCharNodes = 8,title=FALSE,residuals=FALSE,
-         nodeLabels=c("Hyp Tmp","Epi Tmp","Den Del","Spr Mix","Ice Dur","Ice Out"),node.width=c(2,2,2,2,2,2),node.height=c(1.1,1.1,1.1,1.1,1.1,1.1),shapeMan="rectangle",
-         edge.label.position=c(0.5,0.65,0.35,0.65,0.5,0.5,0.5,0.65,0.5,0.5,0.5,0.5,0.5,0.5))
+semPaths(fit,'std',layout='tree2',edge.label.cex = 1.7,label.cex=1.3,intercepts=FALSE,curve=TRUE,nCharNodes = 8,title=FALSE,residuals=FALSE,
+         nodeLabels=c("Hyp Temp","Epi Temp",bquote(" "~Dens.~Delta~" ")," Spr Mix "," Ice Dur. "," Ice Out  "),node.width=c(4.4,4.4,4.4,4.4,4.4,4.4),node.height=c(1.5,1.5,1.5,1.5,1.5,1.5),shapeMan="rectangle",
+         edge.label.position=c(0.5,0.65,0.35,0.65,0.5,0.5,0.5,0.7,0.5,0.5,0.5,0.5,0.5,0.5))
 dev.off()
 #**Partial residual plots for variables of interest####
 #*https://en.wikipedia.org/wiki/Partial_residual_plot
@@ -381,9 +387,116 @@ label_round = 2, name = "Correlation Scale", label_alpha = T, hjust = 0.75) +
       #NS
 
       ggplot(data=AnnualUnderIceSummary_SEM,aes(x=MeanUnderIce_HypoTemp_degC,y=MeanDelta1_11mWaterDensity_kgperm3))+geom_point()  
+  
       
- 
-####STOPPED HERE - NEED TO CONVERT semPaths object into ggplot or grob to have it be a panel in wrap_plots####      
+
+#Create customized ggplot of network from lavaan object####
+      #https://www.ethan-young.com/code/sem-diagrams-for-lavaan-models/
+      #*Extract all the parameters####
+      lavaan_parameters <- parameterestimates(fit)
+      #*Create graphical locations for each of the nodes####
+      nodes <- lavaan_parameters %>% 
+        dplyr::select(lhs) %>% 
+        rename(name = lhs) %>% 
+        distinct(name) %>% 
+        mutate(
+          x = case_when(name == "LengthOfIceCover_days_scale"      ~ 0.3,
+                        name == "IceOutDayofYear_fed_scale"        ~ 0.7,
+                        name == "MeanUnderIce_HypoTemp_degC_scale" ~ 0.05,
+                        name == "MeanUnderIce_EpiTemp_degC_scale" ~ 0.5,
+                        name == "LengthSpringMixedPeriod_days_scale" ~ 0.9,
+                        name == "MeanDelta1_11mWaterDensity_kgperm3_scale" ~ 0.5),
+          y = case_when(name == "LengthOfIceCover_days_scale"      ~ 0.8,
+                        name == "IceOutDayofYear_fed_scale"        ~ 0.8,
+                        name == "MeanUnderIce_HypoTemp_degC_scale" ~ 0.5,
+                        name == "MeanUnderIce_EpiTemp_degC_scale" ~ 0.5,
+                        name == "LengthSpringMixedPeriod_days_scale" ~ 0.5,
+                        name == "MeanDelta1_11mWaterDensity_kgperm3_scale" ~ 0.2),
+          xend = x,
+          yend = y
+        )
+      #*Create graphical locations for each of the edges####
+      edges <- lavaan_parameters %>%
+        filter(op %in% c("~","~~"))
+      #Combine edges and nodes
+      combined <- nodes %>% 
+        bind_rows(
+          left_join(edges,nodes %>% select(name,x,y),by=c("lhs"="name")) %>%
+            left_join(nodes %>% select(name,xend,yend),by = c("rhs"="name"))
+        )
+      #Create edge labels
+      combined_edge_labels <- combined %>% 
+        mutate(
+          est = round(est,2),
+          p.code     = ifelse(pvalue<.05,"p < .05","p > .05"),
+          shape      = "observed",
+          midpoint.x = (x + xend)/2,
+          midpoint.y = (y + yend)/2,
+          x2    = case_when(op=="~"~xend,
+                            lhs == "MeanUnderIce_HypoTemp_degC_scale" & rhs == "MeanUnderIce_EpiTemp_degC_scale" ~ x+0.09,
+                            lhs == "LengthOfIceCover_days_scale" & rhs == "IceOutDayofYear_fed_scale" ~ x+0.09,
+                            lhs == "MeanDelta1_11mWaterDensity_kgperm3_scale" & rhs == "LengthSpringMixedPeriod_days_scale"~x
+                            ),
+          xend2 = ifelse(op=="~",x,xend),
+          y2    = ifelse(op=="~",yend,y),
+          yend2 = ifelse(op=="~",y,yend),
+          rise = yend2-y2,
+          run  = x2-xend2,
+          dist = sqrt(run^2 + rise^2) %>% round(2),
+          newx = case_when(lhs == "MeanUnderIce_HypoTemp_degC_scale" & rhs == "LengthOfIceCover_days_scale" ~ (x2 + (xend2 - x2) * 0.85),
+                           lhs == "MeanUnderIce_HypoTemp_degC_scale" & rhs == "IceOutDayofYear_fed_scale" ~ (x2 + (xend2 - x2) * .85),
+                           lhs == "MeanUnderIce_EpiTemp_degC_scale" & rhs == "LengthOfIceCover_days_scale" ~ (x2 + (xend2 - x2) * .85),
+                           lhs == "MeanUnderIce_EpiTemp_degC_scale" & rhs == "IceOutDayofYear_fed_scale" ~ (x2 + (xend2 - x2) * .85),
+                           lhs == "MeanDelta1_11mWaterDensity_kgperm3_scale" & rhs == "MeanUnderIce_HypoTemp_degC_scale" ~ (x2 + (xend2 - x2) * 0.8),
+                           lhs == "MeanDelta1_11mWaterDensity_kgperm3_scale" & rhs == "MeanUnderIce_EpiTemp_degC_scale" ~ (x2 + (xend2 - x2) * .85),
+                           lhs == "LengthSpringMixedPeriod_days_scale" & rhs == "IceOutDayofYear_fed_scale" ~ (x2 + (xend2 - x2) * .85),
+                           lhs == "LengthSpringMixedPeriod_days_scale" & rhs == "LengthOfIceCover_days_scale" ~ (x2 + (xend2 - x2) * 0.825),
+                           lhs == "MeanUnderIce_HypoTemp_degC_scale" & rhs == "MeanUnderIce_EpiTemp_degC_scale" ~ (x2 + (xend2 - x2) * 0.75),
+                           lhs == "LengthOfIceCover_days_scale" & rhs == "IceOutDayofYear_fed_scale" ~ (x2 + (xend2 - x2) * 0.70),
+                           lhs == "MeanDelta1_11mWaterDensity_kgperm3_scale" & rhs == "LengthSpringMixedPeriod_days_scale" ~ (x2 + (xend2 - x2) * .85)
+                           ),
+          newy = case_when(lhs == "MeanUnderIce_HypoTemp_degC_scale" & rhs == "LengthOfIceCover_days_scale" ~ (y2 + (yend2 - y2) * .7),
+                           lhs == "MeanUnderIce_HypoTemp_degC_scale" & rhs == "IceOutDayofYear_fed_scale" ~ (y2 + (yend2 - y2) * .85),
+                           lhs == "MeanUnderIce_EpiTemp_degC_scale" & rhs == "LengthOfIceCover_days_scale" ~ (y2 + (yend2 - y2) * 0.7), 
+                           lhs == "MeanUnderIce_EpiTemp_degC_scale" & rhs == "IceOutDayofYear_fed_scale" ~ (y2 + (yend2 - y2) * 0.7), 
+                           lhs == "MeanDelta1_11mWaterDensity_kgperm3_scale" & rhs == "MeanUnderIce_HypoTemp_degC_scale" ~ (y2 + (yend2 - y2) * .85),
+                           lhs == "MeanDelta1_11mWaterDensity_kgperm3_scale" & rhs == "MeanUnderIce_EpiTemp_degC_scale" ~ (y2 + (yend2 - y2) * 0.73), 
+                           lhs == "LengthSpringMixedPeriod_days_scale" & rhs == "IceOutDayofYear_fed_scale" ~ (y2 + (yend2 - y2) * 0.72), 
+                           lhs == "LengthSpringMixedPeriod_days_scale" & rhs == "LengthOfIceCover_days_scale" ~ (y2 + (yend2 - y2) * .85),
+                           lhs == "MeanUnderIce_HypoTemp_degC_scale" & rhs == "MeanUnderIce_EpiTemp_degC_scale" ~ (y2 + (yend2 - y2) * .85),
+                           lhs == "LengthOfIceCover_days_scale" & rhs == "IceOutDayofYear_fed_scale" ~ (y2 + (yend2 - y2) * .85),
+                           lhs == "MeanDelta1_11mWaterDensity_kgperm3_scale" & rhs == "LengthSpringMixedPeriod_days_scale" ~ (y2 + (yend2 - y2) * .85)
+                           ),
+          node.labels=case_when(name=="MeanUnderIce_HypoTemp_degC_scale" ~ "Hyp Tmp",
+                                name=="MeanUnderIce_EpiTemp_degC_scale" ~ "Epi Tmp",
+                                name=="MeanDelta1_11mWaterDensity_kgperm3_scale" ~ "Dens Del",
+                                name=="LengthSpringMixedPeriod_days_scale" ~ "Spr Mix",
+                                name=="LengthOfIceCover_days_scale" ~ "Ice Dur",
+                                name=="IceOutDayofYear_fed_scale" ~ "Ice Out"
+                                ),
+          arrow.ends=case_when(op=="~"~"last",
+                               op=="~~"~"both"
+                                 )
+        )
+      
+      
+      ####STOPPED HERE - NEED TO CUSTOMIZE THE NODE GRAPH TO HAVE COVARIANCE ARROWS SHOWING, ADJUST EDGE LABELS FOR EACH ONE TO CENTER, COLORED ARROWS, WEIGHTED ARROWS, DELTA as symbol####      
+      
+      (gg.networkplot<-ggplot(data=combined_edge_labels,aes(x = x, y = y, xend = xend, yend = yend)) +
+        geom_edges(data=combined_edge_labels%>%filter(op=="~"),aes(x = x2, y = y2, xend = newx, yend = newy),
+                   arrow = arrow(length = unit(6, "pt"), type = "closed",ends = "last")) + #edges for the regressions
+        geom_edges(data=combined_edge_labels%>%filter(op=="~~"),aes(x = x2, y = y2, xend = newx, yend = newy),
+                   arrow = arrow(length = unit(6, "pt"), type = "closed",ends = "both")) + #edges for the covariances
+        geom_nodes(data=combined_edge_labels,aes(shape="observed"), color = "black",fill="white",size = 17,shape=22) +
+        geom_nodetext(data=combined_edge_labels,aes(label = node.labels),fontface = "bold",size=2.5) +
+        geom_label(data=combined_edge_labels%>%filter(op%in%c("~","~~")&lhs!=rhs),aes(x = midpoint.x, y = midpoint.y, label = est), color = "black",label.size = NA,hjust = .5,vjust=.5,size=2.2) +
+        scale_y_continuous(expand = c(.05,0.05)) +
+        scale_x_continuous(expand = c(.05,0.05)) +
+        scale_shape_manual(values = c(15,19),guide=F) +
+        theme_blank())
+      
+      ggsave(paste("figures/MohonkWinterLimno-FigureX-SEMplot.jpg",sep=""),plot=gg.networkplot,width=3,height=2.5,units="in", dpi=300)
+      
 #Multiple panel plot for SEM####
       panel.size<-10
       List<-list(semPaths(fit,'std',layout='tree2',edge.label.cex = 1.3,label.cex=1.1,intercepts=FALSE,curve=TRUE,nCharNodes = 8,title=FALSE,residuals=FALSE,
