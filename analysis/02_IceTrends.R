@@ -130,8 +130,8 @@ MohonkIceWeather_trim_correlations %>%
 MohonkIce_top10<-MohonkIceWeather_trim_correlations %>%
   mutate(cor_abs=abs(cor)) %>%
   arrange(desc(cor_abs)) 
-  # group_by(row) %>%
-  # slice(1:10)
+# group_by(row) %>%
+# slice(1:10)
 
 #Extract variable names 
 IceInVars <- MohonkIce_top10 %>% filter(row=="IceInDayofYear_fed") %>% pull(column)
@@ -139,7 +139,7 @@ IceOutVars <- MohonkIce_top10 %>% filter(row=="IceOutDayofYear") %>% pull(column
 IceDurationVars <- MohonkIce_top10 %>% filter(row=="LengthOfIceCover_days") %>% pull(column)
 
 #Export table of top 10 correlations
-write_csv(MohonkIce_top10, "data/exported/MohonkIce_CorrMatrix.csv")
+# write_csv(MohonkIce_top10, "data/exported/MohonkIce_CorrMatrix.csv")
 
 
 #Visualize correlations with IceInDayofYear_fed
@@ -177,7 +177,7 @@ IceInDOY_corrMat<-flattenCorrMatrix(IceInCorrMat$r, IceInCorrMat$P) %>%
   relocate(y, .before = row) 
 write_csv(IceInDOY_corrMat, "data/exported/IceInDOY_CollinearMatrix.csv")
 
- #Visualize correlations with IceOutDayofYear
+#Visualize correlations with IceOutDayofYear
 MohonkIceWeather %>%
   select(IceOutDayofYear, all_of(IceOutVars)) %>%
   ggpairs() 
@@ -354,80 +354,10 @@ ggsave(
 
 # Fitting GAMs for iceOnDOY_fed -------------------------------------------
 
-#Distribution of y
-hist(MohonkIceWeather$IceInDayofYear_fed)
-
-### I added Family Gamma here for how errors should respond
-modIceOn0 <- gam(IceInDayofYear_fed ~ s(Year),
-                  family=Gamma(link="log"),
-                  data = MohonkIce,
-                  correlation = corCAR1(form = ~ Year),
-                  method = "REML")
-summary(modIceOn0)
-## summary object
-# modIceOn0_S <- summary(modIceOn0$gam)
-# modIceOn0_S #Gives you the P values, degrees of freedom...
-
-#PLOT Autocorrelation function of residuals from the additive model with AR(1) errors
-ACF <- acf(resid(modIceOn0$lme, type = "normalized"), plot = FALSE)
-ACF <- setNames(data.frame(unclass(ACF)[c("acf", "lag")]), c("ACF","Lag"))
-ggplot(ACF, aes(x = Lag, y = ACF)) +
-  geom_hline(aes(yintercept = 0)) +
-  geom_segment(mapping = aes(xend = Lag, yend = 0))
-
-###Since we're concerned with the response, include "response" in type of predict()
-IceOnPred <- with(MohonkIce, data.frame(Year = seq(min(Year, na.rm=TRUE),
-                                                         max(Year, na.rm=TRUE),
-                                                         length.out = 200)))
-IceOnPred <- cbind(IceOnPred, data.frame(predict(modIceOn$gam, IceOnPred,
-                                                     type="response",
-                                                     se.fit = TRUE)))
-### this calculates on the link scale (i.e., log)
-IceOnPred <- transform(IceOnPred, upper = fit + (2 * se.fit),
-                         lower = fit - (2 * se.fit))
-
-
-# Plots periods of change
-#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
-Term <- "Year"
-m1.d <- Deriv(modIceOn)
-
-m1.dci <- confint(m1.d, term = "Year")
-m1.dsig <- signifD(IceOnPred$fit,
-                   d = m1.d[[Term]]$deriv,
-                   m1.dci[[Term]]$upper,
-                   m1.dci[[Term]]$lower)
-
-ylim <- with(IceOnPred, range(upper, lower, fit))
-ylab <- 'Ice on DOY (water year)'
-
-plot(fit ~ Year, data = IceOnPred, type = "n", ylab = ylab, ylim = ylim)
-lines(fit ~ Year, data = IceOnPred)
-lines(upper ~ Year, data = IceOnPred, lty = "dashed")
-lines(lower ~ Year, data = IceOnPred, lty = "dashed")
-lines(unlist(m1.dsig$incr) ~ Year, data = IceOnPred, col = "blue", lwd = 3)
-lines(unlist(m1.dsig$decr) ~ Year, data = IceOnPred, col = "red", lwd = 3)
-#To me this indicates that there is no acceleration, and the rate of change is fairly constant. 
-
-#But another way to visualize it is there would be a significant period of change if the error bar around
-#the first derivative didn't overlap the horizontal black line.
-plot.Deriv(m1.d)
-
-#Plot Ice on DOY vs. year pretty
-ggplot(IceOnPred,aes(x=Year,y=fit))+
-  geom_point(data=MohonkIce,
-             mapping=aes(x=Year, y=IceInDayofYear_fed), size=2.5, alpha=0.7) +
-  geom_line(size=1)+
-  geom_ribbon(aes(ymin = (lower), ymax = (upper), x = Year), alpha = 0.5, inherit.aes = FALSE) +
-  labs(x="Year",y="Ice on (day of water-year)")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))
-
-## BUT the fit is poor. Can we add in additional predictors to improve the model fit? 
-
-
-
 ### First add isotherm variables with the highest R2 to the MohonkIceWeather df
+source('mohonkWinterLimno/analysis/01_Isotherm.R')
+
+
 
 MohonkIceWeather <- MohonkIceWeather %>%
   left_join(., Isotherm_WaterYear_dates_IceIn %>%
@@ -598,9 +528,12 @@ compareML(modIceOn5, modIceOn6) #model 6 has lower AIC
 
 visreg::visreg2d(modIceOn6, xvar='isotherm_TempMax_degC_17_days_0_degC_WaterYear_date', yvar='cumMeanDailyT_Nov', scale='response')
 
+# > Final Ice On model ----------------------------------------------------
 
 #Final variables for paper--
 summary(modIceOn6)
+
+
 
 ### Panel A -- Ice On vs. cumMeanDailyT_Dec
 new_data <-
@@ -620,8 +553,8 @@ ilink <- family(modIceOn6)$linkinv
 pred_isotherm <- predict(modIceOn6, new_data, type = "link", se.fit = TRUE)
 pred_isotherm <- cbind(pred_isotherm, new_data)
 pred_isotherm <- transform(pred_isotherm, lwr_ci = ilink(fit - (2 * se.fit)),
-                  upr_ci = ilink(fit + (2 * se.fit)),
-                  fitted = ilink(fit))
+                           upr_ci = ilink(fit + (2 * se.fit)),
+                           fitted = ilink(fit))
 pred_isotherm <- pred_isotherm %>%
   select(isotherm_TempMax_degC_17_days_0_degC_WaterYear_date, lwr_ci:fitted) %>%
   rename(lwr_ci_isotherm = lwr_ci,
@@ -649,15 +582,15 @@ new_data <-
            length = 200
          ),
          isotherm_TempMax_degC_17_days_0_degC_WaterYear_date = median(isotherm_TempMax_degC_17_days_0_degC_WaterYear_date, na.rm =
-                                      TRUE)
+                                                                        TRUE)
        ))
 
 ilink <- family(modIceOn6)$linkinv
 pred_Nov <- predict(modIceOn6, new_data, type = "link", se.fit = TRUE)
 pred_Nov <- cbind(pred_Nov, new_data)
 pred_Nov <- transform(pred_Nov, lwr_ci = ilink(fit - (2 * se.fit)),
-                  upr_ci = ilink(fit + (2 * se.fit)),
-                  fitted = ilink(fit))
+                      upr_ci = ilink(fit + (2 * se.fit)),
+                      fitted = ilink(fit))
 pred_Nov <- pred_Nov %>%
   select(cumMeanDailyT_Nov, lwr_ci:fitted) %>%
   rename(lwr_ci_Nov = lwr_ci,
@@ -677,26 +610,26 @@ IceIn_CumuNov<-ggplot(pred_Nov, aes(x = cumMeanDailyT_Nov, y = fitted_Nov)) +
 
 
 Row1<-cowplot::plot_grid(IceIn_isotherm, 
-                   IceIn_CumuNov + 
-                     theme(axis.text.y = element_blank(),
-                           # axis.ticks.y = element_blank(),
-                           axis.title.y = element_blank() ), 
-                   NULL,
-                   nrow = 1,
-                   labels = c("a","b",NULL),
-                   align = "v")
-
-
-Row1a<-cowplot::plot_grid(IceIn_CumuNov, 
-                          IceIn_isotherm + 
+                         IceIn_CumuNov + 
                            theme(axis.text.y = element_blank(),
                                  # axis.ticks.y = element_blank(),
                                  axis.title.y = element_blank() ), 
+                         NULL,
                          nrow = 1,
-                         labels = c("a","b"),
+                         labels = c("a","b",NULL),
                          align = "v")
 
-ggsave("figures/Figure2.GamPredictions_IceOn.png", plot=Row1a, width=8, height=4,units="in", dpi=300)
+
+Row1a<-cowplot::plot_grid(IceIn_isotherm , 
+                          IceIn_CumuNov + 
+                            theme(axis.text.y = element_blank(),
+                                  # axis.ticks.y = element_blank(),
+                                  axis.title.y = element_blank() ), 
+                          nrow = 1,
+                          labels = c("a","b"),
+                          align = "v")
+
+ggsave("mohonkWinterLimno/figures/Figure2.GamPredictions_IceOn.png", plot=Row1a, width=8, height=4,units="in", dpi=300)
 
 
 
@@ -708,10 +641,10 @@ hist(MohonkIceWeather$IceOutDayofYear)
 
 ### I added Family Gamma here for how errors should respond
 modIceOut0 <- gam(IceOutDayofYear ~ s(Year),
-                 # family=Gamma(link="log"),
-                 data = MohonkIceWeather,
-                 correlation = corCAR1(form = ~ Year),
-                 method = "REML")
+                  # family=Gamma(link="log"),
+                  data = MohonkIceWeather,
+                  correlation = corCAR1(form = ~ Year),
+                  method = "REML")
 summary(modIceOut0)
 ## summary object
 # modIceOut0_S <- summary(modIceOut0$gam)
@@ -721,21 +654,21 @@ summary(modIceOut0)
 ACF <- acf(resid(modIceOut0, type = "response"), plot = FALSE)
 ACF <- setNames(data.frame(unclass(ACF)[c("acf", "lag")]), c("ACF","Lag"))
 ggplot(ACF, aes(x = Lag, y = ACF)) +
-geom_hline(aes(yintercept = 0)) +
-geom_segment(mapping = aes(xend = Lag, yend = 0))
+  geom_hline(aes(yintercept = 0)) +
+  geom_segment(mapping = aes(xend = Lag, yend = 0))
 #Suggests that an AR(1) model isn't necessary? 
 
 
 ###Since we're concerned with the response, include "response" in type of predict()
 IceOffPred <- with(MohonkIce, data.frame(Year = seq(min(Year, na.rm=TRUE),
-                                                   max(Year, na.rm=TRUE),
-                                                   length.out = 200)))
+                                                    max(Year, na.rm=TRUE),
+                                                    length.out = 200)))
 IceOffPred <- cbind(IceOffPred, data.frame(predict(modIceOut0, IceOffPred,
-                                                 type="response",
-                                                 se.fit = TRUE)))
+                                                   type="response",
+                                                   se.fit = TRUE)))
 ### this calculates on the link scale (i.e., log)
 IceOffPred <- transform(IceOffPred, upper = fit + (2 * se.fit),
-                       lower = fit - (2 * se.fit))
+                        lower = fit - (2 * se.fit))
 
 
 # Plots periods of change
@@ -779,10 +712,10 @@ ggplot(IceOffPred,aes(x=Year,y=fit))+
 
 ### IceOutDayofYear~cumMeanDailyT_FebMarApr+cumSnow_FebMarApr
 modIceOut1 <- gam(IceOutDayofYear ~  s(cumMeanDailyT_FebMarApr) + s(cumSnow_FebMarApr),
-                 # family=Gamma(link="log"),
-                 data = MohonkIceWeather,
-                 # correlation = corCAR1(form = ~ Year),
-                 method = "REML")
+                  # family=Gamma(link="log"),
+                  data = MohonkIceWeather,
+                  # correlation = corCAR1(form = ~ Year),
+                  method = "REML")
 summary(modIceOut1)
 # summary(modIceOut1$gam)
 #Fit improves substantially over null model
@@ -793,10 +726,10 @@ draw(modIceOut1, residuals = TRUE)
 
 ### IceOutDayofYear~cumMeanDailyT_FebMar+cumSnow_FebMar (same as 1, but exclude April)
 modIceOut2 <- gam(IceOutDayofYear ~ s(cumMeanDailyT_FebMar) + s(cumSnow_FebMar) ,
-                 # family=Gamma(link="log"),
-                 data = MohonkIceWeather,
-                 # correlation = corCAR1(form = ~ Year),
-                 method = "REML")
+                  # family=Gamma(link="log"),
+                  data = MohonkIceWeather,
+                  # correlation = corCAR1(form = ~ Year),
+                  method = "REML")
 summary(modIceOut2)
 # summary(modIceOut2$gam)
 # Fit is a bit better than modIceOut2, in terms of deviance explained
@@ -807,10 +740,10 @@ draw(modIceOut2, residuals = TRUE)
 
 ### IceOutDayofYear ~ nDaysMinAboveZero_FebMar + cumSnow_FebMar
 modIceOut3 <- gam(IceOutDayofYear ~  s(nDaysMinAboveZero_FebMar) + s(cumSnow_FebMar) ,
-                 # family=Gamma(link="log"),
-                 data = MohonkIceWeather,
-                 # correlation = corCAR1(form = ~ Year),
-                 method = "REML")
+                  # family=Gamma(link="log"),
+                  data = MohonkIceWeather,
+                  # correlation = corCAR1(form = ~ Year),
+                  method = "REML")
 summary(modIceOut3)
 # summary(modIceOut3$gam)
 
@@ -820,10 +753,10 @@ draw(modIceOut3, residuals = TRUE)
 ### IceInDayofYear~ nDaysMinAboveZero_FebMar + cumSnow_FebMarApr
 ### Last model contains only Nov + Dec since individually Sep and Oct were not statistically significantly. 
 modIceOut4 <- gam(IceOutDayofYear ~  s(nDaysMinAboveZero_FebMar) + s(cumSnow_FebMarApr),
-                 # family=Gamma(link="log"),
-                 data = MohonkIceWeather,
-                 # correlation = corCAR1(form = ~ Year),
-                 method = "REML")
+                  # family=Gamma(link="log"),
+                  data = MohonkIceWeather,
+                  # correlation = corCAR1(form = ~ Year),
+                  method = "REML")
 summary(modIceOut4)
 # modIceOut4_S<-summary(modIceOut4$gam)
 # modIceOut4_S
@@ -922,10 +855,10 @@ gam.check(modIceOut9)
 
 #Just for good measure, same as above but without IceInDOY_fed
 modIceOut10 <- gam(IceOutDayofYear ~   s(cumMeanDailyT_Feb) + s(isotherm_TempMean_degC_29_days_4_degC_WaterYear_date) + s(cumSnow_FebMarApr),
-                  # family=Gamma(link="log"),
-                  data = MohonkIceWeather,
-                  # correlation = corCAR1(form = ~ Year),
-                  method = "REML")
+                   # family=Gamma(link="log"),
+                   data = MohonkIceWeather,
+                   # correlation = corCAR1(form = ~ Year),
+                   method = "REML")
 summary(modIceOut10)
 
 
@@ -993,7 +926,10 @@ modIceOut10_summary$dev.expl
 
 
 #Report gam smoothness estimates as variance components
-variance_comp(modIceOut9) 
+variance_comp(modIceOut9, rescale=TRUE, coverage=0.95) 
+variance_comp(modIceOut7, rescale=TRUE, coverage=0.95) 
+
+
 
 # Model 6 compared to Model 2 has lower AIC and %dev explained is 75%
 # Model 2 has a %dev explained of 73.4% and is more parsimonious, so I would lean toward using that instead. We can make the final call together, and also report all of them in a supplement. 
@@ -1010,7 +946,7 @@ visreg::visreg(modIceOut9, "isotherm_TempMean_degC_29_days_4_degC_WaterYear_date
 #Not entirely sure what the values on top mean, and it looks like not all the values are plotted?
 
 mgcv::vis.gam(modIceOut9, view=c("cumSnow_FebMarApr","isotherm_TempMean_degC_29_days_4_degC_WaterYear_date"),
-        plot.type="contour", color="cm", type="response")
+              plot.type="contour", color="cm", type="response")
 
 vis.gam(modIceOut9, view=c("cumSnow_FebMarApr","isotherm_TempMean_degC_29_days_4_degC_WaterYear_date"),
         theta= 24, type="response",
@@ -1019,6 +955,9 @@ vis.gam(modIceOut9, view=c("cumSnow_FebMarApr","isotherm_TempMean_degC_29_days_4
         zlab="\nIce Out DOY (Julian day)",
         xlab="\nCumulative snowfall Feb-Mar",
         ylab="\n29-day isotherm > 4 deg") #Adjust theta to get a different view
+
+
+# > Final Ice Out model ---------------------------------------------------
 
 
 #Final variables for paper--
@@ -1035,19 +974,19 @@ new_data <-
            length = 200
          ),
          isotherm_TempMean_degC_29_days_4_degC_WaterYear_date = median(isotherm_TempMean_degC_29_days_4_degC_WaterYear_date, na.rm =
-                                      TRUE),
+                                                                         TRUE),
          cumSnow_FebMarApr = median(cumSnow_FebMarApr, na.rm =
                                       TRUE),
          IceInDayofYear_fed = median(IceInDayofYear_fed, na.rm =
-                                      TRUE)
+                                       TRUE)
        ))
 
 ilink <- family(modIceOut9)$linkinv
 pred_FebT <- predict(modIceOut9, new_data, type = "link", se.fit = TRUE)
 pred_FebT <- cbind(pred_FebT, new_data)
 pred_FebT <- transform(pred_FebT, lwr_ci = ilink(fit - (2 * se.fit)),
-                      upr_ci = ilink(fit + (2 * se.fit)),
-                      fitted = ilink(fit))
+                       upr_ci = ilink(fit + (2 * se.fit)),
+                       fitted = ilink(fit))
 pred_FebT <- pred_FebT %>%
   select(cumMeanDailyT_Feb, lwr_ci:fitted) %>%
   rename(lwr_ci_FebT = lwr_ci,
@@ -1062,7 +1001,7 @@ IceOut_FebT<-ggplot(pred_FebT, aes(x = cumMeanDailyT_Feb, y = fitted_FebT)) +
   labs(x="Feb cumulative mean daily temperature (°C)",
        y="Ice Off (Julian Day)")+
   scale_y_continuous(breaks = seq(70, 120, by = 10) )+
-  coord_cartesian(ylim = c(70, 120), expand = TRUE)
+  coord_cartesian(ylim = c(65, 120), expand = TRUE)
 
 ### Ice Out vs. cumMeanDailyT_Mar
 modIceOut9_summary
@@ -1081,15 +1020,15 @@ new_data <-
          cumSnow_FebMarApr = median(cumSnow_FebMarApr, na.rm =
                                       TRUE),
          IceInDayofYear_fed = median(IceInDayofYear_fed, na.rm =
-                                          TRUE)
+                                       TRUE)
        ))
 
 ilink <- family(modIceOut9)$linkinv
 pred_isotherm <- predict(modIceOut9, new_data, type = "link", se.fit = TRUE)
 pred_isotherm <- cbind(pred_isotherm, new_data)
 pred_isotherm <- transform(pred_isotherm, lwr_ci = ilink(fit - (2 * se.fit)),
-                       upr_ci = ilink(fit + (2 * se.fit)),
-                       fitted = ilink(fit))
+                           upr_ci = ilink(fit + (2 * se.fit)),
+                           fitted = ilink(fit))
 pred_isotherm <- pred_isotherm %>%
   select(isotherm_TempMean_degC_29_days_4_degC_WaterYear_date, lwr_ci:fitted) %>%
   rename(lwr_ci_isotherm = lwr_ci,
@@ -1104,7 +1043,7 @@ IceOut_isotherm<-ggplot(pred_isotherm, aes(x = isotherm_TempMean_degC_29_days_4_
   labs(x="Isotherm Formula: TempAvg in degC, 29 day window, 4 degC threshold",
        y="Ice Off (Julian Day)")+
   scale_y_continuous(breaks = seq(70, 120, by = 10) )+
-  coord_cartesian(ylim = c(70, 120), expand = TRUE)
+  coord_cartesian(ylim = c(65, 120), expand = TRUE)
 
 
 #Ice Out vs. FebMarAprSnow
@@ -1120,9 +1059,9 @@ new_data <-
          cumMeanDailyT_Feb = median(cumMeanDailyT_Feb, na.rm =
                                       TRUE),
          isotherm_TempMean_degC_29_days_4_degC_WaterYear_date = median(isotherm_TempMean_degC_29_days_4_degC_WaterYear_date, na.rm =
-                                      TRUE),
+                                                                         TRUE),
          IceInDayofYear_fed = median(IceInDayofYear_fed, na.rm =
-                                          TRUE)
+                                       TRUE)
        ))
 
 
@@ -1130,8 +1069,8 @@ ilink <- family(modIceOut9)$linkinv
 pred_FebMarAprSnow <- predict(modIceOut9, new_data, type = "link", se.fit = TRUE)
 pred_FebMarAprSnow <- cbind(pred_FebMarAprSnow, new_data)
 pred_FebMarAprSnow <- transform(pred_FebMarAprSnow, lwr_ci = ilink(fit - (2 * se.fit)),
-                      upr_ci = ilink(fit + (2 * se.fit)),
-                      fitted = ilink(fit))
+                                upr_ci = ilink(fit + (2 * se.fit)),
+                                fitted = ilink(fit))
 pred_FebMarAprSnow <- pred_FebMarAprSnow %>%
   select(cumSnow_FebMarApr, lwr_ci:fitted) %>%
   rename(lwr_ci_FebMarAprSnow = lwr_ci,
@@ -1147,7 +1086,7 @@ IceOut_FebMarAprSnow<-ggplot(pred_FebMarAprSnow, aes(x = cumSnow_FebMarApr, y = 
   labs(x="Feb-Apr Cumulative Snowfall (mm)",
        y="Ice Off (Julian Day)")+
   scale_y_continuous(breaks = seq(70, 120, by = 10) )+
-  coord_cartesian(ylim = c(70, 120), expand = TRUE)
+  coord_cartesian(ylim = c(65, 120), expand = TRUE)
 
 
 
@@ -1166,17 +1105,17 @@ new_data <-
          cumMeanDailyT_Feb = median(cumMeanDailyT_Feb, na.rm =
                                       TRUE),
          isotherm_TempMean_degC_29_days_4_degC_WaterYear_date = median(isotherm_TempMean_degC_29_days_4_degC_WaterYear_date, na.rm =
-                                      TRUE),
+                                                                         TRUE),
          cumSnow_FebMarApr = median(cumSnow_FebMarApr, na.rm =
-                                          TRUE)
+                                      TRUE)
        ))
 
 ilink <- family(modIceOut9)$linkinv
 pred_IceIn <- predict(modIceOut9, new_data, type = "link", se.fit = TRUE)
 pred_IceIn <- cbind(pred_IceIn, new_data)
 pred_IceIn <- transform(pred_IceIn, lwr_ci = ilink(fit - (2 * se.fit)),
-                                upr_ci = ilink(fit + (2 * se.fit)),
-                                fitted = ilink(fit))
+                        upr_ci = ilink(fit + (2 * se.fit)),
+                        fitted = ilink(fit))
 pred_IceIn <- pred_IceIn %>%
   select(IceInDayofYear_fed, lwr_ci:fitted) %>%
   rename(lwr_ci_IceIn = lwr_ci,
@@ -1192,50 +1131,50 @@ IceOut_IceIn<-ggplot(pred_IceIn, aes(x = IceInDayofYear_fed, y = fitted_IceIn)) 
   labs(x="Ice-On (Days since Oct 1)",
        y="Ice Off (Julian Day)")+
   scale_y_continuous(breaks = seq(70, 120, by = 10) )+
-  coord_cartesian(ylim = c(70, 120), expand = TRUE)
+  coord_cartesian(ylim = c(65, 120), expand = TRUE)
 
 
 
 # ~~FIGURE X~~ Ice On/Ice Off vs XYZ --------------------------------------
 
 
+# 
+# Row2<-cowplot::plot_grid(IceOut_FebT,
+#                          IceOut_isotherm
+#                     + 
+#                      theme(axis.text.y = element_blank(),
+#                            # axis.ticks.y = element_blank(),
+#                            axis.title.y = element_blank() ), 
+#                     IceOut_FebMarAprSnow,
+#                    IceOut_IceIn + 
+#                      theme(axis.text.y = element_blank(),
+#                            # axis.ticks.y = element_blank(),
+#                            axis.title.y = element_blank() ), 
+#                    nrow = 1,
+#                    labels = c("c","d","e","f"),
+#                    align = "v")
+# 
+# Figure2<-Row1/Row2
+# Figure2
+# 
+# ggsave("figures/Figurex.GamPredictions_IceOnIceOff.png", plot=Figure2, width=9, height=5,units="in", dpi=300)
+# 
 
-Row2<-cowplot::plot_grid(IceOut_FebT,
-                         IceOut_isotherm
-                    + 
-                     theme(axis.text.y = element_blank(),
-                           # axis.ticks.y = element_blank(),
-                           axis.title.y = element_blank() ), 
-                    IceOut_FebMarAprSnow,
-                   IceOut_IceIn + 
-                     theme(axis.text.y = element_blank(),
-                           # axis.ticks.y = element_blank(),
-                           axis.title.y = element_blank() ), 
-                   nrow = 1,
-                   labels = c("c","d","e","f"),
-                   align = "v")
-
-Figure2<-Row1/Row2
-Figure2
-
-ggsave("figures/Figurex.GamPredictions_IceOnIceOff.png", plot=Figure2, width=9, height=5,units="in", dpi=300)
-
-
-Row2a<-cowplot::plot_grid(IceOut_FebT,
-                          IceOut_isotherm
-                         + 
-                           theme(axis.text.y = element_blank(),
-                                 # axis.ticks.y = element_blank(),
-                                 axis.title.y = element_blank() ), 
-                         IceOut_FebMarAprSnow,
-                         IceOut_IceIn + 
-                           theme(axis.text.y = element_blank(),
-                                 # axis.ticks.y = element_blank(),
-                                 axis.title.y = element_blank() ), 
-                         nrow = 2,
-                         labels = c("a","b","c","d"),
-                         align = "v")
-ggsave("figures/Figure3.GamPredictions_IceOff.png", plot=Row2a, width=8, height=5,units="in", dpi=600)
+Row2a<-cowplot::plot_grid(IceOut_isotherm ,
+                          IceOut_FebT
+                          + 
+                            theme(axis.text.y = element_blank(),
+                                  # axis.ticks.y = element_blank(),
+                                  axis.title.y = element_blank() ), 
+                          IceOut_FebMarAprSnow,
+                          IceOut_IceIn + 
+                            theme(axis.text.y = element_blank(),
+                                  # axis.ticks.y = element_blank(),
+                                  axis.title.y = element_blank() ), 
+                          nrow = 2,
+                          labels = c("a","b","c","d"),
+                          align = "v")
+ggsave("mohonkWinterLimno/figures/Figure3.GamPredictions_IceOff.png", plot=Row2a, width=8, height=5,units="in", dpi=600)
 
 # Fitting GAMs for iceDuration_days -------------------------------------------
 
@@ -1245,10 +1184,10 @@ hist(MohonkIceWeather$LengthOfIceCover_days)
 
 ### I added Family Gamma here for how errors should respond
 modIceDuration0 <- gam(LengthOfIceCover_days ~ s(Year),
-                  # family=Gamma(link="log"),
-                  data = MohonkIceWeather,
-                  correlation = corCAR1(form = ~ Year),
-                  method = "REML")
+                       # family=Gamma(link="log"),
+                       data = MohonkIceWeather,
+                       correlation = corCAR1(form = ~ Year),
+                       method = "REML")
 summary(modIceDuration0)
 ## summary object
 # modIceDuration0_S <- summary(modIceDuration0$gam)
@@ -1265,14 +1204,14 @@ ggplot(ACF, aes(x = Lag, y = ACF)) +
 
 ###Since we're concerned with the response, include "response" in type of predict()
 IceDurationPred <- with(MohonkIce, data.frame(Year = seq(min(Year, na.rm=TRUE),
-                                                    max(Year, na.rm=TRUE),
-                                                    length.out = 200)))
+                                                         max(Year, na.rm=TRUE),
+                                                         length.out = 200)))
 IceDurationPred <- cbind(IceDurationPred, data.frame(predict(modIceDuration0, IceDurationPred,
-                                                   type="response",
-                                                   se.fit = TRUE)))
+                                                             type="response",
+                                                             se.fit = TRUE)))
 ### this calculates on the link scale (i.e., log)
 IceDurationPred <- transform(IceDurationPred, upper = fit + (2 * se.fit),
-                        lower = fit - (2 * se.fit))
+                             lower = fit - (2 * se.fit))
 
 
 # Plots periods of change
@@ -1318,7 +1257,7 @@ ggplot(IceDurationPred,aes(x=Year,y=fit))+
 IceCover_Vars<-MohonkIceWeather %>%
   filter(Year >= 1950) %>% #When the teleconnection data start
   select(LengthOfIceCover_days, GlobalTempanomaly_C, contains("NAO"))
-  
+
 IceCover_Vars %>%
   ggpairs() 
 #Global temp anomaly, NAO_winter, NAO_Nov, and Nov_Dec all have a significant correlation
@@ -1344,13 +1283,12 @@ set.seed(11)
 modIceDuration1 <- gam(LengthOfIceCover_days ~ s(GlobalTempanomaly_C, k=50) +
                          s(NAO_index_Nov, k=10)+
                          s(NAO_index_Dec, k=10),
-                  # family=Gamma(link="log"),
-                  family=scat(link="identity"), #for heavy tail
-                  data = MohonkIceWeather,
-                  # correlation = corCAR1(form = ~ Year),
-                  method = "REML")
+                       # family=Gamma(link="log"),
+                       family=scat(link="identity"), #for heavy tail
+                       data = MohonkIceWeather,
+                       # correlation = corCAR1(form = ~ Year),
+                       method = "REML")
 summary(modIceDuration1)
-#Fit improves substantially over null model
 
 gam.check(modIceDuration1)
 #Want to set k sufficiently high. At default, was getting low p-value for GlobalTempanomaly_C
@@ -1364,12 +1302,10 @@ plot(modIceDuration1,
 
 
 
-# I got to thinking, can we include an interaction? Such as between NAO_index_Nov and NAO_index_Dec?
-# http://r.qcbs.ca/workshop08/book-en/gam-with-interaction-terms.html#interaction-between-smoothed-and-factor-variables
-### Mod2
+### Mod 2
+#Drop November
 modIceDuration2 <- gam(LengthOfIceCover_days ~  s(GlobalTempanomaly_C, k=30) +
-                         s(NAO_index_Nov, NAO_index_Dec),
-                       # s(NAO_index_fall, k=30),
+                         s(NAO_index_Dec, k=10),
                        # family=Gamma(link="log"),
                        family=scat(link="identity"), #for heavy tail
                        data = MohonkIceWeather,
@@ -1385,7 +1321,6 @@ gam.check(modIceDuration2)
 plot(modIceDuration2,
      shift = coef(modIceDuration2)[1],
      pages =1)
-#Basically uninterpretable
 
 draw(modIceDuration2, residuals = TRUE)
 #Partial plots of estimated smooth functions with partial residuals
@@ -1417,18 +1352,16 @@ plot(modIceDuration3,
 
 
 # Compare models
+compareML(modIceDuration1, modIceDuration2) # Basically indistinguishable?
 compareML(modIceDuration1, modIceDuration3) # Similar performance-- could pick based on %Dev explained?
 
 modIceDuration1_summary<- summary.gam(modIceDuration1)
+modIceDuration2_summary<- summary.gam(modIceDuration2)
 modIceDuration3_summary<- summary.gam(modIceDuration3)
 modIceDuration1_summary$dev.expl
+modIceDuration2_summary$dev.expl
 modIceDuration3_summary$dev.expl
 # Including NAO_Nov and NAO_Dec separately leads to more variance explained though still low!
-
-compareML(modIceDuration2, modIceDuration1) # Similar performance-- could pick based on %Dev explained?
-modIceDuration2_summary<- summary.gam(modIceDuration2)
-modIceDuration2_summary$dev.expl
-modIceDuration1_summary$dev.expl
 
 appraise(modIceDuration1)
 
@@ -1452,9 +1385,9 @@ new_data <-
            length = 200
          ),
          NAO_index_Dec = median(NAO_index_Dec, na.rm =
-                                      TRUE),
+                                  TRUE),
          NAO_index_Nov = median(NAO_index_Nov, na.rm =
-                                          TRUE)
+                                  TRUE)
        ))
 
 ilink <- family(modIceDuration1)$linkinv
@@ -1492,17 +1425,17 @@ new_data <-
            length = 200
          ),
          GlobalTempanomaly_C = median(GlobalTempanomaly_C, na.rm =
-                                     TRUE),
+                                        TRUE),
          NAO_index_Nov = median(NAO_index_Nov, na.rm =
-                                   TRUE)
+                                  TRUE)
        ))
 
 ilink <- family(modIceDuration1)$linkinv
 pred_DecNAO <- predict(modIceDuration1, new_data, type = "link", se.fit = TRUE)
 pred_DecNAO <- cbind(pred_DecNAO, new_data)
 pred_DecNAO <- transform(pred_DecNAO, lwr_ci = ilink(fit - (2 * se.fit)),
-                          upr_ci = ilink(fit + (2 * se.fit)),
-                          fitted = ilink(fit))
+                         upr_ci = ilink(fit + (2 * se.fit)),
+                         fitted = ilink(fit))
 pred_DecNAO <- pred_DecNAO %>%
   select(NAO_index_Dec, lwr_ci:fitted) %>%
   rename(lwr_ci_DecNAO = lwr_ci,
@@ -1534,15 +1467,15 @@ new_data <-
          GlobalTempanomaly_C = median(GlobalTempanomaly_C, na.rm =
                                         TRUE),
          NAO_index_Dec = median(NAO_index_Dec, na.rm =
-                                   TRUE)
+                                  TRUE)
        ))
 
 ilink <- family(modIceDuration1)$linkinv
 pred_NovNAO <- predict(modIceDuration1, new_data, type = "link", se.fit = TRUE)
 pred_NovNAO <- cbind(pred_NovNAO, new_data)
 pred_NovNAO <- transform(pred_NovNAO, lwr_ci = ilink(fit - (2 * se.fit)),
-                            upr_ci = ilink(fit + (2 * se.fit)),
-                            fitted = ilink(fit))
+                         upr_ci = ilink(fit + (2 * se.fit)),
+                         fitted = ilink(fit))
 pred_NovNAO <- pred_NovNAO %>%
   select(NAO_index_Nov, lwr_ci:fitted) %>%
   rename(lwr_ci_NovNAO = lwr_ci,
@@ -1562,14 +1495,14 @@ IceDuration_NovNAO<-ggplot(pred_NovNAO, aes(x = NAO_index_Nov, y = LengthOfIceCo
 
 composite_noLegend<-cowplot::plot_grid(IceDuration_GlobalT,
                                        IceDuration_DecNAO + 
-                     theme(axis.text.y = element_blank(),
-                           # axis.ticks.y = element_blank(),
-                           axis.title.y = element_blank() ),
-                   IceDuration_NovNAO +
-                     theme(legend.position="none"), 
-                   nrow = 1,
-                   labels = c("a","b","c"),
-                   align = "hv") 
+                                         theme(axis.text.y = element_blank(),
+                                               # axis.ticks.y = element_blank(),
+                                               axis.title.y = element_blank() ),
+                                       IceDuration_NovNAO +
+                                         theme(legend.position="none"), 
+                                       nrow = 1,
+                                       labels = c("a","b","c"),
+                                       align = "hv") 
 
 
 ggsave("figures/FigureX.GamPredictions_IceDuration_model1.png", width=8, height=3,units="in", dpi=600)
@@ -1923,8 +1856,8 @@ MohonkDailyWeatherFull %>%
   pivot_longer(-(1:2)) %>%
   filter(Month %in% c("3","4","5"))%>%
   ggplot(aes(x=Year,y=value,color=name))+
-    geom_point()+
-    facet_wrap(.~Month, nrow=3, scales="free_y")+
+  geom_point()+
+  facet_wrap(.~Month, nrow=3, scales="free_y")+
   geom_line(size=0.5)+
   coord_cartesian(xlim=c(1930,2020))+
   scale_x_continuous(breaks=seq(1930, 2020, 15))  
@@ -1991,9 +1924,9 @@ WinterWx<-MohonkDailyWeatherFull %>%
 
 ### Model
 modWinterTempMean <- gamm(TempMean_degC ~ s(water_year),
-                  data = WinterWx,
-                 correlation = corCAR1(form = ~ water_year),
-                 method = "REML")
+                          data = WinterWx,
+                          correlation = corCAR1(form = ~ water_year),
+                          method = "REML")
 
 ## summary object
 modWinterTempMean_S <- summary(modWinterTempMean$gam)
@@ -2001,14 +1934,14 @@ modWinterTempMean_S #Gives you the P values, degrees of freedom...
 
 ###Since we're concerned with the response, include "response" in type of predict()
 WinterTempMeanPred <- with(WinterWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
-                                                 max(water_year, na.rm=TRUE),
-                                                 length.out = 200)))
+                                                                 max(water_year, na.rm=TRUE),
+                                                                 length.out = 200)))
 WinterTempMeanPred <- cbind(WinterTempMeanPred, data.frame(predict(modWinterTempMean$gam, WinterTempMeanPred,
-                                                 type="response",
-                                                 se.fit = TRUE)))
+                                                                   type="response",
+                                                                   se.fit = TRUE)))
 ### this calculates on the link scale (i.e., log)
 WinterTempMeanPred <- transform(WinterTempMeanPred, upper = fit + (2 * se.fit),
-                       lower = fit - (2 * se.fit))
+                                lower = fit - (2 * se.fit))
 
 # Plots periods of change
 #https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
@@ -2056,9 +1989,9 @@ WinterWx<-MohonkDailyWeatherFull %>%
 
 ### Model
 modWinterTempMax <- gamm(TempMax_degC ~ s(water_year),
-                          data = WinterWx,
-                          correlation = corCAR1(form = ~ water_year),
-                          method = "REML")
+                         data = WinterWx,
+                         correlation = corCAR1(form = ~ water_year),
+                         method = "REML")
 
 ## summary object
 modWinterTempMax_S <- summary(modWinterTempMax$gam)
@@ -2066,14 +1999,14 @@ modWinterTempMax_S #Gives you the P values, degrees of freedom...
 
 ###Since we're concerned with the response, include "response" in type of predict()
 WinterTempMaxPred <- with(WinterWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
-                                                                 max(water_year, na.rm=TRUE),
-                                                                 length.out = 200)))
+                                                                max(water_year, na.rm=TRUE),
+                                                                length.out = 200)))
 WinterTempMaxPred <- cbind(WinterTempMaxPred, data.frame(predict(modWinterTempMax$gam, WinterTempMaxPred,
-                                                                   type="response",
-                                                                   se.fit = TRUE)))
+                                                                 type="response",
+                                                                 se.fit = TRUE)))
 ### this calculates on the link scale (i.e., log)
 WinterTempMaxPred <- transform(WinterTempMaxPred, upper = fit + (2 * se.fit),
-                                lower = fit - (2 * se.fit))
+                               lower = fit - (2 * se.fit))
 
 # ?transform
 # Plots periods of change
@@ -2190,9 +2123,9 @@ FallWx<-MohonkDailyWeatherFull %>%
 
 ### I added Family Gamma here for how errors should respond
 modFallTempMean <- gamm(TempMean_degC ~ s(Year),
-                          data = FallWx,
-                          correlation = corCAR1(form = ~ Year),
-                          method = "REML")
+                        data = FallWx,
+                        correlation = corCAR1(form = ~ Year),
+                        method = "REML")
 
 ## summary object
 modFallTempMean_S <- summary(modFallTempMean$gam)
@@ -2200,14 +2133,14 @@ modFallTempMean_S #Gives you the P values, degrees of freedom...
 
 ###Since we're concerned with the response, include "response" in type of predict()
 FallTempMeanPred <- with(FallWx, data.frame(Year = seq(min(Year, na.rm=TRUE),
-                                                                 max(Year, na.rm=TRUE),
-                                                                 length.out = 200)))
+                                                       max(Year, na.rm=TRUE),
+                                                       length.out = 200)))
 FallTempMeanPred <- cbind(FallTempMeanPred, data.frame(predict(modFallTempMean$gam, FallTempMeanPred,
-                                                                   type="response",
-                                                                   se.fit = TRUE)))
+                                                               type="response",
+                                                               se.fit = TRUE)))
 ### this calculates on the link scale (i.e., log)
 FallTempMeanPred <- transform(FallTempMeanPred, upper = fit + (2 * se.fit),
-                                lower = fit - (2 * se.fit))
+                              lower = fit - (2 * se.fit))
 
 ?transform
 # Plots periods of change
@@ -2255,9 +2188,9 @@ ggplot(FallTempMeanPred,aes(x=Year,y=fit))+
 
 ### I added Family Gamma here for how errors should respond
 modFallTempMean <- gamm(cumMeanDailyT_OctNovDec ~ s(water_year),
-                          data = MohonkIceWeather,
-                          correlation = corCAR1(form = ~ water_year),
-                          method = "REML")
+                        data = MohonkIceWeather,
+                        correlation = corCAR1(form = ~ water_year),
+                        method = "REML")
 
 ## summary object
 modFallTempMean_S <- summary(modFallTempMean$gam)
@@ -2265,14 +2198,14 @@ modFallTempMean_S #Gives you the P values, degrees of freedom...
 
 ###Since we're concerned with the response, include "response" in type of predict()
 FallTempMeanPred <- with(MohonkIceWeather, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
-                                                                 max(water_year, na.rm=TRUE),
-                                                                 length.out = 200)))
+                                                                       max(water_year, na.rm=TRUE),
+                                                                       length.out = 200)))
 FallTempMeanPred <- cbind(FallTempMeanPred, data.frame(predict(modFallTempMean$gam, FallTempMeanPred,
-                                                                   type="response",
-                                                                   se.fit = TRUE)))
+                                                               type="response",
+                                                               se.fit = TRUE)))
 ### this calculates on the link scale (i.e., log)
 FallTempMeanPred <- transform(FallTempMeanPred, upper = fit + (2 * se.fit),
-                                lower = fit - (2 * se.fit))
+                              lower = fit - (2 * se.fit))
 
 # Plots periods of change
 #https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
@@ -2316,9 +2249,9 @@ ggplot(FallTempMeanPred,aes(x=water_year,y=fit))+
 
 ### I added Family Gamma here for how errors should respond
 modspringTempMean <- gamm(cumMeanDailyT_FebMarApr ~ s(Year),
-                        data = MohonkIceWeather,
-                        correlation = corCAR1(form = ~ Year),
-                        method = "REML")
+                          data = MohonkIceWeather,
+                          correlation = corCAR1(form = ~ Year),
+                          method = "REML")
 
 ## summary object
 modspringTempMean_S <- summary(modspringTempMean$gam)
@@ -2326,14 +2259,14 @@ modspringTempMean_S #Gives you the P values, degrees of freedom...
 
 ###Since we're concerned with the response, include "response" in type of predict()
 springTempMeanPred <- with(MohonkIceWeather, data.frame(Year = seq(min(Year, na.rm=TRUE),
-                                                                                  max(Year, na.rm=TRUE),
-                                                                                  length.out = 200)))
+                                                                   max(Year, na.rm=TRUE),
+                                                                   length.out = 200)))
 springTempMeanPred <- cbind(springTempMeanPred, data.frame(predict(modspringTempMean$gam, springTempMeanPred,
-                                                               type="response",
-                                                               se.fit = TRUE)))
+                                                                   type="response",
+                                                                   se.fit = TRUE)))
 ### this calculates on the link scale (i.e., log)
 springTempMeanPred <- transform(springTempMeanPred, upper = fit + (2 * se.fit),
-                              lower = fit - (2 * se.fit))
+                                lower = fit - (2 * se.fit))
 
 # Plots periods of change
 #https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
@@ -2386,11 +2319,11 @@ MohonkWeatherSummary_winter_naFREE<-MohonkIceWeather %>%
   drop_na(IceOutDayofYear, cumSnow_FebMarApr, cumMeanDailyT_FebMarApr)
 
 arimaFit.SpringSnow<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceOutDayofYear,
-                          xreg=c(MohonkWeatherSummary_winter_naFREE$cumSnow_FebMarApr),
-                          # xreg=cbind(AnnualData$GlobalTempAnomoly_C,
-                          # AnnualData$Year),
-                          seasonal=FALSE,allowdrift = FALSE,
-                          stationary=TRUE)
+                                xreg=c(MohonkWeatherSummary_winter_naFREE$cumSnow_FebMarApr),
+                                # xreg=cbind(AnnualData$GlobalTempAnomoly_C,
+                                # AnnualData$Year),
+                                seasonal=FALSE,allowdrift = FALSE,
+                                stationary=TRUE)
 
 arimaFit.SpringSnow #display the model that was fit
 
@@ -2400,8 +2333,8 @@ IceOut_residuals<-as.numeric(arimaFit.SpringSnow$residuals) #residuals
 
 #Gets the (p,d,q) model fit where p is the autoregressive terms, d is the integrative, and q is the moving average
 SpringSnow_pdq<-paste0(as.numeric(arimaFit.SpringSnow$arma[1]),sep=",",
-                 as.numeric(arimaFit.SpringSnow$arma[6]),sep=",",
-                 as.numeric(arimaFit.SpringSnow$arma[2]))
+                       as.numeric(arimaFit.SpringSnow$arma[6]),sep=",",
+                       as.numeric(arimaFit.SpringSnow$arma[2]))
 
 #extract aicc value
 SpringSnowaicc<-as.numeric(arimaFit.SpringSnow$aicc)
@@ -2411,9 +2344,9 @@ SpringSnowaicc<-as.numeric(arimaFit.SpringSnow$aicc)
 
 
 arimaFit.SpringDailyTcum<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceOutDayofYear,
-                                       xreg=c(MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_FebMarApr),
-                                       seasonal=FALSE,allowdrift = FALSE,
-                                       stationary=TRUE)
+                                     xreg=c(MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_FebMarApr),
+                                     seasonal=FALSE,allowdrift = FALSE,
+                                     stationary=TRUE)
 
 arimaFit.SpringDailyTcum #display the model that was fit
 
@@ -2425,8 +2358,8 @@ SpringDailyTcumresid<-as.numeric(arimaFit.SpringDailyTcum$residuals)
 
 #Gets the (p,d,q) model fit where p is the autoregressive terms, d is the integrative, and q is the moving average
 SpringDailyTcum_pdq<-paste0(as.numeric(arimaFit.SpringDailyTcum$arma[1]),sep=",",
-                              as.numeric(arimaFit.SpringDailyTcum$arma[6]),sep=",",
-                              as.numeric(arimaFit.SpringDailyTcum$arma[2]))
+                            as.numeric(arimaFit.SpringDailyTcum$arma[6]),sep=",",
+                            as.numeric(arimaFit.SpringDailyTcum$arma[2]))
 
 #extract aicc value
 SpringDailyTcumaicc<-arimaFit.SpringDailyTcum$aicc
@@ -2471,12 +2404,12 @@ TS_dataframe<-data.frame(Response, Predictor, AICc, int, coef, pdq)
 
 
 arimaFit.TempSnowSpring.cum<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceOutDayofYear,
-                                                  # xreg=c(AnnualData$Global),
-                                                  xreg=cbind(MohonkWeatherSummary_winter_naFREE$cumSnow_FebMarApr,
-                                                             MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_FebMarApr),
-                                                  # AnnualData$Year),
-                                                  seasonal=FALSE,allowdrift = FALSE,
-                                                  stationary=TRUE)
+                                        # xreg=c(AnnualData$Global),
+                                        xreg=cbind(MohonkWeatherSummary_winter_naFREE$cumSnow_FebMarApr,
+                                                   MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_FebMarApr),
+                                        # AnnualData$Year),
+                                        seasonal=FALSE,allowdrift = FALSE,
+                                        stationary=TRUE)
 
 arimaFit.TempSnowSpring.cum #display the model that was fit
 
@@ -2591,11 +2524,11 @@ MohonkWeatherSummary_winter_naFREE<-MohonkIceWeather %>%
 
 
 arimaFit.ENSOprevFall<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceInDayofYear_fed,
-                                xreg=c(MohonkWeatherSummary_winter_naFREE$ENSO_index_fall),
-                                # xreg=cbind(AnnualData$GlobalTempAnomoly_C,
-                                # AnnualData$Year),
-                                seasonal=FALSE,allowdrift = FALSE,
-                                stationary=TRUE)
+                                  xreg=c(MohonkWeatherSummary_winter_naFREE$ENSO_index_fall),
+                                  # xreg=cbind(AnnualData$GlobalTempAnomoly_C,
+                                  # AnnualData$Year),
+                                  seasonal=FALSE,allowdrift = FALSE,
+                                  stationary=TRUE)
 
 #The first argument is the y variable
 #The second is xregression variables. I think you need to do xreg=cbind(x1,x2) for multiple
@@ -2610,8 +2543,8 @@ IceIn_residuals<-as.numeric(arimaFit.ENSOprevFall$residuals) #residuals
 
 #Gets the (p,d,q) model fit where p is the autoregressive terms, d is the integrative, and q is the moving average
 ENSOprevFall_pdq<-paste0(as.numeric(arimaFit.ENSOprevFall$arma[1]),sep=",",
-                       as.numeric(arimaFit.ENSOprevFall$arma[6]),sep=",",
-                       as.numeric(arimaFit.ENSOprevFall$arma[2]))
+                         as.numeric(arimaFit.ENSOprevFall$arma[6]),sep=",",
+                         as.numeric(arimaFit.ENSOprevFall$arma[2]))
 
 #extract aicc value
 ENSOprevFallaicc<-as.numeric(arimaFit.ENSOprevFall$aicc)
@@ -2685,12 +2618,12 @@ TS_dataframe_IceIn<-data.frame(Response, Predictor, AICc, int, coef, pdq)
 
 
 arimaFit.ENSOcumT<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceInDayofYear_fed,
-                                        # xreg=c(AnnualData$Global),
-                                        xreg=cbind(MohonkWeatherSummary_winter_naFREE$ENSO_index_fall,
-                                                   MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_OctNovDec),
-                                        # AnnualData$Year),
-                                        seasonal=FALSE,allowdrift = FALSE,
-                                        stationary=TRUE)
+                              # xreg=c(AnnualData$Global),
+                              xreg=cbind(MohonkWeatherSummary_winter_naFREE$ENSO_index_fall,
+                                         MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_OctNovDec),
+                              # AnnualData$Year),
+                              seasonal=FALSE,allowdrift = FALSE,
+                              stationary=TRUE)
 
 arimaFit.ENSOcumT #display the model that was fit
 
@@ -2723,8 +2656,8 @@ pdq<-paste0(as.numeric(arimaFit.ENSOcumT$arma[1]),sep=",",
 
 #Combine to make a dataframe of model output 
 TS_dataframe_2factormodels_IceIn<-data.frame(Response, Predictor, AICc,
-                                       int, coef_WinterENSO, coef_cumMeanDailyT_OctNovDec,
-                                       pdq)
+                                             int, coef_WinterENSO, coef_cumMeanDailyT_OctNovDec,
+                                             pdq)
 
 
 TS_data_iceout_table_IceIn<-bind_rows(TS_dataframe_IceIn,TS_dataframe_2factormodels_IceIn)
