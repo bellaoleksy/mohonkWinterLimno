@@ -1280,7 +1280,7 @@ DailyInterpol_winter<-left_join(DailyInterpol_winter,
   mutate(Temp_C=zoo::na.locf(Temp_C,na.rm=FALSE,maxgap=11))%>% #Fills all the lower temperatures with the bottom most temperature
   mutate(RollingTemp_C=ifelse(is.na(RollingTemp_C),Temp_C,RollingTemp_C))%>% #replace all NA values with the lowest temperature measurement
   mutate(HeatContent_calories=Volume_m3*water.density(RollingTemp_C)*1000*RollingTemp_C)%>% #Calculate the heat content in calories
-  summarize(HeatContent_MegaJoules=sum(HeatContent_calories)/239000), #Calculate heat content in mega joules
+  dplyr::summarize(HeatContent_MegaJoules=sum(HeatContent_calories)/239000), #Calculate heat content in mega joules
   by="Date")
 
 #Plot the heat contents by year####
@@ -1302,7 +1302,7 @@ DailyInterpol_winter<-left_join(DailyInterpol_winter,
 
 #Create an annual data frame for winter stats for water temperature metrics####
 AnnualUnderIceSummary<-DailyInterpol_winter%>%group_by(wateryear)%>%filter(DailyIceRecord_binomial==1)%>%
-        summarize(
+        dplyr::summarize(
         numberOfIceDays=sum(DailyIceRecord_binomial,na.rm=TRUE),
         numberOfDaysWithData=sum(!is.na(EpiTemp_degC),na.rm=TRUE),
         proportionOfDaysWithData=sum(!is.na(EpiTemp_degC),na.rm=TRUE)/sum(DailyIceRecord_binomial,na.rm=TRUE), #If this is less than 1, then we need to remove that year because data did not interpolate
