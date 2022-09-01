@@ -355,9 +355,9 @@ ggsave(
 # Fitting GAMs for iceOnDOY_fed -------------------------------------------
 
 ### First add isotherm variables with the highest R2 to the MohonkIceWeather df
-source('mohonkWinterLimno/analysis/01_Isotherm.R')
+source('analysis/01_Isotherm.R')
 
-
+hist(MohonkIceWeather$IceInDayofYear_fed)
 
 MohonkIceWeather <- MohonkIceWeather %>%
   left_join(., Isotherm_WaterYear_dates_IceIn %>%
@@ -370,7 +370,7 @@ MohonkIceWeather <- MohonkIceWeather %>%
 
 ### IceInDayofYear_fed~nDaysMeanBelowZero_OctNovDec
 modIceOn1 <- gam(IceInDayofYear_fed ~  s(nDaysMeanBelowZero_OctNovDec),
-                 # family=Gamma(link="log"),
+                 family=Gamma(link="log"),
                  data = MohonkIceWeather,
                  # correlation = corCAR1(form = ~ Year),
                  method = "REML")
@@ -388,7 +388,7 @@ plot(modIceOn1,
 
 ### IceInDayofYear_fed~cumMeanDailyT_OctNovDec
 modIceOn2 <- gam(IceInDayofYear_fed ~ s(cumMeanDailyT_OctNovDec) ,
-                 # family=Gamma(link="log"),
+                 family=Gamma(link="log"),
                  data = MohonkIceWeather,
                  # correlation = corCAR1(form = ~ Year),
                  method = "REML")
@@ -406,7 +406,7 @@ plot(modIceOn2,
 
 ### IceInDayofYear_fed~Sept + Oct + Nov + Dec
 modIceOn3 <- gam(IceInDayofYear_fed ~  s(cumMeanDailyT_Sep) + s(cumMeanDailyT_Oct) + s(cumMeanDailyT_Nov) + s(cumMeanDailyT_Dec),
-                 # family=Gamma(link="log"),
+                 family=Gamma(link="log"),
                  data = MohonkIceWeather,
                  # correlation = corCAR1(form = ~ Year),
                  method = "REML")
@@ -421,7 +421,7 @@ plot(modIceOn3,
 ### IceInDayofYear_fed~Nov + Dec
 ### Last model contains only Nov + Dec since individually Sep and Oct were not statistically significantly. 
 modIceOn4 <- gam(IceInDayofYear_fed ~  s(cumMeanDailyT_Nov) + s(cumMeanDailyT_Dec),
-                 # family=Gamma(link="log"),
+                 family=Gamma(link="log"),
                  data = MohonkIceWeather,
                  # correlation = corCAR1(form = ~ Year),
                  method = "REML")
@@ -450,7 +450,7 @@ draw(modIceOn4,
 
 ### IceInDayofYear_fed~isotherm_TempMax_degC_17_days_0_degC_WaterYear_date
 modIceOn5 <- gam(IceInDayofYear_fed ~  s(isotherm_TempMax_degC_17_days_0_degC_WaterYear_date),
-                 # family=Gamma(link="log"),
+                 family=Gamma(link="log"),
                  data = MohonkIceWeather,
                  # correlation = corCAR1(form = ~ Year),
                  method = "REML")
@@ -487,7 +487,7 @@ MohonkIceWeather %>%
 #so let's just keep Nov and see if how that fit looks
 
 modIceOn6 <- gam(IceInDayofYear_fed ~  s(isotherm_TempMax_degC_17_days_0_degC_WaterYear_date) + s(cumMeanDailyT_Nov),
-                 # family=Gamma(link="log"),
+                 family=Gamma(link="log"),
                  data = MohonkIceWeather,
                  # correlation = corCAR1(form = ~ Year),
                  method = "REML")
@@ -628,8 +628,8 @@ Row1a<-cowplot::plot_grid(IceIn_isotherm ,
                           nrow = 1,
                           labels = c("a","b"),
                           align = "v")
-
-ggsave("mohonkWinterLimno/figures/Figure2.GamPredictions_IceOn.png", plot=Row1a, width=8, height=4,units="in", dpi=300)
+Row1a
+ggsave("figures/Figure2.GamPredictions_IceOn_gamma_loglink.png", plot=Row1a, width=8, height=4,units="in", dpi=300)
 
 
 
