@@ -2,8 +2,8 @@
 
 
 #Run the main script to bring in all data and functions####
-source('00_main.R')
-
+# source('00_main.R')
+source('01_Isotherm.R') #this script already sources 00_main.R
 
 
 #Load libraries 
@@ -199,9 +199,9 @@ MohonkIceWeather %>%
 
 
 #Visualize correlations with IceOutDayofYear
-MohonkIceWeather %>%
-  select(LengthOfIceCover_days, IceOutDayofYear, all_of(IceDurationVars)) %>%
-  ggpairs() 
+# MohonkIceWeather %>%
+#   select(LengthOfIceCover_days, IceOutDayofYear, all_of(IceDurationVars)) %>%
+#   ggpairs() 
 median(MohonkIceWeather$LengthOfIceCover_days,na.rm=T) #100 days
 
 #Alternatively, look at a matrix as above...
@@ -353,9 +353,6 @@ ggsave(
 )
 
 # Fitting GAMs for iceOnDOY_fed -------------------------------------------
-
-### First add isotherm variables with the highest R2 to the MohonkIceWeather df
-source('analysis/01_Isotherm.R')
 
 hist(MohonkIceWeather$IceInDayofYear_fed)
 
