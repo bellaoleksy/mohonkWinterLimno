@@ -352,6 +352,101 @@ ggsave(
   dpi = 300
 )
 
+
+
+#DCR requested date labels for the y-axis... so will have to do something crafty here. 
+
+MohonkIce.Predicted.test <- MohonkIce.Predicted %>%
+  left_join(., MohonkIce) %>%
+  mutate(IceInDayofYear_fed_yhat_DOY = case_when(IceInDayofYear_fed_yhat< 93 ~ IceInDayofYear_fed_yhat + 274,
+                                                 IceInDayofYear_fed_yhat>=93 ~ IceInDayofYear_fed_yhat - 92),
+         IceInDayofYear_yhat=as.Date(IceInDayofYear_fed_yhat_DOY, origin="2014-01-02"),
+         IceInDate_month=month(IceInDate),
+         IceInDate_day=day(IceInDate),
+         IceInDate_newdate=case_when(IceInDate_month %in% c("10","11","12") ~ ymd(paste("2014", IceInDate_month, IceInDate_day, sep = "-")),
+                                     IceInDate_month %in% c("1","2","3","4") ~ ymd(paste("2015", IceInDate_month, IceInDate_day, sep = "-"))),
+         IceOutDate_month=month(IceOutDate),
+         IceOutDate_day=day(IceOutDate),
+         IceOutDate_newdate=case_when(IceOutDate_month %in% c("10","11","12") ~ ymd(paste("2014", IceOutDate_month, IceOutDate_day, sep = "-")),
+                                       IceOutDate_month %in% c("1","2","3","4") ~ ymd(paste("2015", IceOutDate_month, IceOutDate_day, sep = "-"))),
+         IceInDayofYear_yhat_month=month(IceInDayofYear_yhat),
+         IceInDayofYear_yhat_day=day(IceInDayofYear_yhat),
+         IceInDayofYear_yhat_newdate=case_when(IceInDayofYear_yhat_month %in% c("10","11","12") ~ ymd(paste("2014", IceInDayofYear_yhat_month, IceInDayofYear_yhat_day, sep = "-")),
+                                               IceInDayofYear_yhat_month %in% c("1","2","3","4") ~ ymd(paste("2015", IceInDayofYear_yhat_month, IceInDayofYear_yhat_day, sep = "-"))))
+
+
+ggplot() +
+  geom_segment(
+    data = MohonkIce.Predicted.test,
+    aes(
+      x = Year,
+      xend = Year,
+      y = IceInDate_newdate,
+      yend = IceOutDate_newdate,
+      col = LengthOfIceCover_days
+    )
+  ) +
+  # col="grey")+
+  geom_point(
+    data = MohonkIce.Predicted.test,
+    aes(x = Year, y = IceInDate_newdate, fill = LengthOfIceCover_days),
+    shape = 21,
+    color = "black",
+    size = 1.5
+  ) +
+  geom_smooth(
+    data = MohonkIce.Predicted.test,
+    aes(x = Year, y = IceInDayofYear_yhat_newdate),
+    color = "black",
+    lty = 1,
+    size= 0.5
+  ) +
+  geom_point(
+    data = MohonkIce.Predicted.test,
+    aes(x = Year,
+        y = IceOutDate_newdate,
+        fill = LengthOfIceCover_days),
+    shape = 21,
+    color = "black",
+    size = 1.5
+  ) +
+  scale_color_continuous(high = "green", low = "red",
+                         name = "Ice cover\nduration (days)") +
+  scale_fill_continuous(high = "green", low = "red",
+                        name = "Ice cover\nduration (days)") +
+  # scale_y_continuous(lim = c(50, 200),
+  #                    breaks = seq(50, 250, by = 25)) +
+  # scale_x_continuous(limit = c(1930, 2020),
+  #                    breaks = seq(1930, 2020, by = 10)) +
+  # scale_y_continuous(
+  #   trans = c("date", "reverse2")
+  # )
+  scale_y_date(date_breaks = "1 month", date_minor_breaks = "1 week",
+               date_labels = "%m-%d")+
+  theme_MS() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(colour = "black"),
+    panel.border = element_rect(
+      fill = NA,
+      colour = "black",
+      size = 1
+    ),
+    axis.text.x = element_text(color = "black"),
+    axis.text.y = element_text(color = "black"),
+    axis.ticks = element_line(color = "black")
+  ) +
+  xlab("Year") +
+  ylab("Date")
+
+ggsave(
+  "figures/Fig1.IcePhenology_withDates.png",
+  width = 6,
+  height = 4,
+  units = "in",
+  dpi = 300
+)
 # Fitting GAMs for iceOnDOY_fed -------------------------------------------
 
 hist(MohonkIceWeather$IceInDayofYear_fed)
@@ -1909,6 +2004,113 @@ MohonkIceWeather %>%
   select(IceInDayofYear_fed, prop_rain, ENSO_index_fall, LengthOfIceCover_days, cumMeanDailyT_Dec,
          nDaysMeanBelowZero_Dec, cumMeanDailyT_OctNov, cumMeanDailyT_OctNovDec, nDaysMinBelowZero_OctNovDec) %>%
   ggpairs()
+
+
+
+# >> Trends in the ice phenology drivers ----------------------------------
+
+# Question - is the maximum observed air temperature 17 days after the
+# autumn 0 °C air temperature isotherm was crossed changing over time?
+
+#Distribution of y
+hist(Isotherm_WaterYear_dates_IceIn$isotherm_TempMax_degC_17_days_0_degC_WaterYear_date)
+
+### I added Family Gamma here for how errors should respond
+mod0_iceOnIsotherm <- gam(isotherm_TempMax_degC_17_days_0_degC_WaterYear_date ~ s(WaterYear),
+                  # family=Gamma(link="log"),
+                  data = Isotherm_WaterYear_dates_IceIn,
+                  correlation = corCAR1(form = ~ WaterYear),
+                  method = "REML")
+summary(mod0_iceOnIsotherm)
+
+#PLOT Autocorrelation function of residuals from the additive model with AR(1) errors
+ACF <- acf(resid(mod0_iceOnIsotherm, type = "response"), plot = FALSE)
+ACF <- setNames(data.frame(unclass(ACF)[c("acf", "lag")]), c("ACF","Lag"))
+ggplot(ACF, aes(x = Lag, y = ACF)) +
+  geom_hline(aes(yintercept = 0)) +
+  geom_segment(mapping = aes(xend = Lag, yend = 0))
+#Suggests that an AR(1) model isn't necessary
+
+
+###Since we're concerned with the response, include "response" in type of predict()
+iceOnIsothermPred <- with(Isotherm_WaterYear_dates_IceIn, data.frame(WaterYear = seq(min(WaterYear, na.rm=TRUE),
+                                                    max(WaterYear, na.rm=TRUE),
+                                                    length.out = 200)))
+iceOnIsothermPred <- cbind(iceOnIsothermPred, data.frame(predict(mod0_iceOnIsotherm, iceOnIsothermPred,
+                                                   type="response",
+                                                   se.fit = TRUE)))
+### this calculates on the link scale (i.e., log)
+iceOnIsothermPred <- transform(iceOnIsothermPred, upper = fit + (2 * se.fit),
+                        lower = fit - (2 * se.fit))
+
+
+# Plots periods of change
+#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
+Term <- "WaterYear"
+m1.d <- Deriv(mod0_iceOnIsotherm)
+
+m1.dci <- confint(m1.d, term = "WaterYear")
+m1.dsig <- signifD(iceOnIsothermPred$fit,
+                   d = m1.d[[Term]]$deriv,
+                   m1.dci[[Term]]$upper,
+                   m1.dci[[Term]]$lower)
+
+ylim <- with(iceOnIsothermPred, range(upper, lower, fit))
+ylab <- 'DOY max. temp 17 days after 0 isotherm is crossed'
+
+plot(fit ~ WaterYear, data = iceOnIsothermPred, type = "n", ylab = ylab, ylim = ylim)
+lines(fit ~ WaterYear, data = iceOnIsothermPred)
+lines(upper ~ WaterYear, data = iceOnIsothermPred, lty = "dashed")
+lines(lower ~ WaterYear, data = iceOnIsothermPred, lty = "dashed")
+lines(unlist(m1.dsig$incr) ~ WaterYear, data = iceOnIsothermPred, col = "blue", lwd = 3)
+lines(unlist(m1.dsig$decr) ~ WaterYear, data = iceOnIsothermPred, col = "red", lwd = 3)
+#The date is getting later
+
+plot.Deriv(m1.d)
+#but first derivative plot shows that it is not accelerating at least
+
+#Plot 'DOY max. temp 17 days after 0 isotherm is crossed' vs. water-year pretty
+ggplot(iceOnIsothermPred,aes(x=WaterYear,y=fit))+
+  geom_point(data=Isotherm_WaterYear_dates_IceIn,
+             mapping=aes(x=WaterYear, y=isotherm_TempMax_degC_17_days_0_degC_WaterYear_date), size=2.5, alpha=0.7) +
+  geom_line(size=1)+
+  geom_ribbon(aes(ymin = (lower), ymax = (upper), x = WaterYear), alpha = 0.5, inherit.aes = FALSE) +
+  labs(x="Year",y="DOY max. temp 17 days after 0 isotherm is crossed")+
+  coord_cartesian(xlim=c(1930,2020))+
+  scale_x_continuous(breaks=seq(1930, 2020, 15))
+  # geom_text(x = 1945, y = 120,
+  #           aes(label = paste("Deviance explained",round(mod_sum$dev.expl,1)*100,"%")),
+  #           color="black",size=3)
+
+mod_sum<-summary(mod0_iceOnIsotherm)
+
+#How does this compare to sens slope?
+Isotherm_WaterYear_dates_IceIn %>%
+  select(WaterYear, isotherm_TempMax_degC_17_days_0_degC_WaterYear_date) %>%
+  pivot_longer(-1) %>%
+  group_by(name)%>%
+  dplyr::summarize(Sens_Slope=MTCC.sensSlope(x=WaterYear,y=value)$coefficients["Year"],
+                   Sens_Intercept=MTCC.sensSlope(x=WaterYear,y=value)$coefficients["Intercept"],
+                   Sens_pval=MTCC.sensSlope(x=WaterYear,y=value)$pval,
+                   Sens_z_stat=MTCC.sensSlope(x=WaterYear,y=value)$z_stat,
+                   Sens_n=MTCC.sensSlope(x=WaterYear,y=value)$n) %>%
+  mutate(Significance=ifelse(Sens_pval<0.05,"*","NS"))
+#Moving back 2 days a decade or 19 days later than it was at the beginning of the record. 
+
+#How about trends in cumMeanDailyT_Nov?
+MohonkIceWeather %>%
+  select(Year, cumMeanDailyT_Nov) %>%
+  filter(Year>1931) %>%
+  pivot_longer(-1) %>%
+  group_by(name)%>%
+  dplyr::summarize(Sens_Slope=MTCC.sensSlope(x=Year,y=value)$coefficients["Year"],
+                   Sens_Intercept=MTCC.sensSlope(x=Year,y=value)$coefficients["Intercept"],
+                   Sens_pval=MTCC.sensSlope(x=Year,y=value)$pval,
+                   Sens_z_stat=MTCC.sensSlope(x=Year,y=value)$z_stat,
+                   Sens_n=MTCC.sensSlope(x=Year,y=value)$n) %>%
+  mutate(Significance=ifelse(Sens_pval<0.05,"*","NS"))
+
+plot(MohonkIceWeather$Year, MohonkIceWeather$cumMeanDailyT_Nov)
 
 
 # Fitting GAMs for mean winter temperature -------------------------------------------
