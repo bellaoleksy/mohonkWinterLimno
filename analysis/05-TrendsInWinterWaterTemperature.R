@@ -28,6 +28,7 @@ library(ggplotify) #create gg objects or grobs from other graphical systems
 library(ggnetwork) #Makes nice network plots in ggplot from lavaan object
 library(cowplot) #laying out multipanel plots with different sizes
 
+summarize <- dplyr::summarize 
 
 #Graph  each water year with ice in/out as vertical lines, and temperature as spaghetti plot####
 ggplot(data=DailyInterpol_winter%>%filter(wateryear==2001),aes(x=Date,y=DailyIceRecord_binomial*5))+geom_line()+
@@ -270,13 +271,13 @@ dev.off()
     ggplot(.,aes(y=(LengthSpringMixedPeriod_days_scale_Resids-0.793*IceOutDayofYear_fed_scale),x=IceOutDayofYear_fed_scale))+
     geom_point()+
     geom_line(aes(y=IceOutDayofYear_fed_scale*-0.793-0.012))+
-    xlab("Ice out")+
-    ylab("Spr mixed period (days)")+
+    xlab("Ice off date")+
+    ylab("Spring mixed period (days)")+
     theme_bw()+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
     #Can modify to actual day here... but is better to get more evenly spaced numbers and then figure out the z-score of those numbers for the breaks
     scale_y_continuous(breaks=breaks_lengthspringmixed,labels=labels_lengthspringmixed)+
-    scale_x_continuous(breaks=breaks_IceOutDayofYear_fed,labels=c("15Mar","01Apr","15Apr"),limits=limits_IceOutDayofYear_fed)
+    scale_x_continuous(breaks=breaks_IceOutDayofYear_fed,labels=c("15-Mar","01-Apr","15-Apr"),limits=limits_IceOutDayofYear_fed)
   
   
   
@@ -296,7 +297,7 @@ dev.off()
     geom_point()+
     geom_line(aes(y=LengthOfIceCover_days_scale*0.878+0.046))+
     xlab("Ice duration (days)")+
-    ylab(bquote(Under~ice~hypo~temp~(degree*C)))+
+    ylab(bquote(Under~ice~hypo.~temp.~(degree*C)))+
     theme_bw()+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
     scale_x_continuous(breaks=breaks_LengthOfIceCover_days,labels=labels_LengthOfIceCover_days)+
@@ -327,7 +328,7 @@ dev.off()
     ggplot(.,aes(y=(MeanDelta1_11mWaterDensity_kgperm3_scale_Resids+1.239*MeanUnderIce_EpiTemp_degC_scale),x=MeanUnderIce_EpiTemp_degC_scale))+
     geom_point()+
     geom_line(aes(y=1.239*MeanUnderIce_EpiTemp_degC_scale-0.002))+
-    xlab(bquote(Under~ice~epi~temp~(degree*C)))+
+    xlab(bquote(Under~ice~epi.~temp.~(degree*C)))+
     ylab(bquote(Water~density~Delta~(kg~m^-3)))+
     theme_bw()+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
@@ -472,12 +473,12 @@ label_round = 2, name = "Correlation Scale", label_alpha = T, hjust = 0.75) +
                            lhs == "LengthOfIceCover_days_scale" & rhs == "IceOutDayofYear_fed_scale" ~ (y2 + (yend2 - y2) * .85),
                            lhs == "MeanDelta1_11mWaterDensity_kgperm3_scale" & rhs == "LengthSpringMixedPeriod_days_scale" ~ (y2 + (yend2 - y2) * .85)
                            ),
-          node.labels=case_when(name=="MeanUnderIce_HypoTemp_degC_scale" ~ as.character(expression(paste("Hyp Tmp"))),
-                                name=="MeanUnderIce_EpiTemp_degC_scale" ~ as.character(expression(paste("Epi Tmp"))),
+          node.labels=case_when(name=="MeanUnderIce_HypoTemp_degC_scale" ~ as.character(expression(Hypo.[Temp.])),
+                                name=="MeanUnderIce_EpiTemp_degC_scale" ~ as.character(expression(Epi.[Temp.])),
                                 name=="MeanDelta1_11mWaterDensity_kgperm3_scale" ~ as.character(expression(paste("Dens. ",Delta))),
-                                name=="LengthSpringMixedPeriod_days_scale" ~ as.character(expression(paste("Spr Mix"))),
-                                name=="LengthOfIceCover_days_scale" ~ as.character(expression(paste("Ice Dur"))),
-                                name=="IceOutDayofYear_fed_scale" ~ as.character(expression(paste("Ice Out")))
+                                name=="LengthSpringMixedPeriod_days_scale" ~ as.character(expression(paste("Spr. Mix"))),
+                                name=="LengthOfIceCover_days_scale" ~ as.character(expression(paste("Ice Dur."))),
+                                name=="IceOutDayofYear_fed_scale" ~ as.character(expression(paste("Ice Off")))
                                 ),
           arrow.ends=case_when(op=="~"~"last",
                                op=="~~"~"both"
@@ -560,6 +561,16 @@ label_round = 2, name = "Correlation Scale", label_alpha = T, hjust = 0.75) +
           ncol=2,nrow=1,align="hv")
         )
 #*Export the four panel figure####        
-ggsave(paste("figures/MohonkWinterLimno-FigureX-SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4panel.SEM,width=6,height=5,units="in", dpi=300)
+ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4panel.SEM,width=7,height=5,units="in", dpi=300)
         
-      
+     
+#Alternative arrangement
+ 
+B<-(gg.partialResid.lengthIceVsHypoTemp+gg.partialResid.iceOutVsSpringMixed+gg.partialResid.epiTempVsWaterDensity)
+Fig5alt<-gg.networkplot/B +
+  plot_layout(heights = c(1.5,.75))+
+  plot_annotation(tag_levels = 'a')
+Fig5alt
+
+ggsave("figures/Figure5.SEMplot4panelsPartialResids_alt.jpg", plot=Fig5alt, width=7, height=7,units="in", dpi=300)
+
