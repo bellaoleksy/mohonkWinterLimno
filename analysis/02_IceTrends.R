@@ -469,7 +469,6 @@ MohonkIceWeather <- MohonkIceWeather %>%
               select(WaterYear,isotherm_TempMean_degC_29_days_4_degC_WaterYear_date),
             by = c("Year"="WaterYear")) 
 
-
 ### IceInDayofYear_fed~nDaysMeanBelowZero_OctNovDec
 modIceOn1 <- gam(IceInDayofYear_fed ~  s(nDaysMeanBelowZero_OctNovDec),
                  family=Gamma(link="log"),
@@ -737,7 +736,7 @@ Row1a<-(IceIn_isotherm+IceIn_CumuNov)
 Row1a
 
 
-ggsave("figures/Figure2.GamPredictions_IceOn_test.png", plot=Row1a, width=8, height=4,units="in", dpi=300)
+ggsave("figures/Figure2.GamPredictions_IceOn.png", plot=Row1a, width=8, height=4,units="in", dpi=300)
 
 
 
@@ -1109,7 +1108,19 @@ IceOut_FebT<-ggplot(pred_FebT, aes(x = cumMeanDailyT_Feb, y = fitted_FebT)) +
   labs(x="Feb cumulative mean daily temperature (°C)",
        y="Ice Off (Julian Day)")+
   scale_y_continuous(breaks = seq(70, 120, by = 10) )+
-  coord_cartesian(ylim = c(65, 120), expand = TRUE)
+  coord_cartesian(ylim = c(65, 120), expand = TRUE)+
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        axis.title.y=element_blank(),
+        plot.margin=unit(c(0.5,0.5,0,0), "lines"),
+        axis.ticks.length.y = unit(0, "pt")) +
+  geom_text(data=panelLetter.normal,
+            aes(x=xpos,
+                y=ypos,
+                hjust=hjustvar,
+                vjust=vjustvar,
+                label="b",
+                fontface="bold"))
 
 ### Ice Out vs. cumMeanDailyT_Mar
 modIceOut9_summary
@@ -1148,10 +1159,19 @@ IceOut_isotherm<-ggplot(pred_isotherm, aes(x = isotherm_TempMean_degC_29_days_4_
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=isotherm_TempMean_degC_29_days_4_degC_WaterYear_date,
                                         y=IceOutDayofYear))+
-  labs(x="Isotherm Formula: TempAvg in degC, 29 day window, 4 degC threshold",
+  labs(x=expression(Iso["avg,"]["29day,"]["4°C"]),
+    # x="Isotherm Formula: TempAvg in degC, 29 day window, 4 degC threshold",
        y="Ice Off (Julian Day)")+
   scale_y_continuous(breaks = seq(70, 120, by = 10) )+
-  coord_cartesian(ylim = c(65, 120), expand = TRUE)
+  coord_cartesian(ylim = c(65, 120), expand = TRUE)+
+  theme(plot.margin=unit(c(0.5,0,0,0.5), "lines")) +
+  geom_text(data=panelLetter.normal,
+            aes(x=xpos,
+                y=ypos,
+                hjust=hjustvar,
+                vjust=vjustvar,
+                label="a",
+                fontface="bold"))
 
 
 #Ice Out vs. FebMarAprSnow
@@ -1194,7 +1214,15 @@ IceOut_FebMarAprSnow<-ggplot(pred_FebMarAprSnow, aes(x = cumSnow_FebMarApr, y = 
   labs(x="Feb-Apr Cumulative Snowfall (mm)",
        y="Ice Off (Julian Day)")+
   scale_y_continuous(breaks = seq(70, 120, by = 10) )+
-  coord_cartesian(ylim = c(65, 120), expand = TRUE)
+  coord_cartesian(ylim = c(65, 120), expand = TRUE)+
+  theme(plot.margin=unit(c(0,0,0.5,0.5), "lines")) +
+  geom_text(data=panelLetter.normal,
+            aes(x=xpos,
+                y=ypos,
+                hjust=hjustvar,
+                vjust=vjustvar,
+                label="c",
+                fontface="bold"))
 
 
 
@@ -1239,50 +1267,30 @@ IceOut_IceIn<-ggplot(pred_IceIn, aes(x = IceInDayofYear_fed, y = fitted_IceIn)) 
   labs(x="Ice-On (Days since Oct 1)",
        y="Ice Off (Julian Day)")+
   scale_y_continuous(breaks = seq(70, 120, by = 10) )+
-  coord_cartesian(ylim = c(65, 120), expand = TRUE)
+  coord_cartesian(ylim = c(65, 120), expand = TRUE)+
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        axis.title.y=element_blank(),
+        plot.margin=unit(c(0,0.5,0.5,0), "lines"),
+        axis.ticks.length.y = unit(0, "pt")) +
+  geom_text(data=panelLetter.normal,
+            aes(x=xpos,
+                y=ypos,
+                hjust=hjustvar,
+                vjust=vjustvar,
+                label="d",
+                fontface="bold"))
 
 
 
-# ~~FIGURE X~~ Ice On/Ice Off vs XYZ --------------------------------------
+# ~~FIGURE 3  Ice Off vs ABCD --------------------------------------
 
 
-# 
-# Row2<-cowplot::plot_grid(IceOut_FebT,
-#                          IceOut_isotherm
-#                     + 
-#                      theme(axis.text.y = element_blank(),
-#                            # axis.ticks.y = element_blank(),
-#                            axis.title.y = element_blank() ), 
-#                     IceOut_FebMarAprSnow,
-#                    IceOut_IceIn + 
-#                      theme(axis.text.y = element_blank(),
-#                            # axis.ticks.y = element_blank(),
-#                            axis.title.y = element_blank() ), 
-#                    nrow = 1,
-#                    labels = c("c","d","e","f"),
-#                    align = "v")
-# 
-# Figure2<-Row1/Row2
-# Figure2
-# 
-# ggsave("figures/Figurex.GamPredictions_IceOnIceOff.png", plot=Figure2, width=9, height=5,units="in", dpi=300)
-# 
+Row2a<-(IceOut_isotherm+IceOut_FebT)/(IceOut_FebMarAprSnow+IceOut_IceIn)
+Row2a
 
-Row2a<-cowplot::plot_grid(IceOut_isotherm ,
-                          IceOut_FebT
-                          + 
-                            theme(axis.text.y = element_blank(),
-                                  # axis.ticks.y = element_blank(),
-                                  axis.title.y = element_blank() ), 
-                          IceOut_FebMarAprSnow,
-                          IceOut_IceIn + 
-                            theme(axis.text.y = element_blank(),
-                                  # axis.ticks.y = element_blank(),
-                                  axis.title.y = element_blank() ), 
-                          nrow = 2,
-                          labels = c("a","b","c","d"),
-                          align = "v")
-ggsave("mohonkWinterLimno/figures/Figure3.GamPredictions_IceOff.png", plot=Row2a, width=8, height=5,units="in", dpi=600)
+
+ggsave("figures/Figure3.GamPredictions_IceOff.png", plot=Row2a, width=8, height=5,units="in", dpi=600)
 
 # Fitting GAMs for iceDuration_days -------------------------------------------
 
@@ -1474,7 +1482,7 @@ modIceDuration3_summary$dev.expl
 appraise(modIceDuration1)
 
 
-# ~~FIGURE X ~~ IceCoverDuration vs.  XYZ (Model 1) ---------------------------------
+# ~~FIGURE 4 ~ IceCoverDuration vs.  ABC ---------------------------------
 
 
 
@@ -1510,15 +1518,29 @@ pred_GlobalT <- pred_GlobalT %>%
          upr_ci_GlobalT = upr_ci,
          LengthOfIceCover_days = fitted)
 
-IceDuration_GlobalT<-ggplot(pred_GlobalT, aes(x = GlobalTempanomaly_C, y = LengthOfIceCover_days)) +
+IceDuration_GlobalT<-
+  ggplot(pred_GlobalT, aes(x = GlobalTempanomaly_C, y = LengthOfIceCover_days)) +
   geom_ribbon(aes(ymin = lwr_ci_GlobalT, ymax = upr_ci_GlobalT), alpha = 0.2) +
   geom_line() +
-  geom_point(data=MohonkIceWeather, aes(x=GlobalTempanomaly_C,
+  geom_point(data=MohonkIceWeather , aes(x=GlobalTempanomaly_C,
                                         y=LengthOfIceCover_days))+
   labs(x="Global Temperature Anomaly (°C)",
        y="Length of ice cover (days)")+
   scale_y_continuous(breaks = seq(30, 150, by = 30) )+
-  coord_cartesian(ylim = c(30, 150), expand = TRUE)
+  coord_cartesian(ylim = c(30, 150), expand = TRUE) +
+  theme(plot.margin=unit(c(0.5,0,0.5,0.5), "lines"))+
+        # legend.justification = c(1, 1),
+        # legend.position = c(.98,.98),
+        # legend.background = element_rect(fill = "white", color = NA)) +
+  # scale_fill_gradient(low = "green", high = "red", na.value = NA)+
+  geom_text(data=panelLetter.normal,
+            aes(x=xpos,
+                y=ypos,
+                hjust=hjustvar,
+                vjust=vjustvar,
+                label="a",
+                fontface="bold"))
+
 
 ### Panel B-- Ice Duration vs. NAO_index_Dec
 modIceDuration1_summary
@@ -1558,7 +1580,20 @@ IceDuration_DecNAO<-ggplot(pred_DecNAO, aes(x = NAO_index_Dec, y = LengthOfIceCo
   labs(x="Dec NAO index",
        y="Length of ice cover (days)")+
   scale_y_continuous(breaks = seq(30, 150, by = 30) )+
-  coord_cartesian(ylim = c(30, 150), expand = TRUE)
+  coord_cartesian(ylim = c(30, 150), expand = TRUE) +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        axis.title.y=element_blank(),
+        plot.margin=unit(c(0.5,0,0.5,0), "lines"),
+        axis.ticks.length.y = unit(0, "pt"))+
+  geom_text(data=panelLetter.normal,
+            aes(x=xpos,
+                y=ypos,
+                hjust=hjustvar,
+                vjust=vjustvar,
+                label="b",
+                fontface="bold"))
+
 
 ### Panel C-- Ice Duration vs. NAO_index_Nov
 modIceDuration1_summary
@@ -1598,22 +1633,29 @@ IceDuration_NovNAO<-ggplot(pred_NovNAO, aes(x = NAO_index_Nov, y = LengthOfIceCo
   labs(x="Nov NAO index",
        y="Length of ice cover (days)")+
   scale_y_continuous(breaks = seq(30, 150, by = 30) )+
-  coord_cartesian(ylim = c(30, 150), expand = TRUE)
+  coord_cartesian(ylim = c(30, 150), expand = TRUE) +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        axis.title.y=element_blank(),
+        plot.margin=unit(c(0.5,0.5,0.5,0), "lines"),
+        axis.ticks.length.y = unit(0, "pt"))+
+  geom_text(data=panelLetter.normal,
+            aes(x=xpos,
+                y=ypos,
+                hjust=hjustvar,
+                vjust=vjustvar,
+                label="c",
+                fontface="bold"))
 
 
-composite_noLegend<-cowplot::plot_grid(IceDuration_GlobalT,
-                                       IceDuration_DecNAO + 
-                                         theme(axis.text.y = element_blank(),
-                                               # axis.ticks.y = element_blank(),
-                                               axis.title.y = element_blank() ),
-                                       IceDuration_NovNAO +
-                                         theme(legend.position="none"), 
-                                       nrow = 1,
-                                       labels = c("a","b","c"),
-                                       align = "hv") 
 
 
-ggsave("figures/FigureX.GamPredictions_IceDuration_model1.png", width=8, height=3,units="in", dpi=600)
+composite_noLegend<-(IceDuration_GlobalT+IceDuration_DecNAO+IceDuration_NovNAO)
+composite_noLegend
+
+
+
+ggsave("figures/Figure4.GamPredictions_IceDuration.png", width=8, height=3,units="in", dpi=600)
 
 
 
