@@ -3,7 +3,7 @@
 
 #Run the main script to bring in all data and functions####
 # source('00_main.R')
-source('01_Isotherm.R') #this script already sources 00_main.R
+source('analysis/01_Isotherm.R') #this script already sources 00_main.R
 
 
 #Load libraries 
@@ -91,6 +91,16 @@ theme_MS <- function () {
 }
 
 theme_set(theme_MS())
+
+
+#annotate panel letters inside plot
+panelLetter.normal <- data.frame(
+  xpos = c(-Inf),
+  ypos =  c(Inf),
+  hjustvar = c(-0.5) ,
+  vjustvar = c(1.5))
+
+
 
 
 # Correlations of winter predictor variables -------------------------------------------
@@ -422,7 +432,7 @@ ggplot() +
   #   trans = c("date", "reverse2")
   # )
   scale_y_date(date_breaks = "1 month", date_minor_breaks = "1 week",
-               date_labels = "%m-%d")+
+               date_labels = "%b-%d")+
   theme_MS() +
   theme(
     panel.grid.major = element_blank(),
@@ -658,10 +668,19 @@ IceIn_isotherm<-ggplot(pred_isotherm, aes(x = isotherm_TempMax_degC_17_days_0_de
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=isotherm_TempMax_degC_17_days_0_degC_WaterYear_date,
                                         y=IceInDayofYear_fed))+
-  labs(x="Isotherm Formula: TempMax in degC, 17 day window, 0 degC threshold",
+  labs(x=expression(Iso["max,"]["17day,"]["0°C"]),
+    # x="Isotherm Formula: TempMax in degC, 17 day window, 0 degC threshold",
        y="Ice on (days since Oct 1)")+
   scale_y_continuous(breaks = seq(50, 130, by = 20) )+
-  coord_cartesian(ylim = c(50, 130), expand = TRUE)
+  coord_cartesian(ylim = c(50, 130), expand = TRUE) +
+  theme(plot.margin=unit(c(0.5,0,0.5,0.5), "lines")) +
+  geom_text(data=panelLetter.normal,
+            aes(x=xpos,
+                y=ypos,
+                hjust=hjustvar,
+                vjust=vjustvar,
+                label="a",
+                fontface="bold"))
 
 ### Panel B -- Ice On vs. cumMeanDailyT_Nov
 new_data <-
@@ -698,30 +717,27 @@ IceIn_CumuNov<-ggplot(pred_Nov, aes(x = cumMeanDailyT_Nov, y = fitted_Nov)) +
   labs(x="Nov. cumulative mean daily temperature (°C)",
        y="Ice on (days since Oct 1)")+
   scale_y_continuous(breaks = seq(50, 130, by = 20) )+
-  coord_cartesian(ylim = c(50, 130), expand = TRUE)
+  coord_cartesian(ylim = c(50, 130), expand = TRUE) +
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        axis.title.y=element_blank(),
+        plot.margin=unit(c(0.5,0.5,0.5,0), "lines"),
+        axis.ticks.length.y = unit(0, "pt"))+
+  geom_text(data=panelLetter.normal,
+            aes(x=xpos,
+                y=ypos,
+                hjust=hjustvar,
+                vjust=vjustvar,
+                label="b",
+                fontface="bold"))
 
 
-Row1<-cowplot::plot_grid(IceIn_isotherm, 
-                         IceIn_CumuNov + 
-                           theme(axis.text.y = element_blank(),
-                                 # axis.ticks.y = element_blank(),
-                                 axis.title.y = element_blank() ), 
-                         NULL,
-                         nrow = 1,
-                         labels = c("a","b",NULL),
-                         align = "v")
 
-
-Row1a<-cowplot::plot_grid(IceIn_isotherm , 
-                          IceIn_CumuNov + 
-                            theme(axis.text.y = element_blank(),
-                                  # axis.ticks.y = element_blank(),
-                                  axis.title.y = element_blank() ), 
-                          nrow = 1,
-                          labels = c("a","b"),
-                          align = "v")
+Row1a<-(IceIn_isotherm+IceIn_CumuNov)
 Row1a
-ggsave("figures/Figure2.GamPredictions_IceOn_gamma_loglink.png", plot=Row1a, width=8, height=4,units="in", dpi=300)
+
+
+ggsave("figures/Figure2.GamPredictions_IceOn_test.png", plot=Row1a, width=8, height=4,units="in", dpi=300)
 
 
 
