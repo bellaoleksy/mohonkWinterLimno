@@ -662,16 +662,20 @@ pred_isotherm <- pred_isotherm %>%
          upr_ci_isotherm = upr_ci,
          fitted_isotherm = fitted)
 
-IceIn_isotherm<-ggplot(pred_isotherm, aes(x = isotherm_TempMax_degC_17_days_0_degC_WaterYear_date, y = fitted_isotherm)) +
+#Modify axis labels: fed DOY -> dates
+labels_IceOnDayofYear_fed<-c(50,70,90,110,130)
+#To figure out conversion of FED DOY to Date use something like: as.Date(274+110, origin="2014-01-02")
+
+IceOn_isotherm<-
+  ggplot(pred_isotherm, aes(x = isotherm_TempMax_degC_17_days_0_degC_WaterYear_date, y = fitted_isotherm)) +
   geom_ribbon(aes(ymin = lwr_ci_isotherm, ymax = upr_ci_isotherm), alpha = 0.2) +
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=isotherm_TempMax_degC_17_days_0_degC_WaterYear_date,
-                                        y=IceInDayofYear_fed))+
+                                        y=IceOnDayofYear_fed))+
   labs(x=expression(Iso["max,"]["17day,"]["0°C"]),
     # x="Isotherm Formula: TempMax in degC, 17 day window, 0 degC threshold",
-       y="Ice on (days since Oct 1)")+
-  scale_y_continuous(breaks = seq(50, 130, by = 20) )+
-  coord_cartesian(ylim = c(50, 130), expand = TRUE) +
+       y="Ice on date")+
+  scale_y_continuous(breaks=labels_IceOnDayofYear_fed,labels=c("22-Nov","12-Dec","01-Jan","21-Jan","10-Feb"),limits=c(50,130))+
   theme(plot.margin=unit(c(0.5,0,0.5,0.5), "lines")) +
   geom_text(data=panelLetter.normal,
             aes(x=xpos,
@@ -708,15 +712,16 @@ pred_Nov <- pred_Nov %>%
          fitted_Nov = fitted)
 
 
-IceIn_CumuNov<-ggplot(pred_Nov, aes(x = cumMeanDailyT_Nov, y = fitted_Nov)) +
+IceOn_CumuNov<-ggplot(pred_Nov, aes(x = cumMeanDailyT_Nov, y = fitted_Nov)) +
   geom_ribbon(aes(ymin = lwr_ci_Nov, ymax = upr_ci_Nov), alpha = 0.2) +
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=cumMeanDailyT_Nov,
-                                        y=IceInDayofYear_fed))+
+                                        y=IceOnDayofYear_fed))+
   labs(x="Nov. cumulative mean daily temperature (°C)",
        y="Ice on (days since Oct 1)")+
-  scale_y_continuous(breaks = seq(50, 130, by = 20) )+
-  coord_cartesian(ylim = c(50, 130), expand = TRUE) +
+  # scale_y_continuous(breaks = seq(50, 130, by = 20) )+
+  # coord_cartesian(ylim = c(50, 130), expand = TRUE) +
+  scale_y_continuous(breaks=labels_IceOnDayofYear_fed,labels=c("22-Nov","12-Dec","01-Jan","21-Jan","10-Feb"),limits=c(50,130))+
   theme(axis.text.y=element_blank(),
         axis.ticks.y=element_blank(),
         axis.title.y=element_blank(),
@@ -732,7 +737,7 @@ IceIn_CumuNov<-ggplot(pred_Nov, aes(x = cumMeanDailyT_Nov, y = fitted_Nov)) +
 
 
 
-Row1a<-(IceIn_isotherm+IceIn_CumuNov)
+Row1a<-(IceOn_isotherm+IceOn_CumuNov)
 Row1a
 
 
@@ -1070,6 +1075,7 @@ vis.gam(modIceOut9, view=c("cumSnow_FebMarApr","isotherm_TempMean_degC_29_days_4
 #Final variables for paper--
 modIceOut9_summary
 
+
 ### Ice Out vs. cumMeanDailyT_Feb
 new_data <-
   with(MohonkIceWeather,
@@ -1100,6 +1106,13 @@ pred_FebT <- pred_FebT %>%
          upr_ci_FebT = upr_ci,
          fitted_FebT = fitted)
 
+
+#Modify axis labels: fed DOY -> dates
+breaks_IceOnDayofYear_fed<-c(60,80,100,120) #these are days since oct 1
+breaks_IceOffDayofYear_fed<-c(70,80,90,100,110,120) #these are julian day
+#To figure out conversion of FED DOY to Date use something like: as.Date(274+110, origin="2014-01-02")
+
+
 IceOut_FebT<-ggplot(pred_FebT, aes(x = cumMeanDailyT_Feb, y = fitted_FebT)) +
   geom_ribbon(aes(ymin = lwr_ci_FebT, ymax = upr_ci_FebT), alpha = 0.2) +
   geom_line() +
@@ -1107,8 +1120,9 @@ IceOut_FebT<-ggplot(pred_FebT, aes(x = cumMeanDailyT_Feb, y = fitted_FebT)) +
                                         y=IceOutDayofYear))+
   labs(x="Feb cumulative mean daily temperature (°C)",
        y="Ice Off (Julian Day)")+
-  scale_y_continuous(breaks = seq(70, 120, by = 10) )+
-  coord_cartesian(ylim = c(65, 120), expand = TRUE)+
+  # scale_y_continuous(breaks = seq(70, 120, by = 10) )+
+  # coord_cartesian(ylim = c(65, 120), expand = TRUE)+
+  scale_y_continuous(breaks=breaks_IceOffDayofYear_fed,labels=c("13-Mar","23-Mar","02-Apr","12-Apr","22-Apr","02-May"),limits=c(70,120))+
   theme(axis.text.y=element_blank(),
         axis.ticks.y=element_blank(),
         axis.title.y=element_blank(),
@@ -1161,9 +1175,10 @@ IceOut_isotherm<-ggplot(pred_isotherm, aes(x = isotherm_TempMean_degC_29_days_4_
                                         y=IceOutDayofYear))+
   labs(x=expression(Iso["avg,"]["29day,"]["4°C"]),
     # x="Isotherm Formula: TempAvg in degC, 29 day window, 4 degC threshold",
-       y="Ice Off (Julian Day)")+
-  scale_y_continuous(breaks = seq(70, 120, by = 10) )+
-  coord_cartesian(ylim = c(65, 120), expand = TRUE)+
+       y="Ice off date")+
+  # scale_y_continuous(breaks = seq(70, 120, by = 10) )+
+  # coord_cartesian(ylim = c(65, 120), expand = TRUE)+
+  scale_y_continuous(breaks=breaks_IceOffDayofYear_fed,labels=c("13-Mar","23-Mar","02-Apr","12-Apr","22-Apr","02-May"),limits=c(70,120))+
   theme(plot.margin=unit(c(0.5,0,0,0.5), "lines")) +
   geom_text(data=panelLetter.normal,
             aes(x=xpos,
@@ -1212,9 +1227,10 @@ IceOut_FebMarAprSnow<-ggplot(pred_FebMarAprSnow, aes(x = cumSnow_FebMarApr, y = 
   geom_point(data=MohonkIceWeather, aes(x=cumSnow_FebMarApr,
                                         y=IceOutDayofYear))+
   labs(x="Feb-Apr Cumulative Snowfall (mm)",
-       y="Ice Off (Julian Day)")+
-  scale_y_continuous(breaks = seq(70, 120, by = 10) )+
-  coord_cartesian(ylim = c(65, 120), expand = TRUE)+
+       y="Ice off date")+
+  # scale_y_continuous(breaks = seq(70, 120, by = 10) )+
+  # coord_cartesian(ylim = c(65, 120), expand = TRUE)+
+  scale_y_continuous(breaks=breaks_IceOffDayofYear_fed,labels=c("13-Mar","23-Mar","02-Apr","12-Apr","22-Apr","02-May"),limits=c(70,120))+
   theme(plot.margin=unit(c(0,0,0.5,0.5), "lines")) +
   geom_text(data=panelLetter.normal,
             aes(x=xpos,
@@ -1266,8 +1282,10 @@ IceOut_IceIn<-ggplot(pred_IceIn, aes(x = IceInDayofYear_fed, y = fitted_IceIn)) 
                                         y=IceOutDayofYear))+
   labs(x="Ice-On (Days since Oct 1)",
        y="Ice Off (Julian Day)")+
-  scale_y_continuous(breaks = seq(70, 120, by = 10) )+
-  coord_cartesian(ylim = c(65, 120), expand = TRUE)+
+  # scale_y_continuous(breaks = seq(70, 120, by = 10) )+
+  # coord_cartesian(ylim = c(65, 120), expand = TRUE)+
+  scale_y_continuous(breaks=breaks_IceOffDayofYear_fed,labels=c("13-Mar","23-Mar","02-Apr","12-Apr","22-Apr","02-May"),limits=c(70,120))+
+  scale_x_continuous(breaks=breaks_IceOnDayofYear_fed,labels=c("02-Dec","22-Dec","11-Jan","31-Jan"),limits=c(60,120))+
   theme(axis.text.y=element_blank(),
         axis.ticks.y=element_blank(),
         axis.title.y=element_blank(),
