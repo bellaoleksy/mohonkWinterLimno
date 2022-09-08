@@ -141,7 +141,7 @@ ggplot()+
 
 #*Path Analysis####
 #**Model: Start out with a simple model####
-model<-'
+model1<-'
       MeanUnderIce_HypoTemp_degC_scale~ LengthOfIceCover_days_scale + IceOutDayofYear_fed_scale
       MeanUnderIce_EpiTemp_degC_scale~LengthOfIceCover_days_scale + IceOutDayofYear_fed_scale
       MeanDelta1_11mWaterDensity_kgperm3_scale ~ LengthOfIceCover_days_scale + MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
@@ -241,6 +241,9 @@ fit<-sem(model4,data=AnnualUnderIceSummary_SEM,meanstructure=TRUE)
 summary(fit, fit.measures = TRUE, standardized=T,rsquare=T)
   
   parameterEstimates(fit)
+  
+#Visualize the SEM
+  semPaths(fit,'std',layout='tree2',edge.label.cex = 1.3,label.cex=1.1,intercepts=FALSE,curve=TRUE)
 
 #**Building a Structural Equation Model (SEM)####
 SEM.plot<-semPaths(fit,'std',layout='tree2',edge.label.cex = 1.3,label.cex=1.1,intercepts=FALSE,curve=TRUE,nCharNodes = 8,title=FALSE,residuals=FALSE,
@@ -473,11 +476,11 @@ label_round = 2, name = "Correlation Scale", label_alpha = T, hjust = 0.75) +
                            lhs == "LengthOfIceCover_days_scale" & rhs == "IceOutDayofYear_fed_scale" ~ (y2 + (yend2 - y2) * .85),
                            lhs == "MeanDelta1_11mWaterDensity_kgperm3_scale" & rhs == "LengthSpringMixedPeriod_days_scale" ~ (y2 + (yend2 - y2) * .85)
                            ),
-          node.labels=case_when(name=="MeanUnderIce_HypoTemp_degC_scale" ~ as.character(expression(Hypo.[Temp.])),
-                                name=="MeanUnderIce_EpiTemp_degC_scale" ~ as.character(expression(Epi.[Temp.])),
-                                name=="MeanDelta1_11mWaterDensity_kgperm3_scale" ~ as.character(expression(paste("Dens. ",Delta))),
-                                name=="LengthSpringMixedPeriod_days_scale" ~ as.character(expression(paste("Spr. Mix"))),
-                                name=="LengthOfIceCover_days_scale" ~ as.character(expression(paste("Ice Dur."))),
+          node.labels=case_when(name=="MeanUnderIce_HypoTemp_degC_scale" ~ as.character(expression(Hypo~degree*C)),
+                                name=="MeanUnderIce_EpiTemp_degC_scale" ~ as.character(expression(Epi~degree*C)),
+                                name=="MeanDelta1_11mWaterDensity_kgperm3_scale" ~ as.character(expression(paste("Dens ",Delta))),
+                                name=="LengthSpringMixedPeriod_days_scale" ~ as.character(expression(paste("Spr Mix"))),
+                                name=="LengthOfIceCover_days_scale" ~ as.character(expression(paste("Ice Dur"))),
                                 name=="IceOutDayofYear_fed_scale" ~ as.character(expression(paste("Ice Off")))
                                 ),
           arrow.ends=case_when(op=="~"~"last",
@@ -521,7 +524,7 @@ label_round = 2, name = "Correlation Scale", label_alpha = T, hjust = 0.75) +
                    arrow = arrow(length = unit(6, "pt"), type = "open",ends = "last"),lineend="round",linejoin="mitre") + #edges for the regressions
         geom_edges(data=combined_edge_labels%>%filter(op=="~~"),aes(x = x2, y = y2, xend = newx, yend = newy,color=edge_color,size=edge.factor),
                    arrow = arrow(length = unit(6, "pt"), type = "open",ends = "both"),lineend="round",linejoin="mitre",curvature=0) + #edges for the covariances
-        geom_nodes(data=combined_edge_labels,aes(shape="observed"), color = "black",fill="white",size = 17,shape=22) +
+        geom_nodes(data=combined_edge_labels,aes(shape="observed"), color = "black",fill="white",size = 18,shape=22) +
         geom_nodetext(data=combined_edge_labels,aes(label = node.labels),parse=TRUE,fontface = "bold",size=2.5) + 
         geom_label(data=combined_edge_labels%>%filter(op%in%c("~","~~")&lhs!=rhs),aes(x = midpoint.x, y = midpoint.y, label = est,color=edge_color), label.size = NA,hjust = .5,vjust=.5,size=2.5,label.padding=unit(0.1,"lines")) +
         scale_y_continuous(expand = c(.05,0.05)) +
@@ -561,10 +564,11 @@ label_round = 2, name = "Correlation Scale", label_alpha = T, hjust = 0.75) +
           ncol=2,nrow=1,align="hv")
         )
 #*Export the four panel figure####        
-ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4panel.SEM,width=7,height=5,units="in", dpi=300)
+ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4panel.SEM,width=6,height=5,units="in", dpi=300)
         
      
 #Alternative arrangement
+      #****If we go with this one, modify arrow locations, increase size of the nodes****####
  
 B<-(gg.partialResid.lengthIceVsHypoTemp+gg.partialResid.iceOutVsSpringMixed+gg.partialResid.epiTempVsWaterDensity)
 Fig5alt<-gg.networkplot/B +
@@ -572,5 +576,5 @@ Fig5alt<-gg.networkplot/B +
   plot_annotation(tag_levels = 'a')
 Fig5alt
 
-ggsave("figures/Figure5.SEMplot4panelsPartialResids_alt.jpg", plot=Fig5alt, width=7, height=7,units="in", dpi=300)
+ggsave("figures/Figure5.SEMplot4panelsPartialResids_alt.jpg", plot=Fig5alt, width=6, height=6,units="in", dpi=300)
 
