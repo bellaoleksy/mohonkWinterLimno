@@ -241,6 +241,252 @@ AnnualData %>%
 
 
 
+# ~~ Summary stats for manuscript --------------------------------------------
+
+
+# >> Dates of ice on, off, etc ----------------------------------
+
+#Earliest year
+min(MohonkIce$Year)
+
+#Latest year
+max(MohonkIce$Year)
+
+
+#Earliest ice-on
+as.Date(min(MohonkIceWeather$IceInDayofYear_fed, na.rm=TRUE)+274, origin="2014-01-02")
+#Dec 5
+
+#Latest ice-on
+as.Date(max(MohonkIceWeather$IceInDayofYear_fed, na.rm=TRUE)-92, origin="2014-01-02")
+#February 8
+
+
+#Median ice-on
+as.Date(median(MohonkIceWeather$IceInDayofYear_fed, na.rm=TRUE)-92, origin="2014-01-02")
+#February 8
+
+
+
+#Earliest ice-off
+as.Date(min(MohonkIceWeather$IceOutDayofYear, na.rm=TRUE), origin="2014-01-02")
+#March 11
+
+#Latest ice-off
+as.Date(max(MohonkIceWeather$IceOutDayofYear, na.rm=TRUE), origin="2014-01-02")
+#May 2
+
+#Median ice-off
+as.Date(median(MohonkIceWeather$IceOutDayofYear, na.rm=TRUE), origin="2014-01-02")
+#April 9
+
+# >> Trends in the ice phenology drivers ----------------------------------
+
+# Question - is the maximum observed air temperature 17 days after the
+# autumn 0 °C air temperature isotherm was crossed changing over time?
+
+# What dates does the maximum observed air temperature 17 days after 0 °C air temperature isotherm was crossed
+# correspond to?
+as.Date(min(round(Isotherm_WaterYear_dates_IceIn$isotherm_TempMax_degC_17_days_0_degC_WaterYear_date,0),na.rm=TRUE)+274, origin="2014-01-02")
+as.Date(max(round(Isotherm_WaterYear_dates_IceIn$isotherm_TempMax_degC_17_days_0_degC_WaterYear_date,0),na.rm=TRUE)+274, origin="2014-01-02")
+
+
+
+#Distribution of y
+hist(Isotherm_WaterYear_dates_IceIn$isotherm_TempMax_degC_17_days_0_degC_WaterYear_date)
+
+### I added Family Gamma here for how errors should respond
+mod0_iceOnIsotherm <- gam(isotherm_TempMax_degC_17_days_0_degC_WaterYear_date ~ s(WaterYear),
+                          # family=Gamma(link="log"),
+                          data = Isotherm_WaterYear_dates_IceIn,
+                          correlation = corCAR1(form = ~ WaterYear),
+                          method = "REML")
+summary(mod0_iceOnIsotherm)
+
+#PLOT Autocorrelation function of residuals from the additive model with AR(1) errors
+ACF <- acf(resid(mod0_iceOnIsotherm, type = "response"), plot = FALSE)
+ACF <- setNames(data.frame(unclass(ACF)[c("acf", "lag")]), c("ACF","Lag"))
+ggplot(ACF, aes(x = Lag, y = ACF)) +
+  geom_hline(aes(yintercept = 0)) +
+  geom_segment(mapping = aes(xend = Lag, yend = 0))
+#Suggests that an AR(1) model isn't necessary
+
+
+###Since we're concerned with the response, include "response" in type of predict()
+iceOnIsothermPred <- with(Isotherm_WaterYear_dates_IceIn, data.frame(WaterYear = seq(min(WaterYear, na.rm=TRUE),
+                                                                                     max(WaterYear, na.rm=TRUE),
+                                                                                     length.out = 200)))
+iceOnIsothermPred <- cbind(iceOnIsothermPred, data.frame(predict(mod0_iceOnIsotherm, iceOnIsothermPred,
+                                                                 type="response",
+                                                                 se.fit = TRUE)))
+### this calculates on the link scale (i.e., log)
+iceOnIsothermPred <- transform(iceOnIsothermPred, upper = fit + (2 * se.fit),
+                               lower = fit - (2 * se.fit))
+
+
+# Plots periods of change
+#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
+Term <- "WaterYear"
+m1.d <- Deriv(mod0_iceOnIsotherm)
+
+m1.dci <- confint(m1.d, term = "WaterYear")
+m1.dsig <- signifD(iceOnIsothermPred$fit,
+                   d = m1.d[[Term]]$deriv,
+                   m1.dci[[Term]]$upper,
+                   m1.dci[[Term]]$lower)
+
+ylim <- with(iceOnIsothermPred, range(upper, lower, fit))
+ylab <- 'DOY max. temp 17 days after 0 isotherm is crossed'
+
+plot(fit ~ WaterYear, data = iceOnIsothermPred, type = "n", ylab = ylab, ylim = ylim)
+lines(fit ~ WaterYear, data = iceOnIsothermPred)
+lines(upper ~ WaterYear, data = iceOnIsothermPred, lty = "dashed")
+lines(lower ~ WaterYear, data = iceOnIsothermPred, lty = "dashed")
+lines(unlist(m1.dsig$incr) ~ WaterYear, data = iceOnIsothermPred, col = "blue", lwd = 3)
+lines(unlist(m1.dsig$decr) ~ WaterYear, data = iceOnIsothermPred, col = "red", lwd = 3)
+#The date is getting later
+
+plot.Deriv(m1.d)
+#but first derivative plot shows that it is not accelerating at least
+
+#Plot 'DOY max. temp 17 days after 0 isotherm is crossed' vs. water-year pretty
+ggplot(iceOnIsothermPred,aes(x=WaterYear,y=fit))+
+  geom_point(data=Isotherm_WaterYear_dates_IceIn,
+             mapping=aes(x=WaterYear, y=isotherm_TempMax_degC_17_days_0_degC_WaterYear_date), size=2.5, alpha=0.7) +
+  geom_line(size=1)+
+  geom_ribbon(aes(ymin = (lower), ymax = (upper), x = WaterYear), alpha = 0.5, inherit.aes = FALSE) +
+  labs(x="Year",y="DOY max. temp 17 days after 0 isotherm is crossed")+
+  coord_cartesian(xlim=c(1930,2020))+
+  scale_x_continuous(breaks=seq(1930, 2020, 15))
+# geom_text(x = 1945, y = 120,
+#           aes(label = paste("Deviance explained",round(mod_sum$dev.expl,1)*100,"%")),
+#           color="black",size=3)
+
+mod_sum<-summary(mod0_iceOnIsotherm)
+
+#How does this compare to sens slope?
+Isotherm_WaterYear_dates_IceIn %>%
+  select(WaterYear, isotherm_TempMax_degC_17_days_0_degC_WaterYear_date) %>%
+  pivot_longer(-1) %>%
+  group_by(name)%>%
+  dplyr::summarize(Sens_Slope=MTCC.sensSlope(x=WaterYear,y=value)$coefficients["Year"],
+                   Sens_Intercept=MTCC.sensSlope(x=WaterYear,y=value)$coefficients["Intercept"],
+                   Sens_pval=MTCC.sensSlope(x=WaterYear,y=value)$pval,
+                   Sens_z_stat=MTCC.sensSlope(x=WaterYear,y=value)$z_stat,
+                   Sens_n=MTCC.sensSlope(x=WaterYear,y=value)$n) %>%
+  mutate(Significance=ifelse(Sens_pval<0.05,"*","NS"))
+#Moving back 2 days a decade or 19 days later than it was at the beginning of the record. 
+
+#How about trends in isotherm_TempMean_degC_29_days_4_degC_WaterYear_date?
+Isotherm_WaterYear_dates_IceOut %>%
+  select(WaterYear, isotherm_TempMean_degC_29_days_4_degC_WaterYear_date) %>%
+  filter(WaterYear>1931) %>%
+  pivot_longer(-1) %>%
+  group_by(name)%>%
+  dplyr::summarize(Sens_Slope=MTCC.sensSlope(x=WaterYear,y=value)$coefficients["Year"],
+                   Sens_Intercept=MTCC.sensSlope(x=WaterYear,y=value)$coefficients["Intercept"],
+                   Sens_pval=MTCC.sensSlope(x=WaterYear,y=value)$pval,
+                   Sens_z_stat=MTCC.sensSlope(x=WaterYear,y=value)$z_stat,
+                   Sens_n=MTCC.sensSlope(x=WaterYear,y=value)$n) %>%
+  mutate(Significance=ifelse(Sens_pval<0.05,"*","NS"))
+
+
+
+
+# Question - is the average observed air temperature 29 days after the
+# spring 4℃ air temperature isotherm changing over time?
+
+# What dates does the average observed air temperature 29 days after the spring 4℃ air temperature isotherm was crossed 
+# correspond to? 
+as.Date(min(round(Isotherm_WaterYear_dates_IceOut$isotherm_TempMean_degC_29_days_4_degC_WaterYear_date,0),na.rm=TRUE)-92, origin="2014-01-02")
+as.Date(max(round(Isotherm_WaterYear_dates_IceOut$isotherm_TempMean_degC_29_days_4_degC_WaterYear_date,0),na.rm=TRUE)-92, origin="2014-01-02")
+
+
+#Distribution of y
+hist(Isotherm_WaterYear_dates_IceOut$isotherm_TempMean_degC_29_days_4_degC_WaterYear_date)
+
+### I added Family Gamma here for how errors should respond
+mod0_iceOffIsotherm <- gam(isotherm_TempMean_degC_29_days_4_degC_WaterYear_date ~ s(WaterYear),
+                           # family=Gamma(link="log"),
+                           data = Isotherm_WaterYear_dates_IceOut,
+                           correlation = corCAR1(form = ~ WaterYear),
+                           method = "REML")
+summary(mod0_iceOffIsotherm)
+
+#PLOT Autocorrelation function of residuals from the additive model with AR(1) errors
+ACF <- acf(resid(mod0_iceOffIsotherm, type = "response"), plot = FALSE)
+ACF <- setNames(data.frame(unclass(ACF)[c("acf", "lag")]), c("ACF","Lag"))
+ggplot(ACF, aes(x = Lag, y = ACF)) +
+  geom_hline(aes(yintercept = 0)) +
+  geom_segment(mapping = aes(xend = Lag, yend = 0))
+#Suggests that an AR(1) model isn't necessary
+
+
+###Since we're concerned with the response, include "response" in type of predict()
+iceOffIsothermPred <- with(Isotherm_WaterYear_dates_IceOut, data.frame(WaterYear = seq(min(WaterYear, na.rm=TRUE),
+                                                                                       max(WaterYear, na.rm=TRUE),
+                                                                                       length.out = 200)))
+iceOffIsothermPred <- cbind(iceOffIsothermPred, data.frame(predict(mod0_iceOffIsotherm, iceOffIsothermPred,
+                                                                   type="response",
+                                                                   se.fit = TRUE)))
+### this calculates on the link scale (i.e., log)
+iceOffIsothermPred <- transform(iceOffIsothermPred, upper = fit + (2 * se.fit),
+                                lower = fit - (2 * se.fit))
+
+
+# Plots periods of change
+#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
+Term <- "WaterYear"
+m1.d <- Deriv(mod0_iceOffIsotherm)
+
+m1.dci <- confint(m1.d, term = "WaterYear")
+m1.dsig <- signifD(iceOffIsothermPred$fit,
+                   d = m1.d[[Term]]$deriv,
+                   m1.dci[[Term]]$upper,
+                   m1.dci[[Term]]$lower)
+
+ylim <- with(iceOffIsothermPred, range(upper, lower, fit))
+ylab <- 'DOY avg. temp 29 days after 4C isotherm is crossed'
+
+plot(fit ~ WaterYear, data = iceOffIsothermPred, type = "n", ylab = ylab, ylim = ylim)
+lines(fit ~ WaterYear, data = iceOffIsothermPred)
+lines(upper ~ WaterYear, data = iceOffIsothermPred, lty = "dashed")
+lines(lower ~ WaterYear, data = iceOffIsothermPred, lty = "dashed")
+lines(unlist(m1.dsig$incr) ~ WaterYear, data = iceOffIsothermPred, col = "blue", lwd = 3)
+lines(unlist(m1.dsig$decr) ~ WaterYear, data = iceOffIsothermPred, col = "red", lwd = 3)
+#The date is getting earlier,  with an accelerating trend 1973 to 2012 or so. 
+
+plot.Deriv(m1.d)
+#but first derivative plot shows that it is not accelerating at least
+
+#Plot 'DOY avg. temp 29 days after 4 isotherm is crossed' vs. water-year pretty
+ggplot(iceOffIsothermPred,aes(x=WaterYear,y=fit))+
+  geom_point(data=Isotherm_WaterYear_dates_IceOut,
+             mapping=aes(x=WaterYear, y=isotherm_TempMean_degC_29_days_4_degC_WaterYear_date), size=2.5, alpha=0.7) +
+  geom_line(size=1)+
+  geom_ribbon(aes(ymin = (lower), ymax = (upper), x = WaterYear), alpha = 0.5, inherit.aes = FALSE) +
+  labs(x="Year",y="DOY avg. temp 29 days after 4 isotherm is crossed")+
+  coord_cartesian(xlim=c(1930,2020))+
+  scale_x_continuous(breaks=seq(1930, 2020, 15))
+# geom_text(x = 1945, y = 120,
+#           aes(label = paste("Deviance explained",round(mod_sum$dev.expl,1)*100,"%")),
+#           color="black",size=3)
+
+mod_sum<-summary(mod0_iceOffIsotherm)
+mod_sum
+
+#How about trends in isotherm_TempMean_degC_29_days_4_degC_WaterYear_date?
+Isotherm_WaterYear_dates_IceOut %>%
+  select(WaterYear, isotherm_TempMean_degC_29_days_4_degC_WaterYear_date) %>%
+  filter(WaterYear>1931) %>%
+  pivot_longer(-1) %>%
+  group_by(name)%>%
+  dplyr::summarize(Sens_Slope=MTCC.sensSlope(x=WaterYear,y=value)$coefficients["Year"],
+                   Sens_Intercept=MTCC.sensSlope(x=WaterYear,y=value)$coefficients["Intercept"],
+                   Sens_pval=MTCC.sensSlope(x=WaterYear,y=value)$pval,
+                   Sens_z_stat=MTCC.sensSlope(x=WaterYear,y=value)$z_stat,
+                   Sens_n=MTCC.sensSlope(x=WaterYear,y=value)$n) %>%
+  mutate(Significance=ifelse(Sens_pval<0.05,"*","NS"))
 
 
 # ~~FIGURE 1~~ Ice in phenology timeseries ------------------------------------------------------------
@@ -529,7 +775,8 @@ modIceOn4 <- gam(IceInDayofYear_fed ~  s(cumMeanDailyT_Nov) + s(cumMeanDailyT_De
 summary(modIceOn4)
 #Fit improves substantially over null model
 
-plot(modIceOn4,
+  
+  plot(modIceOn4,
      shift = coef(modIceOn4)[1],
      pages =1, all.terms=TRUE)
 
@@ -631,6 +878,33 @@ visreg::visreg2d(modIceOn6, xvar='isotherm_TempMax_degC_17_days_0_degC_WaterYear
 
 # > Final Ice On model ----------------------------------------------------
 
+#Top 3 models 
+
+
+#Effective degrees of freedom (as a metric for model complexity)
+sum(influence(modIceOn4))
+sum(influence(modIceOn5))
+sum(influence(modIceOn6))
+
+#terms
+modIceOn4$terms
+modIceOn5$terms
+modIceOn6$terms
+
+#AIC
+modIceOn4$aic
+modIceOn5$aic
+modIceOn6$aic
+
+#Dev explained
+summary(modIceOn4)$dev.expl
+summary(modIceOn5)$dev.expl
+summary(modIceOn6)$dev.expl
+
+
+
+
+
 #Final variables for paper--
 summary(modIceOn6)
 
@@ -671,7 +945,7 @@ IceOn_isotherm<-
   geom_ribbon(aes(ymin = lwr_ci_isotherm, ymax = upr_ci_isotherm), alpha = 0.2) +
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=isotherm_TempMax_degC_17_days_0_degC_WaterYear_date,
-                                        y=IceOnDayofYear_fed))+
+                                        y=IceInDayofYear_fed))+
   labs(x=expression(Iso["max,"]["17day,"]["0°C"]),
     # x="Isotherm Formula: TempMax in degC, 17 day window, 0 degC threshold",
        y="Ice on date")+
@@ -716,7 +990,7 @@ IceOn_CumuNov<-ggplot(pred_Nov, aes(x = cumMeanDailyT_Nov, y = fitted_Nov)) +
   geom_ribbon(aes(ymin = lwr_ci_Nov, ymax = upr_ci_Nov), alpha = 0.2) +
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=cumMeanDailyT_Nov,
-                                        y=IceOnDayofYear_fed))+
+                                        y=IceInDayofYear_fed))+
   labs(x="Nov. cumulative mean daily temperature (°C)",
        y="Ice on (days since Oct 1)")+
   # scale_y_continuous(breaks = seq(50, 130, by = 20) )+
@@ -725,7 +999,7 @@ IceOn_CumuNov<-ggplot(pred_Nov, aes(x = cumMeanDailyT_Nov, y = fitted_Nov)) +
   theme(axis.text.y=element_blank(),
         axis.ticks.y=element_blank(),
         axis.title.y=element_blank(),
-        plot.margin=unit(c(0.5,0.5,0.5,0), "lines"),
+        plot.margin=unit(c(0.5,0,0.5,0), "lines"),
         axis.ticks.length.y = unit(0, "pt"))+
   geom_text(data=panelLetter.normal,
             aes(x=xpos,
@@ -734,6 +1008,9 @@ IceOn_CumuNov<-ggplot(pred_Nov, aes(x = cumMeanDailyT_Nov, y = fitted_Nov)) +
                 vjust=vjustvar,
                 label="b",
                 fontface="bold"))
+
+
+# ~~ FIGURE 2.  Ice On Predictors -----------------------------------------
 
 
 
@@ -1072,6 +1349,31 @@ vis.gam(modIceOut9, view=c("cumSnow_FebMarApr","isotherm_TempMean_degC_29_days_4
 # > Final Ice Out model ---------------------------------------------------
 
 
+
+#Effective degrees of freedom (as a metric for model complexity)
+sum(influence(modIceOut7))
+sum(influence(modIceOut8))
+sum(influence(modIceOut9))
+
+#terms
+modIceOut7$terms
+modIceOut8$terms
+modIceOut9$terms
+
+#AIC
+modIceOut7$aic
+modIceOut8$aic
+modIceOut9$aic
+
+#Dev explained
+summary(modIceOut7)$dev.expl
+summary(modIceOut8)$dev.expl
+summary(modIceOut9)$dev.expl
+
+summary(modIceOut9)
+
+
+
 #Final variables for paper--
 modIceOut9_summary
 
@@ -1126,7 +1428,7 @@ IceOut_FebT<-ggplot(pred_FebT, aes(x = cumMeanDailyT_Feb, y = fitted_FebT)) +
   theme(axis.text.y=element_blank(),
         axis.ticks.y=element_blank(),
         axis.title.y=element_blank(),
-        plot.margin=unit(c(0.5,0.5,0,0), "lines"),
+        plot.margin=unit(c(0.5,0,0,0), "lines"),
         axis.ticks.length.y = unit(0, "pt")) +
   geom_text(data=panelLetter.normal,
             aes(x=xpos,
@@ -1280,8 +1582,8 @@ IceOut_IceIn<-ggplot(pred_IceIn, aes(x = IceInDayofYear_fed, y = fitted_IceIn)) 
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=IceInDayofYear_fed,
                                         y=IceOutDayofYear))+
-  labs(x="Ice-On (Days since Oct 1)",
-       y="Ice Off (Julian Day)")+
+  labs(x="Ice on date",
+       y="Ice off date")+
   # scale_y_continuous(breaks = seq(70, 120, by = 10) )+
   # coord_cartesian(ylim = c(65, 120), expand = TRUE)+
   scale_y_continuous(breaks=breaks_IceOffDayofYear_fed,labels=c("13-Mar","23-Mar","02-Apr","12-Apr","22-Apr","02-May"),limits=c(70,120))+
@@ -1301,7 +1603,7 @@ IceOut_IceIn<-ggplot(pred_IceIn, aes(x = IceInDayofYear_fed, y = fitted_IceIn)) 
 
 
 
-# ~~FIGURE 3  Ice Off vs ABCD --------------------------------------
+# ~~FIGURE 3  Ice Off Predictors --------------------------------------
 
 
 Row2a<-(IceOut_isotherm+IceOut_FebT)/(IceOut_FebMarAprSnow+IceOut_IceIn)
@@ -1309,6 +1611,25 @@ Row2a
 
 
 ggsave("figures/Figure3.GamPredictions_IceOff.png", plot=Row2a, width=8, height=5,units="in", dpi=600)
+
+
+
+
+# ~~ FIGURE 2-3 combined --------------------------------------------------
+
+
+Combined23 <-(IceOn_isotherm+IceOn_CumuNov+plot_spacer())/(IceOut_isotherm+IceOut_FebT+
+                                                             IceOut_FebMarAprSnow+  theme(axis.text.y=element_blank(),
+                                                                                          axis.ticks.y=element_blank(),
+                                                                                          axis.title.y=element_blank(),
+                                                                                          plot.margin=unit(c(0.5,0.5,0,0), "lines"),
+                                                                                          axis.ticks.length.y = unit(0, "pt")))
+Combined23
+ggsave("figures/Figure2-3.IceOn_IceOff_combined.png", plot=Combined23, width=8, height=8,units="in", dpi=600)
+
+
+
+
 
 # Fitting GAMs for iceDuration_days -------------------------------------------
 
@@ -2083,110 +2404,10 @@ MohonkIceWeather %>%
 
 
 
-# >> Trends in the ice phenology drivers ----------------------------------
-
-# Question - is the maximum observed air temperature 17 days after the
-# autumn 0 °C air temperature isotherm was crossed changing over time?
-
-#Distribution of y
-hist(Isotherm_WaterYear_dates_IceIn$isotherm_TempMax_degC_17_days_0_degC_WaterYear_date)
-
-### I added Family Gamma here for how errors should respond
-mod0_iceOnIsotherm <- gam(isotherm_TempMax_degC_17_days_0_degC_WaterYear_date ~ s(WaterYear),
-                  # family=Gamma(link="log"),
-                  data = Isotherm_WaterYear_dates_IceIn,
-                  correlation = corCAR1(form = ~ WaterYear),
-                  method = "REML")
-summary(mod0_iceOnIsotherm)
-
-#PLOT Autocorrelation function of residuals from the additive model with AR(1) errors
-ACF <- acf(resid(mod0_iceOnIsotherm, type = "response"), plot = FALSE)
-ACF <- setNames(data.frame(unclass(ACF)[c("acf", "lag")]), c("ACF","Lag"))
-ggplot(ACF, aes(x = Lag, y = ACF)) +
-  geom_hline(aes(yintercept = 0)) +
-  geom_segment(mapping = aes(xend = Lag, yend = 0))
-#Suggests that an AR(1) model isn't necessary
 
 
-###Since we're concerned with the response, include "response" in type of predict()
-iceOnIsothermPred <- with(Isotherm_WaterYear_dates_IceIn, data.frame(WaterYear = seq(min(WaterYear, na.rm=TRUE),
-                                                    max(WaterYear, na.rm=TRUE),
-                                                    length.out = 200)))
-iceOnIsothermPred <- cbind(iceOnIsothermPred, data.frame(predict(mod0_iceOnIsotherm, iceOnIsothermPred,
-                                                   type="response",
-                                                   se.fit = TRUE)))
-### this calculates on the link scale (i.e., log)
-iceOnIsothermPred <- transform(iceOnIsothermPred, upper = fit + (2 * se.fit),
-                        lower = fit - (2 * se.fit))
 
 
-# Plots periods of change
-#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
-Term <- "WaterYear"
-m1.d <- Deriv(mod0_iceOnIsotherm)
-
-m1.dci <- confint(m1.d, term = "WaterYear")
-m1.dsig <- signifD(iceOnIsothermPred$fit,
-                   d = m1.d[[Term]]$deriv,
-                   m1.dci[[Term]]$upper,
-                   m1.dci[[Term]]$lower)
-
-ylim <- with(iceOnIsothermPred, range(upper, lower, fit))
-ylab <- 'DOY max. temp 17 days after 0 isotherm is crossed'
-
-plot(fit ~ WaterYear, data = iceOnIsothermPred, type = "n", ylab = ylab, ylim = ylim)
-lines(fit ~ WaterYear, data = iceOnIsothermPred)
-lines(upper ~ WaterYear, data = iceOnIsothermPred, lty = "dashed")
-lines(lower ~ WaterYear, data = iceOnIsothermPred, lty = "dashed")
-lines(unlist(m1.dsig$incr) ~ WaterYear, data = iceOnIsothermPred, col = "blue", lwd = 3)
-lines(unlist(m1.dsig$decr) ~ WaterYear, data = iceOnIsothermPred, col = "red", lwd = 3)
-#The date is getting later
-
-plot.Deriv(m1.d)
-#but first derivative plot shows that it is not accelerating at least
-
-#Plot 'DOY max. temp 17 days after 0 isotherm is crossed' vs. water-year pretty
-ggplot(iceOnIsothermPred,aes(x=WaterYear,y=fit))+
-  geom_point(data=Isotherm_WaterYear_dates_IceIn,
-             mapping=aes(x=WaterYear, y=isotherm_TempMax_degC_17_days_0_degC_WaterYear_date), size=2.5, alpha=0.7) +
-  geom_line(size=1)+
-  geom_ribbon(aes(ymin = (lower), ymax = (upper), x = WaterYear), alpha = 0.5, inherit.aes = FALSE) +
-  labs(x="Year",y="DOY max. temp 17 days after 0 isotherm is crossed")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))
-  # geom_text(x = 1945, y = 120,
-  #           aes(label = paste("Deviance explained",round(mod_sum$dev.expl,1)*100,"%")),
-  #           color="black",size=3)
-
-mod_sum<-summary(mod0_iceOnIsotherm)
-
-#How does this compare to sens slope?
-Isotherm_WaterYear_dates_IceIn %>%
-  select(WaterYear, isotherm_TempMax_degC_17_days_0_degC_WaterYear_date) %>%
-  pivot_longer(-1) %>%
-  group_by(name)%>%
-  dplyr::summarize(Sens_Slope=MTCC.sensSlope(x=WaterYear,y=value)$coefficients["Year"],
-                   Sens_Intercept=MTCC.sensSlope(x=WaterYear,y=value)$coefficients["Intercept"],
-                   Sens_pval=MTCC.sensSlope(x=WaterYear,y=value)$pval,
-                   Sens_z_stat=MTCC.sensSlope(x=WaterYear,y=value)$z_stat,
-                   Sens_n=MTCC.sensSlope(x=WaterYear,y=value)$n) %>%
-  mutate(Significance=ifelse(Sens_pval<0.05,"*","NS"))
-#Moving back 2 days a decade or 19 days later than it was at the beginning of the record. 
-
-#How about trends in cumMeanDailyT_Nov?
-MohonkIceWeather %>%
-  select(Year, cumMeanDailyT_Nov) %>%
-  filter(Year>1931) %>%
-  pivot_longer(-1) %>%
-  group_by(name)%>%
-  dplyr::summarize(Sens_Slope=MTCC.sensSlope(x=Year,y=value)$coefficients["Year"],
-                   Sens_Intercept=MTCC.sensSlope(x=Year,y=value)$coefficients["Intercept"],
-                   Sens_pval=MTCC.sensSlope(x=Year,y=value)$pval,
-                   Sens_z_stat=MTCC.sensSlope(x=Year,y=value)$z_stat,
-                   Sens_n=MTCC.sensSlope(x=Year,y=value)$n) %>%
-  mutate(Significance=ifelse(Sens_pval<0.05,"*","NS"))
-
-plot(MohonkIceWeather$Year, MohonkIceWeather$cumMeanDailyT_Nov)
 
 
 # Fitting GAMs for mean winter temperature -------------------------------------------
