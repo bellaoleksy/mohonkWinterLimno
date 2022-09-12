@@ -19,7 +19,7 @@ library(forecast)
 library(corrplot)
 library(MTS)
 
-
+summarize <- dplyr::summarize
 
 #Calculate moving average and bollinger bounds for each of teh ice phenology metrics####
 #First calculate as days since Oct 1####
