@@ -89,9 +89,9 @@ theme_MS <- function () {
       axis.ticks.length = unit(0.1, "cm")
     )
 }
-# 
-# theme_MS <- function () { 
-#   theme_base(base_size=8) %+replace% 
+
+# theme_MS <- function () {
+#   theme_base(base_size=8) %+replace%
 #     theme(
 #       panel.background  = element_blank(),
 #       plot.background = element_rect(fill="white", colour=NA, size=1.0),
@@ -595,9 +595,9 @@ ggplot() +
     size = 1
   ) +
   scale_color_continuous(high = "green", low = "red",
-                         name = "Ice cover\nduration (days)") +
+                         name = "Ice duration\n(days)") +
   scale_fill_continuous(high = "green", low = "red",
-                        name = "Ice cover\nduration (days)") +
+                        name = "Ice duration\n(days)") +
   scale_y_continuous(lim = c(50, 200),
                      breaks = seq(50, 250, by = 25)) +
   scale_x_continuous(limit = c(1930, 2020),
@@ -692,9 +692,9 @@ ggplot() +
     size = 1
   ) +
   scale_color_continuous(high = "green", low = "red",
-                         name = "Ice cover\nduration (days)") +
+                         name = "Ice duration\n(days)") +
   scale_fill_continuous(high = "green", low = "red",
-                        name = "Ice cover\nduration (days)") +
+                        name = "Ice duration\n(days)") +
   # scale_y_continuous(lim = c(50, 200),
   #                    breaks = seq(50, 250, by = 25)) +
   # scale_x_continuous(limit = c(1930, 2020),
@@ -703,7 +703,7 @@ ggplot() +
   #   trans = c("date", "reverse2")
   # )
   scale_y_date(date_breaks = "1 month", date_minor_breaks = "1 week",
-               date_labels = "%b-%d")+
+               date_labels = "%d-%b")+
   theme_MS() +
   theme(
     panel.grid.major = element_blank(),
@@ -715,7 +715,7 @@ ggplot() +
       size = 1
     ),
     axis.text.x = element_text(color = "black"),
-    axis.text.y = element_text(color = "black"),
+    axis.text.y = element_text(color = "black", angle=90, hjust=0.5),
     axis.ticks = element_line(color = "black")
   ) +
   xlab("Year") +
