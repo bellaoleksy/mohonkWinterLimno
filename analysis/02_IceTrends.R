@@ -89,6 +89,24 @@ theme_MS <- function () {
       axis.ticks.length = unit(0.1, "cm")
     )
 }
+# 
+# theme_MS <- function () { 
+#   theme_base(base_size=8) %+replace% 
+#     theme(
+#       panel.background  = element_blank(),
+#       plot.background = element_rect(fill="white", colour=NA, size=1.0),
+#       plot.title=element_text(face="plain",hjust=0.5),
+#       plot.subtitle = element_text(color="dimgrey", hjust=0, size=8),
+#       panel.grid.major = element_blank(),
+#       panel.grid.minor = element_blank(),
+#       strip.background = element_blank(),
+#       strip.text.y = element_text(size=8, angle=270),
+#       strip.text.x = element_text(size=8),
+#       panel.spacing=grid::unit(0,"lines"),
+#       axis.ticks.length = unit(0.1, "cm")
+#     )
+# }
+
 
 theme_set(theme_MS())
 
@@ -631,6 +649,13 @@ MohonkIce.Predicted.test <- MohonkIce.Predicted %>%
                                                IceInDayofYear_yhat_month %in% c("1","2","3","4") ~ ymd(paste("2015", IceInDayofYear_yhat_month, IceInDayofYear_yhat_day, sep = "-"))))
 
 
+
+jpeg(filename = 'figures/Fig1.IcePhenology_withDates.jpg',
+    width = 3.14,
+    height = 2.5,
+    res = 300,
+    units = 'in')
+
 ggplot() +
   geom_segment(
     data = MohonkIce.Predicted.test,
@@ -694,15 +719,17 @@ ggplot() +
     axis.ticks = element_line(color = "black")
   ) +
   xlab("Year") +
-  ylab("Date")
+  ylab("Ice phenology date")
 
-ggsave(
-  "figures/Fig1.IcePhenology_withDates.jpg",
-  width = 80,
-  height = 60,
-  units = "mm",
-  dpi = 300
-)
+dev.off()
+
+# ggsave(
+#   "figures/Fig1.IcePhenology_withDates_inches.jpg",
+#   width = 3.14,
+#   height = 2,
+#   units = "in",
+#   dpi = 600
+# )
 
 # Fitting GAMs for iceOnDOY_fed -------------------------------------------
 
@@ -939,7 +966,9 @@ pred_isotherm <- pred_isotherm %>%
 
 #Modify axis labels: fed DOY -> dates
 labels_IceOnDayofYear_fed<-c(50,70,90,110,130)
+labels_IsoMax_fed<-c(80,100,120)
 #To figure out conversion of FED DOY to Date use something like: as.Date(274+110, origin="2014-01-02")
+
 
 IceOn_isotherm<-
   ggplot(pred_isotherm, aes(x = isotherm_TempMax_degC_17_days_0_degC_WaterYear_date, y = fitted_isotherm)) +
@@ -949,9 +978,11 @@ IceOn_isotherm<-
                                         y=IceInDayofYear_fed))+
   labs(x=expression(Iso["max,"]["17day,"]["0°C"]),
     # x="Isotherm Formula: TempMax in degC, 17 day window, 0 degC threshold",
-       y="Ice on date")+
+       y="Ice-on date")+
   scale_y_continuous(breaks=labels_IceOnDayofYear_fed,labels=c("22-Nov","12-Dec","01-Jan","21-Jan","10-Feb"),limits=c(50,130))+
-  theme(plot.margin=unit(c(0.5,0,0.5,0.5), "lines")) +
+  scale_x_continuous(breaks=labels_IsoMax_fed,labels=c("22-Dec","11-Jan","31-Jan"),limits=c(70,120))+
+    theme(plot.margin=unit(c(0.5,0,0.5,0.5), "lines"),
+        axis.text.y = element_text(angle = 90, hjust=0.5)) +
   geom_text(data=panelLetter.normal,
             aes(x=xpos,
                 y=ypos,
@@ -1021,7 +1052,7 @@ Row1a
 
 ggsave("figures/Figure2.GamPredictions_IceOn.png", plot=Row1a, width=8, height=4,units="in", dpi=300)
 
-ggsave("figures/Figure2.GamPredictions_IceOn.jpg", plot=Row1a, width=180, height=90,units="mm", dpi=300)
+ggsave("figures/Figure2.GamPredictions_IceOn.jpg", plot=Row1a, width=180, height=120,units="mm", dpi=300)
 
 
 
@@ -1373,8 +1404,8 @@ summary(modIceOut7)$dev.expl
 summary(modIceOut8)$dev.expl
 summary(modIceOut9)$dev.expl
 
-summary(modIceOut9)
-
+modIceOut9_summary<-summary(modIceOut9)
+modIceOut9_summary
 
 
 #Final variables for paper--
@@ -1473,6 +1504,10 @@ pred_isotherm <- pred_isotherm %>%
          upr_ci_isotherm = upr_ci,
          fitted_isotherm = fitted)
 
+
+breaks_IsoAvg_fed<-c(170,190,210) #these are julian day
+as.Date(210, origin="2014-01-02")
+
 IceOut_isotherm<-ggplot(pred_isotherm, aes(x = isotherm_TempMean_degC_29_days_4_degC_WaterYear_date, y = fitted_isotherm)) +
   geom_ribbon(aes(ymin = lwr_ci_isotherm, ymax = upr_ci_isotherm), alpha = 0.2) +
   geom_line() +
@@ -1480,11 +1515,13 @@ IceOut_isotherm<-ggplot(pred_isotherm, aes(x = isotherm_TempMean_degC_29_days_4_
                                         y=IceOutDayofYear))+
   labs(x=expression(Iso["avg,"]["29day,"]["4°C"]),
     # x="Isotherm Formula: TempAvg in degC, 29 day window, 4 degC threshold",
-       y="Ice off date")+
+       y="Ice-off date")+
   # scale_y_continuous(breaks = seq(70, 120, by = 10) )+
   # coord_cartesian(ylim = c(65, 120), expand = TRUE)+
   scale_y_continuous(breaks=breaks_IceOffDayofYear_fed,labels=c("13-Mar","23-Mar","02-Apr","12-Apr","22-Apr","02-May"),limits=c(70,120))+
-  theme(plot.margin=unit(c(0.5,0,0,0.5), "lines")) +
+  scale_x_continuous(breaks=breaks_IsoAvg_fed,labels=c("21-Jun","11-Jul","31-Jul"),limits=c(170,220))+
+  theme(plot.margin=unit(c(0.5,0,0,0.5), "lines"),
+        axis.text.y = element_text(angle = 90, hjust=0.5)) +
   geom_text(data=panelLetter.normal,
             aes(x=xpos,
                 y=ypos,
@@ -1531,8 +1568,8 @@ IceOut_FebMarAprSnow<-ggplot(pred_FebMarAprSnow, aes(x = cumSnow_FebMarApr, y = 
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=cumSnow_FebMarApr,
                                         y=IceOutDayofYear))+
-  labs(x="Feb-Apr Cumulative Snowfall (mm)",
-       y="Ice off date")+
+  labs(x="Feb-Apr Cumulative\nSnowfall (mm)",
+       y="Ice-off date")+
   # scale_y_continuous(breaks = seq(70, 120, by = 10) )+
   # coord_cartesian(ylim = c(65, 120), expand = TRUE)+
   scale_y_continuous(breaks=breaks_IceOffDayofYear_fed,labels=c("13-Mar","23-Mar","02-Apr","12-Apr","22-Apr","02-May"),limits=c(70,120))+
@@ -1585,8 +1622,8 @@ IceOut_IceIn<-ggplot(pred_IceIn, aes(x = IceInDayofYear_fed, y = fitted_IceIn)) 
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=IceInDayofYear_fed,
                                         y=IceOutDayofYear))+
-  labs(x="Ice on date",
-       y="Ice off date")+
+  labs(x="Ice-on date",
+       y="Ice-off date")+
   # scale_y_continuous(breaks = seq(70, 120, by = 10) )+
   # coord_cartesian(ylim = c(65, 120), expand = TRUE)+
   scale_y_continuous(breaks=breaks_IceOffDayofYear_fed,labels=c("13-Mar","23-Mar","02-Apr","12-Apr","22-Apr","02-May"),limits=c(70,120))+
@@ -1631,7 +1668,7 @@ Combined23
 
 # ggsave("figures/Figure2-3.IceOn_IceOff_combined.png", plot=Combined23, width=8, height=8,units="in", dpi=600)
 
-ggsave("figures/Figure2-3.IceOn_IceOff_combined.jpg", plot=Combined23, width=180, height=90,units="mm", dpi=300)
+ggsave("figures/Fig3.IceOn_IceOff_combined.jpg", plot=Combined23, width=180, height=160,units="mm", dpi=300)
 
 
 
