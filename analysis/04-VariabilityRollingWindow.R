@@ -53,7 +53,7 @@ gg.iceIn_RW<-ggplot(data=singleRollingWindow)+
   geom_line(aes(x=year_median,y=rw_iceIn_doy_wateryear_mean),color="light grey",size=0.5)+ #Moving average
   #geom_errorbar(aes(x=Year,ymin=min_sd,ymax=max_sd),size=1)+
   geom_point(data=MohonkIce,aes(x=Year,y=IceInDayofYear_fed),shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1.5)+ #actual days of ice cover
-  ylab("Ice In (doy)")+
+  ylab("Ice-in date")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
@@ -64,7 +64,7 @@ gg.iceOut_RW<-ggplot(data=singleRollingWindow)+
   geom_line(aes(x=year_median,y=rw_iceOut_doy_wateryear_mean),color="light grey",size=0.5)+ #Moving average
   #geom_errorbar(aes(x=Year,ymin=min_sd,ymax=max_sd),size=1)+
   geom_point(data=MohonkIce,aes(x=Year,y=IceOutDayofYear_fed),shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+ #actual days of ice cover
-  ylab("Ice Out (doy)")+
+  ylab("Ice-off date")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
@@ -181,7 +181,7 @@ variability_sequential<-do.call(bind_rows,datalist_sequential)
     geom_ribbon(aes(ymin=duration_q5_sensSlope_fit,ymax=duration_q95_sensSlope_fit),alpha=0.1,fill="grey",color="dark grey")+
     #geom_ribbon(aes(ymin=q25_sensSlope_fit,ymax=q75_sensSlope_fit),alpha=0.1,fill="light grey",color="grey")+
     geom_line(size=1.2)+
-    ylab("Duration s.d. (days)")+
+    ylab("Duration sd (days)")+
     theme_bw()+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   
@@ -190,7 +190,7 @@ variability_sequential<-do.call(bind_rows,datalist_sequential)
     geom_ribbon(aes(ymin=iceIn_q5_sensSlope_fit,ymax=iceIn_q95_sensSlope_fit),alpha=0.1,fill="grey",color="dark grey")+
     #geom_ribbon(aes(ymin=q25_sensSlope_fit,ymax=q75_sensSlope_fit),alpha=0.1,fill="light grey",color="grey")+
     geom_line(size=1.2)+
-    ylab("Ice in s.d. (days)")+
+    ylab("Ice in sd (days)")+
     theme_bw()+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
   
@@ -199,7 +199,7 @@ variability_sequential<-do.call(bind_rows,datalist_sequential)
     geom_ribbon(aes(ymin=iceOut_q5_sensSlope_fit,ymax=iceOut_q95_sensSlope_fit),alpha=0.1,fill="grey",color="dark grey")+
     #geom_ribbon(aes(ymin=q25_sensSlope_fit,ymax=q75_sensSlope_fit),alpha=0.1,fill="light grey",color="grey")+
     geom_line(size=1.2)+
-    ylab("Ice out s.d. (days)")+
+    ylab("Ice out sd (days)")+
     theme_bw()+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
@@ -220,45 +220,45 @@ variability_sequential<-do.call(bind_rows,datalist_sequential)
                #theme(axis.title.y=element_text(size=10),axis.text.y = element_text(angle = 90,hjust=0.5),axis.title.x=element_blank(),axis.text.x=element_blank(),plot.title = element_text(size = panel.size, face = "bold"))+ #Rotate and center the x axis labels
                #scale_y_continuous(limits=c(10,10000),trans="log10",breaks=c(10,100,1000,10000),labels=trans_format("log10",math_format(10^.x)))+
                #geom_text(data=panelLetter.data, aes(x=xpos,y=ypos,hjust=hjustvar,vjust=vjustvar,label="d",fontface="bold"))+
-               scale_x_continuous(limits=c(1931,2022),breaks=c(1940,1980,2020))+
+               scale_x_continuous(limits=c(1931,2023),breaks=c(1940,1980,2020))+
                scale_y_continuous(limits=c(60,130),breaks=c(62,93,124),labels=c("01Dec","01Jan","01Feb"))+
                theme(axis.text.x=element_blank(),axis.title.x=element_blank())+
-               ggtitle("(a)"),
+               geom_text(aes(x=-Inf,y=Inf,hjust=-0.3,vjust=1.2,label="a")),
              gg.iceOut_RW+
                #theme(axis.title.y=element_text(size=10),axis.text.y = element_text(angle = 90,hjust=0.5),axis.title.x=element_blank(),axis.text.x=element_blank(),plot.title = element_text(size = panel.size, face = "bold"))+ #Rotate and center the x axis labels
                #scale_y_continuous(limits=c(1,10000),trans="log10",breaks=trans_breaks("log10", function(x) 10^x),labels=trans_format("log10",math_format(10^.x)))+ 
-               scale_x_continuous(limits=c(1931,2022),breaks=c(1940,1980,2020))+
+               scale_x_continuous(limits=c(1931,2023),breaks=c(1940,1980,2020))+
                scale_y_continuous(limits=c(150,214),breaks=c(152,183,213),labels=c("01Mar","01Apr","01May"))+
                theme(axis.text.x=element_blank(),axis.title.x=element_blank())+
-               ggtitle("(b)"),
+               geom_text(aes(x=-Inf,y=Inf,hjust=-0.3,vjust=1.2,label="b")),
              gg.duration_RW+
                #theme(axis.title.y=element_text(size=10),axis.text.y = element_text(angle = 90,hjust=0.5),axis.title.x=element_text(size=10),plot.title = element_text(size = panel.size, face = "bold"))+ #Rotate and center the x axis labels
                #scale_y_continuous(breaks=c(3,6,9))+ 
                #geom_text(data=panelLetter.data, aes(x=xpos,y=ypos,hjust=hjustvar,vjust=vjustvar,label="b",fontface="bold"))+
-               scale_x_continuous(limits=c(1931,2022),breaks=c(1940,1980,2020))+
+               scale_x_continuous(limits=c(1931,2023),breaks=c(1940,1980,2020))+
                theme(axis.text.x=element_blank(),axis.title.x=element_blank())+
-               ggtitle("(c)"),
+               geom_text(aes(x=-Inf,y=Inf,hjust=-0.23,vjust=1.2,label="c")),
              gg.iceIn_SD_sequential+
                scale_y_continuous(limits=c(5,28),breaks=c(5,15,25))+
-               scale_x_continuous(limits=c(1931,2022),breaks=c(1940,1980,2020))+
+               scale_x_continuous(limits=c(1931,2023),breaks=c(1940,1980,2020))+
                xlab("Year")+
-               ggtitle("(d)"),
+               geom_text(aes(x=-Inf,y=Inf,hjust=-0.3,vjust=1.2,label="d")),
              gg.iceOut_SD_sequential+
                scale_y_continuous(limits=c(5,28),breaks=c(5,15,25))+
-               scale_x_continuous(limits=c(1931,2022),breaks=c(1940,1980,2020))+
+               scale_x_continuous(limits=c(1931,2023),breaks=c(1940,1980,2020))+
                xlab("Year")+
-               ggtitle("(e)"),
+               geom_text(aes(x=-Inf,y=Inf,hjust=-0.3,vjust=1.2,label="e")),
              gg.duration_SD_sequential+
                scale_y_continuous(limits=c(5,28),breaks=c(5,15,25))+
-               scale_x_continuous(limits=c(1931,2022),breaks=c(1940,1980,2020))+
+               scale_x_continuous(limits=c(1931,2023),breaks=c(1940,1980,2020))+
                xlab("Year")+
-               ggtitle("(f)")
+               geom_text(aes(x=-Inf,y=Inf,hjust=-0.3,vjust=1.2,label="f"))
              )
   
   #Plot them using patchwork####
   (gg.3panel.variability<-wrap_plots(List,ncol = 3,nrow = 2)&theme(plot.margin = unit(c(3,3,3,3),"pt")))
   #Could do a 3x3 with width 6, height = 5
-  ggsave(paste("figures/MohonkWinterLimno-FigureX-Variability6panels.jpg",sep=""), plot=gg.3panel.variability, width=6, height=4,units="in", dpi=300)
+  ggsave(paste("figures/MohonkWinterLimno-FigureX-Variability6panels.jpg",sep=""), plot=gg.3panel.variability, width=7, height=4,units="in", dpi=300)
   
   
   
