@@ -74,17 +74,17 @@ library(huxtable)
 
 
 theme_MS <- function () { 
-  theme_base(base_size=8) %+replace% 
+  theme_base(base_size=10) %+replace% 
     theme(
       panel.background  = element_blank(),
       plot.background = element_rect(fill="white", colour=NA, size=1.0),
       plot.title=element_text(face="plain",hjust=0.5),
-      plot.subtitle = element_text(color="dimgrey", hjust=0, size=8),
+      plot.subtitle = element_text(color="dimgrey", hjust=0, size=10),
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank(),
       strip.background = element_blank(),
-      strip.text.y = element_text(size=8, angle=270),
-      strip.text.x = element_text(size=8),
+      strip.text.y = element_text(size=10, angle=270),
+      strip.text.x = element_text(size=10),
       panel.spacing=grid::unit(0,"lines"),
       axis.ticks.length = unit(0.1, "cm")
     )
@@ -559,7 +559,7 @@ ggplot() +
     aes(x = Year, y = IceInDayofYear_fed, fill = LengthOfIceCover_days),
     shape = 21,
     color = "black",
-    size = 1.5
+    size = 1
   ) +
   geom_line(
     data = MohonkIce.Predicted,
@@ -574,7 +574,7 @@ ggplot() +
         fill = LengthOfIceCover_days),
     shape = 21,
     color = "black",
-    size = 1.5
+    size = 1
   ) +
   scale_color_continuous(high = "green", low = "red",
                          name = "Ice cover\nduration (days)") +
@@ -601,10 +601,10 @@ ggplot() +
   xlab("Year") +
   ylab("Days since Oct 1 (beginning of water-year)")
 ggsave(
-  "figures/Fig1.IcePhenology.png",
-  width = 6,
-  height = 4,
-  units = "in",
+  "figures/Fig1.IcePhenology.jpg",
+  width = 80,
+  height = 60,
+  units = "mm",
   dpi = 300
 )
 
@@ -648,7 +648,7 @@ ggplot() +
     aes(x = Year, y = IceInDate_newdate, fill = LengthOfIceCover_days),
     shape = 21,
     color = "black",
-    size = 1.5
+    size = 1
   ) +
   geom_smooth(
     data = MohonkIce.Predicted.test,
@@ -664,7 +664,7 @@ ggplot() +
         fill = LengthOfIceCover_days),
     shape = 21,
     color = "black",
-    size = 1.5
+    size = 1
   ) +
   scale_color_continuous(high = "green", low = "red",
                          name = "Ice cover\nduration (days)") +
@@ -697,12 +697,13 @@ ggplot() +
   ylab("Date")
 
 ggsave(
-  "figures/Fig1.IcePhenology_withDates.png",
-  width = 6,
-  height = 4,
-  units = "in",
+  "figures/Fig1.IcePhenology_withDates.jpg",
+  width = 80,
+  height = 60,
+  units = "mm",
   dpi = 300
 )
+
 # Fitting GAMs for iceOnDOY_fed -------------------------------------------
 
 hist(MohonkIceWeather$IceInDayofYear_fed)
@@ -991,7 +992,7 @@ IceOn_CumuNov<-ggplot(pred_Nov, aes(x = cumMeanDailyT_Nov, y = fitted_Nov)) +
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=cumMeanDailyT_Nov,
                                         y=IceInDayofYear_fed))+
-  labs(x="Nov. cumulative mean daily temperature (°C)",
+  labs(x="Nov. cumulative\nmean daily temp. (°C)",
        y="Ice on (days since Oct 1)")+
   # scale_y_continuous(breaks = seq(50, 130, by = 20) )+
   # coord_cartesian(ylim = c(50, 130), expand = TRUE) +
@@ -1019,6 +1020,8 @@ Row1a
 
 
 ggsave("figures/Figure2.GamPredictions_IceOn.png", plot=Row1a, width=8, height=4,units="in", dpi=300)
+
+ggsave("figures/Figure2.GamPredictions_IceOn.jpg", plot=Row1a, width=180, height=90,units="mm", dpi=300)
 
 
 
@@ -1420,7 +1423,7 @@ IceOut_FebT<-ggplot(pred_FebT, aes(x = cumMeanDailyT_Feb, y = fitted_FebT)) +
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=cumMeanDailyT_Feb,
                                         y=IceOutDayofYear))+
-  labs(x="Feb cumulative mean daily temperature (°C)",
+  labs(x="Feb cumulative\nmean daily temp. (°C)",
        y="Ice Off (Julian Day)")+
   # scale_y_continuous(breaks = seq(70, 120, by = 10) )+
   # coord_cartesian(ylim = c(65, 120), expand = TRUE)+
@@ -1435,7 +1438,7 @@ IceOut_FebT<-ggplot(pred_FebT, aes(x = cumMeanDailyT_Feb, y = fitted_FebT)) +
                 y=ypos,
                 hjust=hjustvar,
                 vjust=vjustvar,
-                label="b",
+                label="d",
                 fontface="bold"))
 
 ### Ice Out vs. cumMeanDailyT_Mar
@@ -1487,7 +1490,7 @@ IceOut_isotherm<-ggplot(pred_isotherm, aes(x = isotherm_TempMean_degC_29_days_4_
                 y=ypos,
                 hjust=hjustvar,
                 vjust=vjustvar,
-                label="a",
+                label="c",
                 fontface="bold"))
 
 
@@ -1539,7 +1542,7 @@ IceOut_FebMarAprSnow<-ggplot(pred_FebMarAprSnow, aes(x = cumSnow_FebMarApr, y = 
                 y=ypos,
                 hjust=hjustvar,
                 vjust=vjustvar,
-                label="c",
+                label="e",
                 fontface="bold"))
 
 
@@ -1625,8 +1628,10 @@ Combined23 <-(IceOn_isotherm+IceOn_CumuNov+plot_spacer())/(IceOut_isotherm+IceOu
                                                                                           plot.margin=unit(c(0.5,0.5,0,0), "lines"),
                                                                                           axis.ticks.length.y = unit(0, "pt")))
 Combined23
-ggsave("figures/Figure2-3.IceOn_IceOff_combined.png", plot=Combined23, width=8, height=8,units="in", dpi=600)
 
+# ggsave("figures/Figure2-3.IceOn_IceOff_combined.png", plot=Combined23, width=8, height=8,units="in", dpi=600)
+
+ggsave("figures/Figure2-3.IceOn_IceOff_combined.jpg", plot=Combined23, width=180, height=90,units="mm", dpi=300)
 
 
 
