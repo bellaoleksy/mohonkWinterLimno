@@ -157,24 +157,75 @@ MohonkIceWeather_trim_correlations %>%
 #Look at the top 10 strongest correlations for each predictor variable
 MohonkIce_top10<-MohonkIceWeather_trim_correlations %>%
   mutate(cor_abs=abs(cor)) %>%
-  arrange(desc(cor_abs)) 
-# group_by(row) %>%
-# slice(1:10)
+  filter(!grepl('nDays|Jan|LengthOfIceCover_days', column)) %>% #Exclude any nDays variables
+  group_by(row) %>%
+  arrange(desc(cor_abs)) %>%
+  group_by(row) %>%
+  slice(1:10)
 
 #Extract variable names 
 IceInVars <- MohonkIce_top10 %>% filter(row=="IceInDayofYear_fed") %>% pull(column)
 IceOutVars <- MohonkIce_top10 %>% filter(row=="IceOutDayofYear") %>% pull(column)
 IceDurationVars <- MohonkIce_top10 %>% filter(row=="LengthOfIceCover_days") %>% pull(column)
 
+# Graph the top 10 pairwise correlations for Ice-On and Ice-Off
+
+
+#Make bar plot
+jpeg(filename = 'figures/FigureSX.top10_correlations.jpg',
+    width = 6, height = 7, units = 'in', res = 300)
+
+MohonkIce_top10 %>%
+  filter(row %in% c("IceInDayofYear_fed","IceOutDayofYear")) %>%
+  mutate(row =
+           ifelse(row=="IceInDayofYear_fed","Ice-on",
+                  ifelse(row=="IceOutDayofYear", "Ice-off",""))) %>%
+  select(row, column, cor_abs) %>%
+  mutate(column=
+           ifelse(column=="cumMeanDailyT_OctNovDec", "cumul. mean daily temp. Oct-Dec", 
+                  ifelse(column=="cumMeanDailyT_Dec","cumul. mean daily temp. Dec",
+                         ifelse(column=="cumMeanDailyT_Nov", "cumul. mean daily temp. Nov",
+                                ifelse(column=="cumMeanDailyT_SepOctNov", "cumul. mean daily temp. Sept-Nov",
+                                       ifelse(column=="cumMeanDailyT_OctNov", "cumul. mean daily temp. Oct-Nov",
+                                              ifelse(column=="NAO_index_Nov", "NAO Nov.",
+                                                     ifelse(column=="percPrecipRain_Nov", "% rain Nov.",
+                                                            ifelse(column=="cumSnow_OctNovDec", "cumul. snow Oct-Dec.",
+                                                                   ifelse(column=="GlobalTempanomaly_C", "global mean daily temp. anom.",
+                                                                          ifelse(column=="cumSnow_Nov", "cumul. snow Nov.",
+   ifelse(column=="cumMeanDailyT_FebMar", "cumul. mean daily temp. Feb-Mar.",
+          ifelse(column=="cumMeanDailyT_FebMarApr", "cumul. mean daily temp. Feb-Apr.",
+             ifelse(column=="cumMeanDailyT_Mar", "cumul. mean daily temp. Mar.",
+                    ifelse(column=="cumMeanDailyT_MarApr", "cumul. mean daily temp. Mar-Apr.",
+                          ifelse(column=="cumSnow_FebMarApr", "cumul. snow Feb-Apr.",
+                           ifelse(column=="cumSnow_FebMar", "cumul. snow Feb-Mar.",
+                           ifelse(column=="maxSnowDepth_mm", "max. winter snow depth",
+                           ifelse(column=="cumSnow_MarApr", "cumul. snow Mar-Apr",
+                                  ifelse(column=="cumSnow_Mar", "cumul. snow Mar.",
+                                         ifelse(column=="cumMeanDailyT_Feb", "cumul. mean daily temp. Feb",""))))))))))))))))))))) %>%
+  mutate(name=paste(row, "-", column)) %>%
+  ggplot(aes(x=cor_abs,y=fct_reorder(column, cor_abs, .desc = FALSE), fill=cor_abs))+
+  geom_bar(stat="identity", width=0.75, color="black")+
+  scale_fill_gradient2(low = "white", mid="darkolivegreen2", high = "darkseagreen4", midpoint=0.5, na.value = NA) +
+  geom_text(aes(label=round(cor_abs,1)),color="black",size=3,position=position_stack(vjust=0.5)) +
+  labs(y="Pairs",
+       x="Correlation coefficient")+
+  scale_x_continuous(limits = c(0, 1, breaks = seq(0, 1, by = 0.25)))+
+  facet_wrap(~row, scales="free", nrow=2)+
+  theme(legend.position="none")
+
+dev.off()
+
+
+
 #Export table of top 10 correlations
 # write_csv(MohonkIce_top10, "data/exported/MohonkIce_CorrMatrix.csv")
 
 
 #Visualize correlations with IceInDayofYear_fed
-MohonkIceWeather %>%
-  select(IceInDayofYear_fed, all_of(IceInVars)) %>%
-  ggpairs() 
-median(MohonkIceWeather$IceInDayofYear,na.rm=T)
+# MohonkIceWeather %>%
+#   select(IceInDayofYear_fed, all_of(IceInVars)) %>%
+#   ggpairs() 
+# median(MohonkIceWeather$IceInDayofYear,na.rm=T)
 
 # December 14th median ice-in DOY
 # cumMeanDailyT_OctNovDec & nDaysMinBelowZero_OctNovDec -0.79 Keep the former since the latter had *slightly* weaker corr. w/ ice-in
@@ -189,9 +240,9 @@ median(MohonkIceWeather$IceInDayofYear,na.rm=T)
 ## This basically only leaves us with one predictor variable...
 ## What about keeping nDaysMinBelowZero_Nov too since it isn't too strongly colinear with cumMeanDailyT_OctNovDec?
 
-MohonkIceWeather %>%
-  select(IceInDayofYear_fed, cumMeanDailyT_OctNovDec, nDaysMinBelowZero_Nov) %>%
-  ggpairs() 
+# MohonkIceWeather %>%
+#   select(IceInDayofYear_fed, cumMeanDailyT_OctNovDec, nDaysMinBelowZero_Nov) %>%
+#   ggpairs() 
 
 #Alternatively, look at a matrix as above...
 IceInVars_df<-MohonkIceWeather %>%
@@ -203,7 +254,7 @@ IceInDOY_corrMat<-flattenCorrMatrix(IceInCorrMat$r, IceInCorrMat$P) %>%
   arrange(row) %>%
   mutate(y="IceInDayofYear_fed") %>%
   relocate(y, .before = row) 
-write_csv(IceInDOY_corrMat, "data/exported/IceInDOY_CollinearMatrix.csv")
+# write_csv(IceInDOY_corrMat, "data/exported/IceInDOY_CollinearMatrix.csv")
 
 #Visualize correlations with IceOutDayofYear
 MohonkIceWeather %>%
@@ -243,7 +294,7 @@ IceOutDOY_corrMat<-flattenCorrMatrix(IceOutCorrMat$r, IceOutCorrMat$P) %>%
   mutate(y="IceOutDayofYear") %>%
   relocate(y, .before = row) 
 IceOutDOY_corrMat
-write_csv(IceOutDOY_corrMat, "data/exported/IceOutDOY_CollinearMatrix.csv")
+# write_csv(IceOutDOY_corrMat, "data/exported/IceOutDOY_CollinearMatrix.csv")
 
 
 #Just out of curiosity, is there any relationship between days since turnover and IceInDOY?
