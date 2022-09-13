@@ -1906,7 +1906,7 @@ IceDuration_GlobalT<-
   geom_point(data=MohonkIceWeather , aes(x=GlobalTempanomaly_C,
                                         y=LengthOfIceCover_days))+
   labs(x="Global Temperature Anomaly (°C)",
-       y="Length of ice cover (days)")+
+       y="Ice duration (days)")+
   scale_y_continuous(breaks = seq(30, 150, by = 30) )+
   coord_cartesian(ylim = c(30, 150), expand = TRUE) +
   theme(plot.margin=unit(c(0.5,0,0.5,0.5), "lines"))+
@@ -2036,7 +2036,7 @@ composite_noLegend
 
 
 
-ggsave("figures/Figure4.GamPredictions_IceDuration.png", width=8, height=3,units="in", dpi=600)
+ggsave("figures/Figure4.GamPredictions_IceDuration.png", width=7, height=3,units="in", dpi=300)
 
 
 
