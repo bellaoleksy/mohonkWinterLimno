@@ -446,6 +446,22 @@ Isotherm_WaterYear_dates_IceIn %>%
   mutate(Significance=ifelse(Sens_pval<0.05,"*","NS"))
 #Moving back 2 days a decade or 19 days later than it was at the beginning of the record. 
 
+#What about isotherm_TempMax_degC_1_days_0_degC_WaterYear_date?
+#How does this compare to sens slope?
+Isotherm_WaterYear_dates_IceIn %>%
+  select(WaterYear, isotherm_TempMax_degC_1_days_0_degC_WaterYear_date) %>%
+  pivot_longer(-1) %>%
+  group_by(name)%>%
+  dplyr::summarize(Sens_Slope=MTCC.sensSlope(x=WaterYear,y=value)$coefficients["Year"],
+                   Sens_Intercept=MTCC.sensSlope(x=WaterYear,y=value)$coefficients["Intercept"],
+                   Sens_pval=MTCC.sensSlope(x=WaterYear,y=value)$pval,
+                   Sens_z_stat=MTCC.sensSlope(x=WaterYear,y=value)$z_stat,
+                   Sens_n=MTCC.sensSlope(x=WaterYear,y=value)$n) %>%
+  mutate(Significance=ifelse(Sens_pval<0.05,"*","NS"))
+
+
+
+
 #How about trends in isotherm_TempMean_degC_29_days_4_degC_WaterYear_date?
 Isotherm_WaterYear_dates_IceOut %>%
   select(WaterYear, isotherm_TempMean_degC_29_days_4_degC_WaterYear_date) %>%
@@ -611,72 +627,72 @@ MohonkIce.Predicted <- MohonkIce %>% dplyr::select(Year) %>%
 
 
 
-ggplot() +
-  geom_segment(
-    data = MohonkIce,
-    aes(
-      x = Year,
-      xend = Year,
-      y = IceInDayofYear_fed,
-      yend = IceOutDayofYear_fed,
-      col = LengthOfIceCover_days
-    )
-  ) +
-  # col="grey")+
-  geom_point(
-    data = MohonkIce,
-    aes(x = Year, y = IceInDayofYear_fed, fill = LengthOfIceCover_days),
-    shape = 21,
-    color = "black",
-    size = 1
-  ) +
-  geom_line(
-    data = MohonkIce.Predicted,
-    aes(x = Year, y = IceInDayofYear_fed_yhat),
-    color = "black",
-    lty = 1
-  ) +
-  geom_point(
-    data = MohonkIce,
-    aes(x = Year,
-        y = IceOutDayofYear_fed,
-        fill = LengthOfIceCover_days),
-    shape = 21,
-    color = "black",
-    size = 1
-  ) +
-  scale_color_continuous(high = "green", low = "red",
-                         name = "Ice duration\n(days)") +
-  scale_fill_continuous(high = "green", low = "red",
-                        name = "Ice duration\n(days)") +
-  scale_y_continuous(lim = c(50, 200),
-                     breaks = seq(50, 250, by = 25)) +
-  scale_x_continuous(limit = c(1930, 2020),
-                     breaks = seq(1930, 2020, by = 10)) +
-  theme_MS() +
-  theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    axis.line = element_line(colour = "black"),
-    panel.border = element_rect(
-      fill = NA,
-      colour = "black",
-      size = 1
-    ),
-    axis.text.x = element_text(color = "black"),
-    axis.text.y = element_text(color = "black"),
-    axis.ticks = element_line(color = "black")
-  ) +
-  xlab("Year") +
-  ylab("Days since Oct 1 (beginning of water-year)")
-ggsave(
-  "figures/Fig1.IcePhenology.jpg",
-  width = 80,
-  height = 60,
-  units = "mm",
-  dpi = 300
-)
-
+# ggplot() +
+#   geom_segment(
+#     data = MohonkIce,
+#     aes(
+#       x = Year,
+#       xend = Year,
+#       y = IceInDayofYear_fed,
+#       yend = IceOutDayofYear_fed,
+#       col = LengthOfIceCover_days
+#     )
+#   ) +
+#   # col="grey")+
+#   geom_point(
+#     data = MohonkIce,
+#     aes(x = Year, y = IceInDayofYear_fed, fill = LengthOfIceCover_days),
+#     shape = 21,
+#     color = "black",
+#     size = 1
+#   ) +
+#   geom_line(
+#     data = MohonkIce.Predicted,
+#     aes(x = Year, y = IceInDayofYear_fed_yhat),
+#     color = "black",
+#     lty = 1
+#   ) +
+#   geom_point(
+#     data = MohonkIce,
+#     aes(x = Year,
+#         y = IceOutDayofYear_fed,
+#         fill = LengthOfIceCover_days),
+#     shape = 21,
+#     color = "black",
+#     size = 1
+#   ) +
+#   scale_color_continuous(high = "green", low = "red",
+#                          name = "Ice duration\n(days)") +
+#   scale_fill_continuous(high = "green", low = "red",
+#                         name = "Ice duration\n(days)") +
+#   scale_y_continuous(lim = c(50, 200),
+#                      breaks = seq(50, 250, by = 25)) +
+#   scale_x_continuous(limit = c(1930, 2020),
+#                      breaks = seq(1930, 2020, by = 10)) +
+#   theme_MS() +
+#   theme(
+#     panel.grid.major = element_blank(),
+#     panel.grid.minor = element_blank(),
+#     axis.line = element_line(colour = "black"),
+#     panel.border = element_rect(
+#       fill = NA,
+#       colour = "black",
+#       size = 1
+#     ),
+#     axis.text.x = element_text(color = "black"),
+#     axis.text.y = element_text(color = "black"),
+#     axis.ticks = element_line(color = "black")
+#   ) +
+#   xlab("Year") +
+#   ylab("Days since Oct 1 (beginning of water-year)")
+# ggsave(
+#   "figures/Fig1.IcePhenology.jpg",
+#   width = 80,
+#   height = 60,
+#   units = "mm",
+#   dpi = 300
+# )
+# 
 
 
 #DCR requested date labels for the y-axis... so will have to do something crafty here. 
@@ -748,8 +764,8 @@ ggplot() +
                         name = "Ice duration\n(days)") +
   # scale_y_continuous(lim = c(50, 200),
   #                    breaks = seq(50, 250, by = 25)) +
-  # scale_x_continuous(limit = c(1930, 2020),
-  #                    breaks = seq(1930, 2020, by = 10)) +
+  scale_x_continuous(limit = c(1932, 2022),
+                     breaks = seq(1940, 2020, by = 20)) +
   # scale_y_continuous(
   #   trans = c("date", "reverse2")
   # )
@@ -774,13 +790,13 @@ ggplot() +
 
 dev.off()
 
-# ggsave(
-#   "figures/Fig1.IcePhenology_withDates_inches.jpg",
-#   width = 3.14,
-#   height = 2,
-#   units = "in",
-#   dpi = 600
-# )
+ggsave(
+  "figures/Fig1.IcePhenology_withDates_inches.jpg",
+  width = 3.14,
+  height = 2.5,
+  units = "in",
+  dpi = 600
+)
 
 # Fitting GAMs for iceOnDOY_fed -------------------------------------------
 
