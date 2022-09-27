@@ -2,7 +2,7 @@
 
 
 #Run the main script to bring in all data and functions####
-# source('00_main.R')
+# source('00_main.R')MohonkIceWeather
 source('analysis/01_Isotherm.R') #this script already sources 00_main.R
 
 
@@ -1033,7 +1033,7 @@ pred_isotherm <- pred_isotherm %>%
 
 #Modify axis labels: fed DOY -> dates
 labels_IceOnDayofYear_fed<-c(50,70,90,110,130)
-labels_IsoMax_fed<-c(80,100,120)
+labels_IsoMax_fed<-c(70,90,110)
 #To figure out conversion of FED DOY to Date use something like: as.Date(274+110, origin="2014-01-02")
 
 
@@ -1047,7 +1047,7 @@ IceOn_isotherm<-
     # x="Isotherm Formula: TempMax in degC, 17 day window, 0 degC threshold",
        y="Ice-on date")+
   scale_y_continuous(breaks=labels_IceOnDayofYear_fed,labels=c("22-Nov","12-Dec","01-Jan","21-Jan","10-Feb"),limits=c(50,130))+
-  scale_x_continuous(breaks=labels_IsoMax_fed,labels=c("22-Dec","11-Jan","31-Jan"),limits=c(70,120))+
+  scale_x_continuous(breaks=labels_IsoMax_fed,labels=c("12-Dec","01-Jan","21-Jan"),limits=c(70,120))+
     theme(plot.margin=unit(c(0.5,0,0.5,0.5), "lines"),
         axis.text.y = element_text(angle = 90, hjust=0.5)) +
   geom_text(data=panelLetter.normal,
