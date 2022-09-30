@@ -1540,7 +1540,7 @@ IceOut_FebT<-ggplot(pred_FebT, aes(x = cumMeanDailyT_Feb, y = fitted_FebT)) +
                 fontface="bold"))
 
 ### Ice Out vs. cumMeanDailyT_Mar
-modIceOut9_summary
+# modIceOut9_summary
 
 new_data <-
   with(MohonkIceWeather,
@@ -1573,7 +1573,10 @@ pred_isotherm <- pred_isotherm %>%
 
 
 breaks_IsoAvg_fed<-c(170,190,210) #these are julian day
-as.Date(210, origin="2014-01-02")
+as.Date(170-91, origin="2014-01-02")
+as.Date(190-91, origin="2014-01-02")
+as.Date(210-91, origin="2014-01-02")
+
 
 IceOut_isotherm<-ggplot(pred_isotherm, aes(x = isotherm_TempMean_degC_29_days_4_degC_WaterYear_date, y = fitted_isotherm)) +
   geom_ribbon(aes(ymin = lwr_ci_isotherm, ymax = upr_ci_isotherm), alpha = 0.2) +
@@ -1586,7 +1589,7 @@ IceOut_isotherm<-ggplot(pred_isotherm, aes(x = isotherm_TempMean_degC_29_days_4_
   # scale_y_continuous(breaks = seq(70, 120, by = 10) )+
   # coord_cartesian(ylim = c(65, 120), expand = TRUE)+
   scale_y_continuous(breaks=breaks_IceOffDayofYear_fed,labels=c("13-Mar","23-Mar","02-Apr","12-Apr","22-Apr","02-May"),limits=c(70,120))+
-  scale_x_continuous(breaks=breaks_IsoAvg_fed,labels=c("21-Jun","11-Jul","31-Jul"),limits=c(170,220))+
+  scale_x_continuous(breaks=breaks_IsoAvg_fed,labels=c("22-Mar","11-Apr","01-May"),limits=c(170,220))+
   theme(plot.margin=unit(c(0.5,0,0,0.5), "lines"),
         axis.text.y = element_text(angle = 90, hjust=0.5)) +
   geom_text(data=panelLetter.normal,
