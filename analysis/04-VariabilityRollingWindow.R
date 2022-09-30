@@ -1,5 +1,5 @@
 #Script 04-VariabilityRollingWindow.R####
-#Explore the rolling window in ice phenology variability for Mohonk Lake
+#Explore the rolling window iice phenology variability for Mohonk Lake
 #Created 16Mar2022, by David Richardson (DCR)
 
 #Run the main script to bring in all data and functions####
@@ -38,7 +38,7 @@ singleRollingWindow<-tibble(year_median=as.vector(rollapply(MohonkIce%>%dplyr::s
 #*Duration Rolling Window Graph a single plot with rolling window SDs as shaded region####
 #These are bollinger band in econ/finance: https://www.investopedia.com/terms/b/bollingerbands.asp
 gg.duration_RW<-ggplot(data=singleRollingWindow)+
-  geom_ribbon(aes(x=year_median,ymin=rw_duration_days_mean-rw_duration_days_sd,ymax=rw_duration_days_mean+rw_duration_days_sd),color="lightgrey",fill="grey", alpha=0.4)+
+  geom_ribbon(aes(x=year_median,ymin=rw_duration_days_mean-rw_duration_days_sd,ymax=rw_duration_days_mean+rw_duration_days_sd),color="#dcdcdc",fill="#dcdcdc")+
   geom_line(aes(x=year_median,y=rw_duration_days_mean),color="black",size=1)+ #Moving average
   #geom_errorbar(aes(x=Year,ymin=min_sd,ymax=max_sd),size=1)+
   geom_point(data=MohonkIce,aes(x=Year,y=LengthOfIceCover_days),shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+ #actual days of ice cover
@@ -49,7 +49,7 @@ gg.duration_RW<-ggplot(data=singleRollingWindow)+
 #*Ice In Rolling Window Graph a single plot with rolling window SDs as shaded region####
 #These are bollinger band in econ/finance: https://www.investopedia.com/terms/b/bollingerbands.asp
 gg.iceIn_RW<-ggplot(data=singleRollingWindow)+
-  geom_ribbon(aes(x=year_median,ymin=rw_iceIn_doy_wateryear_mean-rw_iceIn_doy_wateryear_sd,ymax=rw_iceIn_doy_wateryear_mean+rw_iceIn_doy_wateryear_sd),color="lightgrey",fill="grey", alpha=0.4)+
+  geom_ribbon(aes(x=year_median,ymin=rw_iceIn_doy_wateryear_mean-rw_iceIn_doy_wateryear_sd,ymax=rw_iceIn_doy_wateryear_mean+rw_iceIn_doy_wateryear_sd),color="#dcdcdc",fill="#dcdcdc")+
   geom_line(aes(x=year_median,y=rw_iceIn_doy_wateryear_mean),color="black",size=1)+ #Moving average
   #geom_errorbar(aes(x=Year,ymin=min_sd,ymax=max_sd),size=1)+
   geom_point(data=MohonkIce,aes(x=Year,y=IceInDayofYear_fed),shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+ #actual days of ice cover
@@ -60,7 +60,7 @@ gg.iceIn_RW<-ggplot(data=singleRollingWindow)+
 #*Ice Out Rolling Window Graph a single plot with rolling window SDs as shaded region####
 #These are bollinger band in econ/finance: https://www.investopedia.com/terms/b/bollingerbands.asp
 gg.iceOut_RW<-ggplot(data=singleRollingWindow)+
-  geom_ribbon(aes(x=year_median,ymin=rw_iceOut_doy_wateryear_mean-rw_iceOut_doy_wateryear_sd,ymax=rw_iceOut_doy_wateryear_mean+rw_iceOut_doy_wateryear_sd),color="lightgrey",fill="grey", alpha=0.4)+
+  geom_ribbon(aes(x=year_median,ymin=rw_iceOut_doy_wateryear_mean-rw_iceOut_doy_wateryear_sd,ymax=rw_iceOut_doy_wateryear_mean+rw_iceOut_doy_wateryear_sd),color="#dcdcdc",fill="#dcdcdc")+
   geom_line(aes(x=year_median,y=rw_iceOut_doy_wateryear_mean),color="black",size=1)+ #Moving average
   #geom_errorbar(aes(x=Year,ymin=min_sd,ymax=max_sd),size=1)+
   geom_point(data=MohonkIce,aes(x=Year,y=IceOutDayofYear_fed),shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+ #actual days of ice cover
@@ -178,7 +178,7 @@ variability_sequential<-do.call(bind_rows,datalist_sequential)
   
   #*Duration: plot the median sens slope fits surrounded by 5 and 95 credible intervals####
   gg.duration_SD_sequential<-ggplot(sensSlopeFitsInterpolated_sequential,aes(x=year,y=duration_median_sensSlope_fit))+
-    geom_ribbon(aes(ymin=duration_q5_sensSlope_fit,ymax=duration_q95_sensSlope_fit),alpha=0.1,fill="grey",color="dark grey")+
+    geom_ribbon(aes(ymin=duration_q5_sensSlope_fit,ymax=duration_q95_sensSlope_fit),fill="#dcdcdc",color="#dcdcdc")+
     #geom_ribbon(aes(ymin=q25_sensSlope_fit,ymax=q75_sensSlope_fit),alpha=0.1,fill="light grey",color="grey")+
     geom_line(size=1)+
     ylab("Duration sd (days)")+
@@ -187,7 +187,7 @@ variability_sequential<-do.call(bind_rows,datalist_sequential)
   
   #*Ice in: plot the median sens slope fits surrounded by 5 and 95 credible intervals####
   gg.iceIn_SD_sequential<-ggplot(sensSlopeFitsInterpolated_sequential,aes(x=year,y=iceIn_median_sensSlope_fit))+
-    geom_ribbon(aes(ymin=iceIn_q5_sensSlope_fit,ymax=iceIn_q95_sensSlope_fit),alpha=0.1,fill="grey",color="dark grey")+
+    geom_ribbon(aes(ymin=iceIn_q5_sensSlope_fit,ymax=iceIn_q95_sensSlope_fit),fill="#dcdcdc",color="#dcdcdc")+
     #geom_ribbon(aes(ymin=q25_sensSlope_fit,ymax=q75_sensSlope_fit),alpha=0.1,fill="light grey",color="grey")+
     geom_line(size=1)+
     ylab("Ice-on sd (days)")+
@@ -196,7 +196,7 @@ variability_sequential<-do.call(bind_rows,datalist_sequential)
   
   #*Ice out: plot the median sens slope fits surrounded by 5 and 95 credible intervals####
   gg.iceOut_SD_sequential<-ggplot(sensSlopeFitsInterpolated_sequential,aes(x=year,y=iceOut_median_sensSlope_fit))+
-    geom_ribbon(aes(ymin=iceOut_q5_sensSlope_fit,ymax=iceOut_q95_sensSlope_fit),alpha=0.1,fill="grey",color="dark grey")+
+    geom_ribbon(aes(ymin=iceOut_q5_sensSlope_fit,ymax=iceOut_q95_sensSlope_fit),fill="#dcdcdc",color="#dcdcdc")+
     #geom_ribbon(aes(ymin=q25_sensSlope_fit,ymax=q75_sensSlope_fit),alpha=0.1,fill="light grey",color="grey")+
     geom_line(size=1)+
     ylab("Ice-off sd (days)")+
