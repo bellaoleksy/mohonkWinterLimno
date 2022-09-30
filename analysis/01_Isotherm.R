@@ -232,6 +232,8 @@ IsothermSummary_IceOut <-
 
 #~~~Exploring the relationships with highest r squared values####
 head(IsothermSummary_IceOut)
+IsothermSummary_IceOut[1:10,]
+
 
 ggplot(data = Isotherm_WaterYear_dates_IceOut, aes(x = IceOutDayofYear_fed, y = isotherm_TempMean_degC_29_days_4_degC_WaterYear_date)) +
   geom_point() +
