@@ -265,6 +265,21 @@ ggplot(data = Isotherm_WaterYear_dates_IceOut, aes(x = IceOutDayofYear_fed, y = 
   scale_y_continuous(breaks = c(160, 180, 200, 220), labels = c("Mar 9", "Mar 29", "Apr 18", "May 8"))  +
   geom_abline(intercept=0, slope=1)
 
+
+ggplot(data = Isotherm_WaterYear_dates_IceOut, aes(x = IceOutDayofYear_fed, y = isotherm_TempMin_degC_25_days_0_degC_WaterYear_date)) +
+  geom_point() +
+  labs(x = "Ice Out Observed Date",
+       y = "Ice Out Predicted Date",
+       title = "Observed vs Predicted Ice Out Dates",
+       subtitle = "Using Isotherm Formula: TempAvg in degC, 25 day window, 0 degC threshold") +
+  # scale_x_continuous(breaks = c(160, 180, 200, 220), labels = c("Mar 9", "Mar 29", "Apr 18", "May 8")) + 
+  # scale_y_continuous(breaks = c(160, 180, 200, 220), labels = c("Mar 9", "Mar 29", "Apr 18", "May 8"))  +
+  geom_abline(intercept=0, slope=1)
+
+as.Date(160-91, origin="2014-01-02")
+
+
+
 #Remove dataframes, lists, and values that are no longer necessary
 rm(IsothermFormula,
    IceIn_ObservedDates,
