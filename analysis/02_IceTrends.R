@@ -89,7 +89,7 @@ theme_MS <- function () {
       axis.ticks.length = unit(0.1, "cm")
     )
 }
-
+# 
 # theme_MS <- function () {
 #   theme_base(base_size=8) %+replace%
 #     theme(
@@ -758,9 +758,9 @@ ggplot() +
     color = "black",
     size = 1
   ) +
-  scale_color_continuous(high = "green", low = "red",
+  scale_color_continuous(high = "cyan", low = "red",
                          name = "Ice duration\n(days)") +
-  scale_fill_continuous(high = "green", low = "red",
+  scale_fill_continuous(high = "cyan", low = "red",
                         name = "Ice duration\n(days)") +
   # scale_y_continuous(lim = c(50, 200),
   #                    breaks = seq(50, 250, by = 25)) +
@@ -769,7 +769,7 @@ ggplot() +
   # scale_y_continuous(
   #   trans = c("date", "reverse2")
   # )
-  scale_y_date(date_breaks = "1 month", date_minor_breaks = "1 week",
+  scale_y_date(date_breaks = "45 days", date_minor_breaks = "1 week",
                date_labels = "%d-%b")+
   theme_MS() +
   theme(
@@ -781,6 +781,7 @@ ggplot() +
       colour = "black",
       size = 1
     ),
+    plot.margin=unit(c(0.7,0,0,0), "lines"),
     axis.text.x = element_text(color = "black"),
     axis.text.y = element_text(color = "black", angle=90, hjust=0.5),
     axis.ticks = element_line(color = "black")
