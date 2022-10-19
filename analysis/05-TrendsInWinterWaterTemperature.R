@@ -243,7 +243,7 @@ summary(fit, fit.measures = TRUE, standardized=T,rsquare=T)
   parameterEstimates(fit)
   
 #Visualize the SEM
-  semPaths(fit,'std',layout='tree2',edge.label.cex = 1.3,label.cex=1.1,intercepts=FALSE,curve=TRUE)
+  semPlot::semPaths(fit,'std',layout='tree2',edge.label.cex = 1.3,label.cex=1.1,intercepts=FALSE,curve=TRUE)
 
 #**Building a Structural Equation Model (SEM)####
 SEM.plot<-semPaths(fit,'std',layout='tree2',edge.label.cex = 1.3,label.cex=1.1,intercepts=FALSE,curve=TRUE,nCharNodes = 8,title=FALSE,residuals=FALSE,
@@ -536,7 +536,8 @@ label_round = 2, name = "Correlation Scale", label_alpha = T, hjust = 0.75) +
         scale_y_continuous(expand = c(.07,0.07)) +
         scale_x_continuous(expand = c(.04,0.04)) +
         scale_shape_manual(values = c(15,19),guide=F) +
-        scale_color_manual(values=c(rgb(75,174,76,maxColorValue = 255),rgb(203,84,80,maxColorValue = 255)))+
+        # scale_color_manual(values=c(rgb(75,174,76,maxColorValue = 255),rgb(203,84,80,maxColorValue = 255)))+
+         scale_color_manual(values=c("blue","red"))+
         scale_size_discrete(range=c(0.15,1.5))+
         theme_blank()+ 
         theme(legend.position = "none",plot.margin = unit(c(0.1,0.1,0.1,0.1),"pt"),
