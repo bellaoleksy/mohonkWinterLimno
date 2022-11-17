@@ -89,7 +89,7 @@ theme_MS <- function () {
       axis.ticks.length = unit(0.1, "cm")
     )
 }
-# 
+
 # theme_MS <- function () {
 #   theme_base(base_size=8) %+replace%
 #     theme(
@@ -2378,964 +2378,774 @@ theme_plain(Climate.SensSlopeSummary_hux)
 
 
 
-# ~~~~~~~ Visualize trends ~~~~~~~~ --------------------------------------------------------
+# ~~ FIGURE S2.  Monthly temp.  trends  -----------------------------------
 
 
 
-#Visualize the years where we have good precip. as snow data
-MohonkDailyWeatherFull %>% 
-  filter(season=="winter")%>%
-  select(Date, Snow_mm, water_year) %>%
-  drop_na()%>%
+# Fitting GAMs for mean Jan temperature -------------------------------------------
+JanWx<-MohonkDailyWeatherFull %>%
+  filter(Month=="1") %>%
   group_by(water_year) %>%
-  summarize(snow_total_mm=sum(Snow_mm))%>%
-  ggplot(aes(x=water_year, y=snow_total_mm))+
-  geom_point()+
-  ggtitle("Winter snow totals")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))  
-## The caveat here is that prior to 1950 the snow data is kind of patchy
-
-
-#Visualize the years where we have good snow depth data
-MohonkDailyWeatherFull %>% 
-  filter(season=="winter")%>%
-  select(Date, SnowDepth_mm, water_year) %>%
-  drop_na()%>%
-  group_by(water_year) %>%
-  summarize(mean_snowdepth=mean(SnowDepth_mm))%>%
-  ggplot(aes(x=water_year, y=mean_snowdepth))+
-  geom_point()+
-  ggtitle("Winter snow depth average")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))  
-
-#Mean snow depth in march
-MohonkDailyWeatherFull %>% 
-  filter(Month=="3")%>%
-  select(Date, SnowDepth_mm, Year) %>%
-  drop_na()%>%
-  group_by(Year) %>%
-  summarize(mean_snowdepth=mean(SnowDepth_mm))%>%
-  ggplot(aes(x=Year, y=mean_snowdepth))+
-  geom_point()+
-  ggtitle("March snow depth average")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))  
-
-#Maximum winter snow depth (kind of like max SWE? good predictor of ice off in Rocky lakes)
-MohonkDailyWeatherFull %>% 
-  filter(season=="winter")%>%
-  select(Date, SnowDepth_mm, water_year) %>%
-  drop_na()%>%
-  group_by(water_year) %>%
-  summarize(max_snowdepth=max(SnowDepth_mm))%>%
-  ggplot(aes(x=water_year, y=max_snowdepth))+
-  geom_point()+
-  ggtitle("Winter snow depth maximum")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))  
-
-
-MohonkDailyWeatherFull %>% 
-  filter(season=="winter")%>%
-  select(Date, SnowDepth_mm, water_year) %>%
-  drop_na()%>%
-  group_by(water_year) %>%
-  summarize(max_snowdepth=max(SnowDepth_mm))%>%
-  ggplot(aes(x=water_year, y=max_snowdepth))+
-  geom_point()+
-  ggtitle("March snow depth maximum")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))  
-
-
-#Trends in March-April-May temperatures
-MohonkDailyWeatherFull %>%
-  select(Year, Month,TempMax_degC, TempMin_degC, TempMean_degC) %>%
-  group_by(Year, Month) %>%
-  summarize_at(vars(TempMax_degC:TempMean_degC), mean, na.rm=TRUE) %>%
-  pivot_longer(-(1:2)) %>%
-  filter(Month %in% c("3","4","5"))%>%
-  ggplot(aes(x=Year,y=value,color=name))+
-  geom_point()+
-  facet_wrap(.~Month, nrow=3, scales="free_y")+
-  geom_line(size=0.5)+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))  
-
-#Trends in seasonal temperatures
-MohonkDailyWeatherFull %>%
-  select(water_year, season,TempMax_degC, TempMin_degC, TempMean_degC) %>%
-  group_by(water_year,season) %>%
-  summarize_at(vars(TempMax_degC:TempMean_degC), mean, na.rm=TRUE) %>%
-  pivot_longer(-(1:2)) %>%
-  # filter(month %in% c("3","4","5"))%>%
-  ggplot(aes(x=water_year,y=value,color=name))+
-  geom_point()+
-  facet_wrap(.~season, nrow=3, scales="free_y")+
-  geom_line(size=0.5)+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))  +
-  ylab("Temperature (C)")+
-  theme(legend.position="bottom")+
-  geom_smooth(size=0.5)
-
-
-MohonkIceWeather %>%
-  select(Year, contains(c("cumMean"))) %>%
-  pivot_longer(-1) %>%
-  ggplot(aes(x=Year, y=value))+
-  geom_point()+
-  # ggtitle("Cumulative Mar+Apr temperatures")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))+
-  geom_smooth()+
-  facet_wrap(~name, scales="free_y")
-
-
-# >> corr. with ice-off date ----------------------------------------------
-
-# ggpairs(MohonkIceWeather, columns = 3:ncol(MohonkIceWeather)) 
-
-#Strong correlations between Ice out DOY and spring snow (+) and temperatures (-)
-#Moderate correlations between Ice on DOY and Ice duration and MEI of previous winter
-
-MohonkIceWeather %>%
-  select(IceOutDayofYear, LengthOfIceCover_days, cumMeanDailyT_Mar, nDaysMeanBelowZero_Mar,
-         nDaysMinBelowZero_Mar, cumMeanDailyT_FebMar, cumSnow_FebMar, nDaysMeanAboveZero_FebMar,
-         maxSnowDepth_mm, NAO_index_spring) %>%
-  ggpairs()
-
-# >> corr. with ice-on date ----------------------------------------------
-
-MohonkIceWeather %>%
-  mutate(prop_rain=cumRain_OctNovDec/(cumRain_OctNovDec+cumSnow_OctNovDec)) %>%
-  select(IceInDayofYear_fed, prop_rain, ENSO_index_fall, LengthOfIceCover_days, cumMeanDailyT_Dec,
-         nDaysMeanBelowZero_Dec, cumMeanDailyT_OctNov, cumMeanDailyT_OctNovDec, nDaysMinBelowZero_OctNovDec) %>%
-  ggpairs()
-
-
-
-
-
-
-
-
-
-# Fitting GAMs for mean winter temperature -------------------------------------------
-WinterWx<-MohonkDailyWeatherFull %>%
-  filter(season=="winter")%>%
-  select(water_year, TempMax_degC, TempMin_degC, TempMean_degC) %>%
-  group_by(water_year) %>%
-  summarize_at(vars(TempMax_degC:TempMean_degC), mean, na.rm=TRUE) 
+  dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
+  mutate(Month="Jan")
 
 
 ### Model
-modWinterTempMean <- gamm(TempMean_degC ~ s(water_year),
-                          data = WinterWx,
-                          correlation = corCAR1(form = ~ water_year),
-                          method = "REML")
+modJanTempMean <- gamm(TempMean_degC ~ s(water_year, k=20),
+                       data = JanWx,
+                       method = "REML")
 
-## summary object
-modWinterTempMean_S <- summary(modWinterTempMean$gam)
-modWinterTempMean_S #Gives you the P values, degrees of freedom...
 
 ###Since we're concerned with the response, include "response" in type of predict()
-WinterTempMeanPred <- with(WinterWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
-                                                                 max(water_year, na.rm=TRUE),
-                                                                 length.out = 200)))
-WinterTempMeanPred <- cbind(WinterTempMeanPred, data.frame(predict(modWinterTempMean$gam, WinterTempMeanPred,
-                                                                   type="response",
-                                                                   se.fit = TRUE)))
+###Since we're concerned with the response, include "response" in type of predict()
+JanTempMeanPred <- with(JanWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
+                                                           max(water_year, na.rm=TRUE),
+                                                           length.out = 200)))
+JanTempMeanPred <- cbind(JanTempMeanPred, data.frame(predict(modJanTempMean$gam, JanTempMeanPred,
+                                                             type="response",
+                                                             se.fit = TRUE)))
 ### this calculates on the link scale (i.e., log)
-WinterTempMeanPred <- transform(WinterTempMeanPred, upper = fit + (2 * se.fit),
-                                lower = fit - (2 * se.fit))
+JanTempMeanPred <- transform(JanTempMeanPred, upper = fit + (2 * se.fit),
+                             lower = fit - (2 * se.fit)) %>%
+  mutate(Month="Jan")
+
+
+m1.dsig <- signifD(JanTempMeanPred$fit,
+                   d = JanTempMeanPred$deriv,
+                   JanTempMeanPred$upper,
+                   JanTempMeanPred$lower)
+
+
 
 # Plots periods of change
 #https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
 Term <- "water_year"
-m1.d <- Deriv(modWinterTempMean)
+m1.d <- Deriv(modJanTempMean)
 
 m1.dci <- confint(m1.d, term = "water_year")
-m1.dsig <- signifD(WinterTempMeanPred$fit,
+m1.dsig <- signifD(JanTempMeanPred$fit,
                    d = m1.d[[Term]]$deriv,
                    m1.dci[[Term]]$upper,
                    m1.dci[[Term]]$lower)
 
-ylim <- with(WinterTempMeanPred, range(upper, lower, fit))
-ylab <- 'Mean winter temp (water year)'
+Jan_incr<-data.frame(value_pred=unlist(m1.dsig$incr), water_year=JanTempMeanPred$water_year) %>%
+  left_join(.,JanTempMeanPred) %>%
+  mutate(Month="Jan")
 
-plot(fit ~ water_year, data = WinterTempMeanPred, type = "n", ylab = ylab, ylim = ylim)
-lines(fit ~ water_year, data = WinterTempMeanPred)
-lines(upper ~ water_year, data = WinterTempMeanPred, lty = "dashed")
-lines(lower ~ water_year, data = WinterTempMeanPred, lty = "dashed")
-lines(unlist(m1.dsig$incr) ~ water_year, data = WinterTempMeanPred, col = "blue", lwd = 3)
-lines(unlist(m1.dsig$decr) ~ water_year, data = WinterTempMeanPred, col = "red", lwd = 3)
-#To me this indicates that there is no acceleration, and the rate of change is fairly constant. 
+JanWx %>%
+  ggplot(aes(x=water_year, y=TempMean_degC))+
+  geom_point()+
+  geom_line(data=JanTempMeanPred, aes(x=water_year, y=fit)) +
+  geom_line(data=JanTempMeanPred, aes(x=water_year, y=upper), linetype="dashed") +
+  geom_line(data=JanTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
+  geom_line(data=Jan_incr, aes(x=water_year, y=value_pred), color="red", size=1.5)
 
-#But another way to visualize it is there would be a significant period of change if the error bar around
-#the first derivative didn't overlap the horizontal black line.
-plot.Deriv(m1.d)
 
-#Plot Ice on DOY vs. year pretty
-ggplot(WinterTempMeanPred,aes(x=water_year,y=fit))+
-  geom_point(data=WinterWx,
-             mapping=aes(x=water_year, y=TempMean_degC), size=2.5, alpha=0.7) +
-  geom_line(size=1)+
-  geom_ribbon(aes(ymin = (lower), ymax = (upper), x = water_year), alpha = 0.5, inherit.aes = FALSE) +
-  labs(x="Water year",y="Mean winter temperature (C))")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))
 
-# Fitting GAMs for max winter temperature -------------------------------------------
-WinterWx<-MohonkDailyWeatherFull %>%
-  filter(season=="winter")%>%
-  select(water_year, TempMax_degC, TempMin_degC, TempMean_degC) %>%
+# Fitting GAMs for mean Feb temperature -------------------------------------------
+FebWx<-MohonkDailyWeatherFull %>%
+  filter(Month=="2") %>%
   group_by(water_year) %>%
-  summarize_at(vars(TempMax_degC:TempMean_degC), mean, na.rm=TRUE) 
+  dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
+  mutate(Month="Feb")
 
 
 ### Model
-modWinterTempMax <- gamm(TempMax_degC ~ s(water_year),
-                         data = WinterWx,
-                         correlation = corCAR1(form = ~ water_year),
-                         method = "REML")
-
-## summary object
-modWinterTempMax_S <- summary(modWinterTempMax$gam)
-modWinterTempMax_S #Gives you the P values, degrees of freedom...
+modFebTempMean <- gamm(TempMean_degC ~ s(water_year, k=20),
+                       data = FebWx,
+                       method = "REML")
 
 ###Since we're concerned with the response, include "response" in type of predict()
-WinterTempMaxPred <- with(WinterWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
-                                                                max(water_year, na.rm=TRUE),
-                                                                length.out = 200)))
-WinterTempMaxPred <- cbind(WinterTempMaxPred, data.frame(predict(modWinterTempMax$gam, WinterTempMaxPred,
-                                                                 type="response",
-                                                                 se.fit = TRUE)))
+###Since we're concerned with the response, include "response" in type of predict()
+FebTempMeanPred <- with(FebWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
+                                                           max(water_year, na.rm=TRUE),
+                                                           length.out = 200)))
+FebTempMeanPred <- cbind(FebTempMeanPred, data.frame(predict(modFebTempMean$gam, FebTempMeanPred,
+                                                             type="response",
+                                                             se.fit = TRUE)))
 ### this calculates on the link scale (i.e., log)
-WinterTempMaxPred <- transform(WinterTempMaxPred, upper = fit + (2 * se.fit),
-                               lower = fit - (2 * se.fit))
+FebTempMeanPred <- transform(FebTempMeanPred, upper = fit + (2 * se.fit),
+                             lower = fit - (2 * se.fit)) %>%
+  mutate(Month="Feb")
 
-# ?transform
+
+m1.dsig <- signifD(FebTempMeanPred$fit,
+                   d = FebTempMeanPred$deriv,
+                   FebTempMeanPred$upper,
+                   FebTempMeanPred$lower)
+
+
+
 # Plots periods of change
 #https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
 Term <- "water_year"
-m1.d <- Deriv(modWinterTempMax)
+m1.d <- Deriv(modFebTempMean)
 
 m1.dci <- confint(m1.d, term = "water_year")
-m1.dsig <- signifD(WinterTempMaxPred$fit,
+m1.dsig <- signifD(FebTempMeanPred$fit,
                    d = m1.d[[Term]]$deriv,
                    m1.dci[[Term]]$upper,
                    m1.dci[[Term]]$lower)
 
-ylim <- with(WinterTempMaxPred, range(upper, lower, fit))
-ylab <- 'Max winter temp (water year)'
+Feb_incr<-data.frame(value_pred=unlist(m1.dsig$incr), water_year=FebTempMeanPred$water_year) %>%
+  # left_join(.,FebTempMeanPred) %>%
+  mutate(Month="Feb")
 
-plot(fit ~ water_year, data = WinterTempMaxPred, type = "n", ylab = ylab, ylim = ylim)
-lines(fit ~ water_year, data = WinterTempMaxPred)
-lines(upper ~ water_year, data = WinterTempMaxPred, lty = "dashed")
-lines(lower ~ water_year, data = WinterTempMaxPred, lty = "dashed")
-lines(unlist(m1.dsig$incr) ~ water_year, data = WinterTempMaxPred, col = "blue", lwd = 3)
-lines(unlist(m1.dsig$decr) ~ water_year, data = WinterTempMaxPred, col = "red", lwd = 3)
-#An acceleration in the trend 1990s-2000s
+FebWx %>%
+  ggplot(aes(x=water_year, y=TempMean_degC))+
+  geom_point()+
+  geom_line(data=FebTempMeanPred, aes(x=water_year, y=fit)) +
+  geom_line(data=FebTempMeanPred, aes(x=water_year, y=upper), linetype="dashed") +
+  geom_line(data=FebTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
+  geom_line(data=Feb_incr, aes(x=water_year, y=value_pred), color="red", size=1.5)
 
-#But another way to visualize it is there would be a significant period of change if the error bar around
-#the first derivative didn't overlap the horizontal black line.
-plot.Deriv(m1.d)
-
-#Plot Ice on DOY vs. year pretty
-ggplot(WinterTempMaxPred,aes(x=water_year,y=fit))+
-  geom_point(data=WinterWx,
-             mapping=aes(x=water_year, y=TempMax_degC), size=2.5, alpha=0.7) +
-  geom_line(size=1)+
-  geom_ribbon(aes(ymin = (lower), ymax = (upper), x = water_year), alpha = 0.5, inherit.aes = FALSE) +
-  labs(x="Water year",y="Max winter temperature (C))")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))
-
-# Fitting GAMs for min winter temperature -------------------------------------------
-WinterWx<-MohonkDailyWeatherFull %>%
-  filter(season=="winter")%>%
-  select(water_year, TempMax_degC, TempMin_degC, TempMean_degC) %>%
+# Fitting GAMs for mean March temperature -------------------------------------------
+MarchWx<-MohonkDailyWeatherFull %>%
+  filter(Month=="3") %>%
   group_by(water_year) %>%
-  summarize_at(vars(TempMax_degC:TempMean_degC), mean, na.rm=TRUE) 
+  dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
+  mutate(Month="March")
 
 
-### I added Family Gamma here for how errors should respond
-modWinterTempMin <- gamm(TempMin_degC ~ s(water_year),
-                         data = WinterWx,
-                         correlation = corCAR1(form = ~ water_year),
+### Model
+modMarchTempMean <- gamm(TempMean_degC ~ s(water_year, k=20),
+                         data = MarchWx,
                          method = "REML")
 
-## summary object
-modWinterTempMin_S <- summary(modWinterTempMin$gam)
-modWinterTempMin_S #Gives you the P values, degrees of freedom...
-
 ###Since we're concerned with the response, include "response" in type of predict()
-WinterTempMinPred <- with(WinterWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
-                                                                max(water_year, na.rm=TRUE),
-                                                                length.out = 200)))
-WinterTempMinPred <- cbind(WinterTempMinPred, data.frame(predict(modWinterTempMin$gam, WinterTempMinPred,
+###Since we're concerned with the response, include "response" in type of predict()
+MarchTempMeanPred <- with(MarchWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
+                                                               max(water_year, na.rm=TRUE),
+                                                               length.out = 200)))
+MarchTempMeanPred <- cbind(MarchTempMeanPred, data.frame(predict(modMarchTempMean$gam, MarchTempMeanPred,
                                                                  type="response",
                                                                  se.fit = TRUE)))
 ### this calculates on the link scale (i.e., log)
-WinterTempMinPred <- transform(WinterTempMinPred, upper = fit + (2 * se.fit),
-                               lower = fit - (2 * se.fit))
+MarchTempMeanPred <- transform(MarchTempMeanPred, upper = fit + (2 * se.fit),
+                               lower = fit - (2 * se.fit)) %>%
+  mutate(Month="March")
+
+
+m1.dsig <- signifD(MarchTempMeanPred$fit,
+                   d = MarchTempMeanPred$deriv,
+                   MarchTempMeanPred$upper,
+                   MarchTempMeanPred$lower)
+
 
 
 # Plots periods of change
 #https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
 Term <- "water_year"
-m1.d <- Deriv(modWinterTempMin)
+m1.d <- Deriv(modMarchTempMean)
 
 m1.dci <- confint(m1.d, term = "water_year")
-m1.dsig <- signifD(WinterTempMinPred$fit,
+m1.dsig <- signifD(MarchTempMeanPred$fit,
                    d = m1.d[[Term]]$deriv,
                    m1.dci[[Term]]$upper,
                    m1.dci[[Term]]$lower)
 
-ylim <- with(WinterTempMinPred, range(upper, lower, fit))
-ylab <- 'Min winter temp (water year)'
+March_incr<-data.frame(value_pred=unlist(m1.dsig$incr), water_year=MarchTempMeanPred$water_year) %>%
+  # left_join(.,MarchTempMeanPred) %>%
+  mutate(Month="March")
 
-plot(fit ~ water_year, data = WinterTempMinPred, type = "n", ylab = ylab, ylim = ylim)
-lines(fit ~ water_year, data = WinterTempMinPred)
-lines(upper ~ water_year, data = WinterTempMinPred, lty = "dashed")
-lines(lower ~ water_year, data = WinterTempMinPred, lty = "dashed")
-lines(unlist(m1.dsig$incr) ~ water_year, data = WinterTempMinPred, col = "blue", lwd = 3)
-lines(unlist(m1.dsig$decr) ~ water_year, data = WinterTempMinPred, col = "red", lwd = 3)
-#To me this indicates that there is no acceleration, and the rate of change is fairly constant. 
-
-#But another way to visualize it is there would be a significant period of change if the error bar around
-#the first derivative didn't overlap the horizontal black line.
-plot.Deriv(m1.d)
-
-#Plot Ice on DOY vs. year pretty
-ggplot(WinterTempMinPred,aes(x=water_year,y=fit))+
-  geom_point(data=WinterWx,
-             mapping=aes(x=water_year, y=TempMin_degC), size=2.5, alpha=0.7) +
-  geom_line(size=1)+
-  geom_ribbon(aes(ymin = (lower), ymax = (upper), x = water_year), alpha = 0.5, inherit.aes = FALSE) +
-  labs(x="Water year",y="Min winter temperature (C))")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))
+MarchWx %>%
+  ggplot(aes(x=water_year, y=TempMean_degC))+
+  geom_point()+
+  geom_line(data=MarchTempMeanPred, aes(x=water_year, y=fit)) +
+  geom_line(data=MarchTempMeanPred, aes(x=water_year, y=upper), linetype="dashed") +
+  geom_line(data=MarchTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
+  geom_line(data=March_incr, aes(x=water_year, y=value_pred), color="red", size=1.5)
 
 
 
-# Fitting GAMs for mean sept temperature -------------------------------------------
-FallWx<-MohonkDailyWeatherFull %>%
-  filter(Month==9)%>%
-  select(Year, TempMax_degC, TempMin_degC, TempMean_degC) %>%
-  group_by(Year) %>%
-  summarize_at(vars(TempMax_degC:TempMean_degC), mean, na.rm=TRUE) 
+# Fitting GAMs for mean April temperature -------------------------------------------
+AprilWx<-MohonkDailyWeatherFull %>%
+  filter(Month=="4") %>%
+  group_by(water_year) %>%
+  dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
+  mutate(Month="April")
 
 
-### I added Family Gamma here for how errors should respond
-modFallTempMean <- gamm(TempMean_degC ~ s(Year),
-                        data = FallWx,
-                        correlation = corCAR1(form = ~ Year),
-                        method = "REML")
-
-## summary object
-modFallTempMean_S <- summary(modFallTempMean$gam)
-modFallTempMean_S #Gives you the P values, degrees of freedom...
+### Model
+modAprilTempMean <- gamm(TempMean_degC ~ s(water_year, k=20),
+                         data = AprilWx,
+                         method = "REML")
 
 ###Since we're concerned with the response, include "response" in type of predict()
-FallTempMeanPred <- with(FallWx, data.frame(Year = seq(min(Year, na.rm=TRUE),
-                                                       max(Year, na.rm=TRUE),
-                                                       length.out = 200)))
-FallTempMeanPred <- cbind(FallTempMeanPred, data.frame(predict(modFallTempMean$gam, FallTempMeanPred,
-                                                               type="response",
-                                                               se.fit = TRUE)))
-### this calculates on the link scale (i.e., log)
-FallTempMeanPred <- transform(FallTempMeanPred, upper = fit + (2 * se.fit),
-                              lower = fit - (2 * se.fit))
-
-?transform
-# Plots periods of change
-#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
-Term <- "Year"
-m1.d <- Deriv(modFallTempMean)
-
-m1.dci <- confint(m1.d, term = "Year")
-m1.dsig <- signifD(FallTempMeanPred$fit,
-                   d = m1.d[[Term]]$deriv,
-                   m1.dci[[Term]]$upper,
-                   m1.dci[[Term]]$lower)
-
-ylim <- with(FallTempMeanPred, range(upper, lower, fit))
-ylab <- 'Mean Sept temp (water Year)'
-
-plot(fit ~ Year, data = FallTempMeanPred, type = "n", ylab = ylab, ylim = ylim)
-lines(fit ~ Year, data = FallTempMeanPred)
-lines(upper ~ Year, data = FallTempMeanPred, lty = "dashed")
-lines(lower ~ Year, data = FallTempMeanPred, lty = "dashed")
-lines(unlist(m1.dsig$incr) ~ Year, data = FallTempMeanPred, col = "blue", lwd = 3)
-lines(unlist(m1.dsig$decr) ~ Year, data = FallTempMeanPred, col = "red", lwd = 3)
-#Pretty substantial acceleration in the trend mid-1980s through 2010s
-
-#But another way to visualize it is there would be a significant period of change if the error bar around
-#the first derivative didn't overlap the horizontal black line.
-plot.Deriv(m1.d)
-
-#Plot Ice on DOY vs. Year pretty
-ggplot(FallTempMeanPred,aes(x=Year,y=fit))+
-  geom_point(data=FallWx,
-             mapping=aes(x=Year, y=TempMean_degC), size=2.5, alpha=0.7) +
-  geom_line(size=1)+
-  geom_ribbon(aes(ymin = (lower), ymax = (upper), x = Year), alpha = 0.5, inherit.aes = FALSE) +
-  labs(x="Water Year",y="Mean Sept temperature (C)")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))
-
-
-
-
-
-
-# Fitting GAMs for cumulative mean fall temperature -------------------------------------------
-
-### I added Family Gamma here for how errors should respond
-modFallTempMean <- gamm(cumMeanDailyT_OctNovDec ~ s(water_year),
-                        data = MohonkIceWeather,
-                        correlation = corCAR1(form = ~ water_year),
-                        method = "REML")
-
-## summary object
-modFallTempMean_S <- summary(modFallTempMean$gam)
-modFallTempMean_S #Gives you the P values, degrees of freedom...
-
 ###Since we're concerned with the response, include "response" in type of predict()
-FallTempMeanPred <- with(MohonkIceWeather, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
-                                                                       max(water_year, na.rm=TRUE),
-                                                                       length.out = 200)))
-FallTempMeanPred <- cbind(FallTempMeanPred, data.frame(predict(modFallTempMean$gam, FallTempMeanPred,
-                                                               type="response",
-                                                               se.fit = TRUE)))
+AprilTempMeanPred <- with(AprilWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
+                                                               max(water_year, na.rm=TRUE),
+                                                               length.out = 200)))
+AprilTempMeanPred <- cbind(AprilTempMeanPred, data.frame(predict(modAprilTempMean$gam, AprilTempMeanPred,
+                                                                 type="response",
+                                                                 se.fit = TRUE)))
 ### this calculates on the link scale (i.e., log)
-FallTempMeanPred <- transform(FallTempMeanPred, upper = fit + (2 * se.fit),
-                              lower = fit - (2 * se.fit))
+AprilTempMeanPred <- transform(AprilTempMeanPred, upper = fit + (2 * se.fit),
+                               lower = fit - (2 * se.fit)) %>%
+  mutate(Month="April")
+
+
+m1.dsig <- signifD(AprilTempMeanPred$fit,
+                   d = AprilTempMeanPred$deriv,
+                   AprilTempMeanPred$upper,
+                   AprilTempMeanPred$lower)
+
+
 
 # Plots periods of change
 #https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
 Term <- "water_year"
-m1.d <- Deriv(modFallTempMean)
+m1.d <- Deriv(modAprilTempMean)
 
 m1.dci <- confint(m1.d, term = "water_year")
-m1.dsig <- signifD(FallTempMeanPred$fit,
+m1.dsig <- signifD(AprilTempMeanPred$fit,
                    d = m1.d[[Term]]$deriv,
                    m1.dci[[Term]]$upper,
                    m1.dci[[Term]]$lower)
 
-ylim <- with(FallTempMeanPred, range(upper, lower, fit))
-ylab <- 'Mean fall temp (water year)'
+April_incr<-data.frame(value_pred=unlist(m1.dsig$incr), water_year=AprilTempMeanPred$water_year) %>%
+  # left_join(.,AprilTempMeanPred) %>%
+  mutate(Month="April")
 
-plot(fit ~ water_year, data = FallTempMeanPred, type = "n", ylab = ylab, ylim = ylim)
-lines(fit ~ water_year, data = FallTempMeanPred)
-lines(upper ~ water_year, data = FallTempMeanPred, lty = "dashed")
-lines(lower ~ water_year, data = FallTempMeanPred, lty = "dashed")
-lines(unlist(m1.dsig$incr) ~ water_year, data = FallTempMeanPred, col = "blue", lwd = 3)
-lines(unlist(m1.dsig$decr) ~ water_year, data = FallTempMeanPred, col = "red", lwd = 3)
-#Similar acceleration mid-1980s to 2010s. 
+AprilWx %>%
+  ggplot(aes(x=water_year, y=TempMean_degC))+
+  geom_point()+
+  geom_line(data=AprilTempMeanPred, aes(x=water_year, y=fit)) +
+  geom_line(data=AprilTempMeanPred, aes(x=water_year, y=upper), linetype="dashed") +
+  geom_line(data=AprilTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
+  geom_line(data=April_incr, aes(x=water_year, y=value_pred), color="red", size=1.5)
 
-#But another way to visualize it is there would be a significant period of change if the error bar around
-#the first derivative didn't overlap the horizontal black line.
-plot.Deriv(m1.d)
-
-#Plot Ice on DOY vs. year pretty
-ggplot(FallTempMeanPred,aes(x=water_year,y=fit))+
-  geom_point(data=MohonkIceWeather,
-             mapping=aes(x=water_year, y=cumMeanDailyT_OctNovDec), size=2.5, alpha=0.7) +
-  geom_line(size=1)+
-  geom_ribbon(aes(ymin = (lower), ymax = (upper), x = water_year), alpha = 0.5, inherit.aes = FALSE) +
-  labs(x="Water year",y="Mean fall temperature (C))")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))
+# Fitting GAMs for mean May temperature -------------------------------------------
+MayWx<-MohonkDailyWeatherFull %>%
+  filter(Month=="5") %>%
+  group_by(water_year) %>%
+  dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
+  mutate(Month="May")
 
 
-
-# Fitting GAMs for cumulative mean spring temperature -------------------------------------------
-
-### I added Family Gamma here for how errors should respond
-modspringTempMean <- gamm(cumMeanDailyT_FebMarApr ~ s(Year),
-                          data = MohonkIceWeather,
-                          correlation = corCAR1(form = ~ Year),
-                          method = "REML")
-
-## summary object
-modspringTempMean_S <- summary(modspringTempMean$gam)
-modspringTempMean_S #Gives you the P values, degrees of freedom...
+### Model
+modMayTempMean <- gamm(TempMean_degC ~ s(water_year, k=20),
+                       data = MayWx,
+                       method = "REML")
 
 ###Since we're concerned with the response, include "response" in type of predict()
-springTempMeanPred <- with(MohonkIceWeather, data.frame(Year = seq(min(Year, na.rm=TRUE),
-                                                                   max(Year, na.rm=TRUE),
-                                                                   length.out = 200)))
-springTempMeanPred <- cbind(springTempMeanPred, data.frame(predict(modspringTempMean$gam, springTempMeanPred,
-                                                                   type="response",
-                                                                   se.fit = TRUE)))
+###Since we're concerned with the response, include "response" in type of predict()
+MayTempMeanPred <- with(MayWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
+                                                           max(water_year, na.rm=TRUE),
+                                                           length.out = 200)))
+MayTempMeanPred <- cbind(MayTempMeanPred, data.frame(predict(modMayTempMean$gam, MayTempMeanPred,
+                                                             type="response",
+                                                             se.fit = TRUE)))
 ### this calculates on the link scale (i.e., log)
-springTempMeanPred <- transform(springTempMeanPred, upper = fit + (2 * se.fit),
-                                lower = fit - (2 * se.fit))
+MayTempMeanPred <- transform(MayTempMeanPred, upper = fit + (2 * se.fit),
+                             lower = fit - (2 * se.fit)) %>%
+  mutate(Month="May")
+
+
+m1.dsig <- signifD(MayTempMeanPred$fit,
+                   d = MayTempMeanPred$deriv,
+                   MayTempMeanPred$upper,
+                   MayTempMeanPred$lower)
+
+
 
 # Plots periods of change
 #https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
-Term <- "Year"
-m1.d <- Deriv(modspringTempMean)
+Term <- "water_year"
+m1.d <- Deriv(modMayTempMean)
 
-m1.dci <- confint(m1.d, term = "Year")
-m1.dsig <- signifD(springTempMeanPred$fit,
+m1.dci <- confint(m1.d, term = "water_year")
+m1.dsig <- signifD(MayTempMeanPred$fit,
                    d = m1.d[[Term]]$deriv,
                    m1.dci[[Term]]$upper,
                    m1.dci[[Term]]$lower)
 
-ylim <- with(springTempMeanPred, range(upper, lower, fit))
-ylab <- 'Mean spring temp (water year)'
-
-plot(fit ~ Year, data = springTempMeanPred, type = "n", ylab = ylab, ylim = ylim)
-lines(fit ~ Year, data = springTempMeanPred)
-lines(upper ~ Year, data = springTempMeanPred, lty = "dashed")
-lines(lower ~ Year, data = springTempMeanPred, lty = "dashed")
-lines(unlist(m1.dsig$incr) ~ Year, data = springTempMeanPred, col = "blue", lwd = 3)
-lines(unlist(m1.dsig$decr) ~ Year, data = springTempMeanPred, col = "red", lwd = 3)
-#Substantial spring warming since mid 70s to mid 2010s
-
-#But another way to visualize it is there would be a significant period of change if the error bar around
-#the first derivative didn't overlap the horizontal black line.
-plot.Deriv(m1.d)
-
-#Plot Ice on DOY vs. year pretty
-ggplot(springTempMeanPred,aes(x=Year,y=fit))+
-  geom_point(data=MohonkIceWeather,
-             mapping=aes(x=Year, y=cumMeanDailyT_FebMarApr), size=2.5, alpha=0.7) +
-  geom_line(size=1)+
-  geom_ribbon(aes(ymin = (lower), ymax = (upper), x = Year), alpha = 0.5, inherit.aes = FALSE) +
-  labs(x="Water year",y="Cumulative mean spring temperature (C))")+
-  coord_cartesian(xlim=c(1930,2020))+
-  scale_x_continuous(breaks=seq(1930, 2020, 15))
-
-
-
-
-
-# Ice-off TS - 1 predictor models--------------------------------------------------------
-#Caldwell et al. 2020 used the cumulative sum of mean daily T, snow or rain fraction, downward shortwave radiation, and wind speed
-#for winter+spring (1oct-31may) or spring only (1March-31may). Let's try something similar.
-#In our case, spring is defined as 1March-30Apr because the median ice-off day is ~April 7th.
-#Winter+spring is 1Oct-30Apr
-
-# ~ Ice-off , xreg="cumSnow_spring" ------------------------------------------------------
-MohonkWeatherSummary_winter_naFREE<-MohonkIceWeather %>%
-  drop_na(IceOutDayofYear, cumSnow_FebMarApr, cumMeanDailyT_FebMarApr)
-
-arimaFit.SpringSnow<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceOutDayofYear,
-                                xreg=c(MohonkWeatherSummary_winter_naFREE$cumSnow_FebMarApr),
-                                # xreg=cbind(AnnualData$GlobalTempAnomoly_C,
-                                # AnnualData$Year),
-                                seasonal=FALSE,allowdrift = FALSE,
-                                stationary=TRUE)
-
-arimaFit.SpringSnow #display the model that was fit
-
-SpringSnowcoef<-as.numeric(arimaFit.SpringSnow$coef["xreg"])#extracts the xreg coefficient
-
-IceOut_residuals<-as.numeric(arimaFit.SpringSnow$residuals) #residuals
-
-#Gets the (p,d,q) model fit where p is the autoregressive terms, d is the integrative, and q is the moving average
-SpringSnow_pdq<-paste0(as.numeric(arimaFit.SpringSnow$arma[1]),sep=",",
-                       as.numeric(arimaFit.SpringSnow$arma[6]),sep=",",
-                       as.numeric(arimaFit.SpringSnow$arma[2]))
-
-#extract aicc value
-SpringSnowaicc<-as.numeric(arimaFit.SpringSnow$aicc)
-
-
-# ~ Ice-off , xreg="cumMeanDailyT_spring" ------------------------------------------------------
-
-
-arimaFit.SpringDailyTcum<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceOutDayofYear,
-                                     xreg=c(MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_FebMarApr),
-                                     seasonal=FALSE,allowdrift = FALSE,
-                                     stationary=TRUE)
-
-arimaFit.SpringDailyTcum #display the model that was fit
-
-SpringDailyTcumcoef<-as.numeric(arimaFit.SpringDailyTcum$coef["xreg"])#extracts the xreg coefficient
-
-SpringDailyTcumresid<-as.numeric(arimaFit.SpringDailyTcum$residuals)
-
-# arimaFit.Year$residuals #residuals
-
-#Gets the (p,d,q) model fit where p is the autoregressive terms, d is the integrative, and q is the moving average
-SpringDailyTcum_pdq<-paste0(as.numeric(arimaFit.SpringDailyTcum$arma[1]),sep=",",
-                            as.numeric(arimaFit.SpringDailyTcum$arma[6]),sep=",",
-                            as.numeric(arimaFit.SpringDailyTcum$arma[2]))
-
-#extract aicc value
-SpringDailyTcumaicc<-arimaFit.SpringDailyTcum$aicc
-
-# Compile model output  ---------------------------------------------------------
-
-#Column for response variable (Mixing Action in all models)
-Response <- "Ice out DOY"
-
-#Vector of predictors used in models 
-Predictor <- c("Cumul. spring snow",
-               "Cumul. spring temp")
-
-#Pull all xreg interecepts
-SpringSnowint<-as.numeric(arimaFit.SpringSnow$coef["intercept"])
-SpringDailyTcumint<-as.numeric(arimaFit.SpringDailyTcum$coef["intercept"])
-
-#Vector of xreg coefficients
-int <- c(SpringSnowint,
-         SpringDailyTcumint)
-
-#Vector of xreg coefficients
-coef <- c(SpringSnowcoef,
-          SpringDailyTcumcoef)
-
-#vector of AICc values
-AICc<-c(SpringSnowaicc, SpringDailyTcumaicc)
-
-#Vector of all p,d,q data
-pdq <- c(SpringSnow_pdq,
-         SpringDailyTcum_pdq)
-
-#Combine to make a dataframe of model output 
-TS_dataframe<-data.frame(Response, Predictor, AICc, int, coef, pdq)
-
-
-
-
-# Ice-off TS - 2 predictor models--------------------------------------------------------
-
-# ~ Ice-off , xreg="cumMeanDailyT_spring + cumSnow_spring" ------------------------------------------------------
-
-
-arimaFit.TempSnowSpring.cum<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceOutDayofYear,
-                                        # xreg=c(AnnualData$Global),
-                                        xreg=cbind(MohonkWeatherSummary_winter_naFREE$cumSnow_FebMarApr,
-                                                   MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_FebMarApr),
-                                        # AnnualData$Year),
-                                        seasonal=FALSE,allowdrift = FALSE,
-                                        stationary=TRUE)
-
-arimaFit.TempSnowSpring.cum #display the model that was fit
-
-
-
-#extract aicc value
-TempSnowSpring.cumaicc<-as.numeric(arimaFit.TempSnowSpring.cum$aicc)
-
-#Combine model output into DF
-#Column for response variable (Mixing Action in all models)
-Response <- "Ice out DOY"
-
-#Vector of predictors used in models 
-Predictor <- "Cumul. spring snow + Cumu spring temp"
-
-#Pull all xreg coefficients and intercepts
-coef_cumSnow_spring<-as.numeric(arimaFit.TempSnowSpring.cum$coef["xreg1"])#extracts the xreg coefficient
-coef_cumMeanDailyT_spring<-as.numeric(arimaFit.TempSnowSpring.cum$coef["xreg2"])#extracts the xreg coefficient
-int<-as.numeric(arimaFit.TempSnowSpring.cum$coef["intercept"])#common intercept
-
-
-#Pull all AICc values
-AICc<-as.numeric(arimaFit.TempSnowSpring.cum$aicc)
-
-#Pull pdq values
-#Gets the (p,d,q) model fit where p is the autoregressive terms, d is the integrative, and q is the moving average
-pdq<-paste0(as.numeric(arimaFit.TempSnowSpring.cum$arma[1]),sep=",",
-            as.numeric(arimaFit.TempSnowSpring.cum$arma[6]),sep=",",
-            as.numeric(arimaFit.TempSnowSpring.cum$arma[2]))
-
-#Combine to make a dataframe of model output 
-TS_dataframe_2factormodels<-data.frame(Response, Predictor, AICc,
-                                       int, coef_cumSnow_spring, coef_cumMeanDailyT_spring,
-                                       pdq)
-
-
-TS_data_iceout_table<-bind_rows(TS_dataframe,TS_dataframe_2factormodels)
-
-TS_data_iceout_table_hux <- 
-  hux(TS_data_iceout_table) %>% 
-  arrange(AICc) %>%
-  add_colnames() %>% 
-  set_bold(row = 1, col = everywhere, value = TRUE) %>% 
-  set_all_borders(TRUE) 
-
-# theme_plain(TS_dataframe_hux) 
-# quick_docx(TS_data_iceout_table_hux, file = 'figures/IceOut_TSmodel_output.docx')
-
-
-MohonkWeatherSummary_winter_naFREE$fittedIceOutDOY<-as.numeric(arimaFit.TempSnowSpring.cum$fitted)
-
-#Predicted values
-MohonkWeatherSummary_winter_naFREE %>%
-  select(fittedIceOutDOY,cumSnow_FebMarApr,cumMeanDailyT_FebMarApr)%>%
-  rename("Cumulative daily precipitation (cm) Feb-Apr"="cumSnow_FebMarApr",
-         "Cumulative mean daily spring air T (C) Feb-Apr"="cumMeanDailyT_FebMarApr")%>%
-  pivot_longer(-1, names_to="predictorID", values_to="predictorValue")%>%
-  ggplot(aes(y=fittedIceOutDOY, x=predictorValue))+
-  geom_jitter(shape=21,size=2, color="black", fill="#81b29a", width=0.05)+
-  scale_fill_viridis_c(guide = "colourbar")+
-  theme_MS() + 
-  ylab("Predicted Ice Out DOY ")+
-  theme(strip.placement = "outside", #strip placement on outside of x-axis labels and ticks
-        panel.spacing=grid::unit(0,"lines"), #squish panels together
-        strip.text.x = element_text(margin = margin(0,0,0.2,0, "cm")), #increase strip box size
-        axis.title.x=element_blank(),
-        panel.grid.minor=element_blank(), panel.grid.major=element_blank()) +
-  facet_wrap(.~predictorID, scales="free_x", switch="x")
-ggsave("figures/IceOut_predictors_TSmodelout.png", width=7, height=3,units="in", dpi=300)
-
-#Raw values
-MohonkWeatherSummary_winter_naFREE %>%
-  select(IceOutDayofYear,cumSnow_FebMarApr,cumMeanDailyT_FebMarApr)%>%
-  rename("Cumulative daily precipitation (cm) Feb-Apr"="cumSnow_FebMarApr",
-         "Cumulative mean daily spring air T (C) Feb-Apr"="cumMeanDailyT_FebMarApr")%>%
-  pivot_longer(-1, names_to="predictorID", values_to="predictorValue")%>%
-  ggplot(aes(y=IceOutDayofYear, x=predictorValue))+
-  geom_jitter(shape=21,size=2, color="black", fill="#81b29a", width=0.05)+
-  scale_fill_viridis_c(guide = "colourbar")+
-  theme_MS() + 
-  ylab("Ice Out DOY ")+
-  theme(strip.placement = "outside", #strip placement on outside of x-axis labels and ticks
-        panel.spacing=grid::unit(0,"lines"), #squish panels together
-        strip.text.x = element_text(margin = margin(0,0,0.2,0, "cm")), #increase strip box size
-        axis.title.x=element_blank(),
-        panel.grid.minor=element_blank(), panel.grid.major=element_blank()) +
-  facet_wrap(.~predictorID, scales="free_x", switch="x")
-#Looks pretty similar! 
-
-
-# Ice-off DOY mult. reg. model --------------------------------------------
-
-#Since there is no apparaent autocorrelation in the timeseries, could we use mult. reg. to get an
-#easier to interpret model output?
-
-mr_1<-lm(IceOutDayofYear~cumSnow_FebMarApr+cumMeanDailyT_FebMarApr,data=MohonkWeatherSummary_winter_naFREE)
-summary(mr_1)
-plot(mr_1)
-
-# Leaning toward no but the R2 is pretty high which suggests to me that
-# cumulative spring ppt and cumulative daily T are pretty good predictors of ice-off. 
-
-
-# Ice-on TS - 1 predictor models--------------------------------------------------------
-
-##Note that the trouble with using ENSO/MEI indices is that the data do not span the entire record. 
-
-# ~ Ice-on , xreg="ENSO_index_fall" ------------------------------------------------------
-MohonkWeatherSummary_winter_naFREE<-MohonkIceWeather %>%
-  drop_na(IceInDayofYear_fed, ENSO_index_fall, cumMeanDailyT_OctNovDec)
-
-
-
-arimaFit.ENSOprevFall<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceInDayofYear_fed,
-                                  xreg=c(MohonkWeatherSummary_winter_naFREE$ENSO_index_fall),
-                                  # xreg=cbind(AnnualData$GlobalTempAnomoly_C,
-                                  # AnnualData$Year),
-                                  seasonal=FALSE,allowdrift = FALSE,
-                                  stationary=TRUE)
-
-#The first argument is the y variable
-#The second is xregression variables. I think you need to do xreg=cbind(x1,x2) for multiple
-#seasonal=FALSE removes seasonal trends, allowdrift=FALSE disallows a drift component (we want to specify that, I think stationary=TRUE is redundant with allowdrift
-
-
-arimaFit.ENSOprevFall #display the model that was fit
-
-ENSOprevFallcoef<-as.numeric(arimaFit.ENSOprevFall$coef["xreg"])#extracts the xreg coefficient
-
-IceIn_residuals<-as.numeric(arimaFit.ENSOprevFall$residuals) #residuals
-
-#Gets the (p,d,q) model fit where p is the autoregressive terms, d is the integrative, and q is the moving average
-ENSOprevFall_pdq<-paste0(as.numeric(arimaFit.ENSOprevFall$arma[1]),sep=",",
-                         as.numeric(arimaFit.ENSOprevFall$arma[6]),sep=",",
-                         as.numeric(arimaFit.ENSOprevFall$arma[2]))
-
-#extract aicc value
-ENSOprevFallaicc<-as.numeric(arimaFit.ENSOprevFall$aicc)
-
-# ~ Ice-on , xreg="ENSO_index_fall" ------------------------------------------------------
-
-arimaFit.cumFallPrecip<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceInDayofYear_fed,
-                                   xreg=c(MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_OctNovDec),
-                                   # xreg=cbind(AnnualData$GlobalTempAnomoly_C,
-                                   # AnnualData$Year),
-                                   seasonal=FALSE,allowdrift = FALSE,
-                                   stationary=TRUE)
-
-#The first argument is the y variable
-#The second is xregression variables. I think you need to do xreg=cbind(x1,x2) for multiple
-#seasonal=FALSE removes seasonal trends, allowdrift=FALSE disallows a drift component (we want to specify that, I think stationary=TRUE is redundant with allowdrift
-
-
-arimaFit.cumFallPrecip #display the model that was fit
-
-cumFallPrecipcoef<-as.numeric(arimaFit.cumFallPrecip$coef["xreg"])#extracts the xreg coefficient
-
-IceIn_residuals<-as.numeric(arimaFit.cumFallPrecip$residuals) #residuals
-
-#Gets the (p,d,q) model fit where p is the autoregressive terms, d is the integrative, and q is the moving average
-cumFallPrecip_pdq<-paste0(as.numeric(arimaFit.cumFallPrecip$arma[1]),sep=",",
-                          as.numeric(arimaFit.cumFallPrecip$arma[6]),sep=",",
-                          as.numeric(arimaFit.cumFallPrecip$arma[2]))
-
-#extract aicc value
-cumFallPrecipaicc<-as.numeric(arimaFit.cumFallPrecip$aicc)
-
-
-# Compile model output  ---------------------------------------------------------
-
-#Column for response variable (Mixing Action in all models)
-Response <- "Ice in DOY"
-
-#Vector of predictors used in models 
-Predictor <- c("Prev. winter ENSO",
-               "Cum fall temp")
-
-#Pull all xreg interecepts
-ENSOprevFallint<-as.numeric(arimaFit.ENSOprevFall$coef["intercept"])
-cumFallPrecipint<-as.numeric(arimaFit.cumFallPrecip$coef["intercept"])
-
-#Vector of xreg coefficients
-int <- c(ENSOprevFallint,
-         cumFallPrecipint)
-
-#Vector of xreg coefficients
-coef <- c(ENSOprevFallcoef,
-          cumFallPrecipcoef)
-
-#vector of AICc values
-AICc<-c(ENSOprevFallaicc,
-        cumFallPrecipaicc)
-
-#Vector of all p,d,q data
-pdq <- c(ENSOprevFall_pdq,
-         cumFallPrecip_pdq)
-
-#Combine to make a dataframe of model output 
-TS_dataframe_IceIn<-data.frame(Response, Predictor, AICc, int, coef, pdq)
-
-
-
-# Ice-on TS - 2 predictor models--------------------------------------------------------
-
-# ~ Ice-on , xreg="ENSO_index_fall + cumMeanDailyT_OctNovDec" ------------------------------------------------------
-
-
-arimaFit.ENSOcumT<-auto.arima(MohonkWeatherSummary_winter_naFREE$IceInDayofYear_fed,
-                              # xreg=c(AnnualData$Global),
-                              xreg=cbind(MohonkWeatherSummary_winter_naFREE$ENSO_index_fall,
-                                         MohonkWeatherSummary_winter_naFREE$cumMeanDailyT_OctNovDec),
-                              # AnnualData$Year),
-                              seasonal=FALSE,allowdrift = FALSE,
-                              stationary=TRUE)
-
-arimaFit.ENSOcumT #display the model that was fit
-
-
-
-#extract aicc value
-ENSOcumTaicc<-as.numeric(arimaFit.ENSOcumT$aicc)
-
-#Combine model output into DF
-#Column for response variable (Mixing Action in all models)
-Response <- "Ice in DOY (fed)"
-
-#Vector of predictors used in models 
-Predictor <- "Prev. fall ENSO + cum. fall air T"
-
-#Pull all xreg coefficients and intercepts
-coef_WinterENSO<-as.numeric(arimaFit.ENSOcumT$coef["xreg1"])#extracts the xreg coefficient
-coef_cumMeanDailyT_OctNovDec<-as.numeric(arimaFit.ENSOcumT$coef["xreg2"])#extracts the xreg coefficient
-int<-as.numeric(arimaFit.ENSOcumT$coef["intercept"])#common intercept
-
-
-#Pull all AICc values
-AICc<-as.numeric(arimaFit.ENSOcumT$aicc)
-
-#Pull pdq values
-#Gets the (p,d,q) model fit where p is the autoregressive terms, d is the integrative, and q is the moving average
-pdq<-paste0(as.numeric(arimaFit.ENSOcumT$arma[1]),sep=",",
-            as.numeric(arimaFit.ENSOcumT$arma[6]),sep=",",
-            as.numeric(arimaFit.ENSOcumT$arma[2]))
-
-#Combine to make a dataframe of model output 
-TS_dataframe_2factormodels_IceIn<-data.frame(Response, Predictor, AICc,
-                                             int, coef_WinterENSO, coef_cumMeanDailyT_OctNovDec,
-                                             pdq)
-
-
-TS_data_iceout_table_IceIn<-bind_rows(TS_dataframe_IceIn,TS_dataframe_2factormodels_IceIn)
-
-TS_data_iceout_table_IceIn_hux <- 
-  hux(TS_data_iceout_table_IceIn) %>% 
-  arrange(AICc) %>%
-  add_colnames() %>% 
-  set_bold(row = 1, col = everywhere, value = TRUE) %>% 
-  set_all_borders(TRUE) 
-
-# theme_plain(TS_dataframe_hux) 
-# quick_html(TS_data_iceout_table_IceIn_hux, file = 'figures/MohonkWinter/IceIn_TSmodel_output.html')
-# quick_docx(TS_data_iceout_table_IceIn_hux, file = 'figures/MohonkWinter/IceIn_TSmodel_output.docx')
-
-
-
-MohonkWeatherSummary_winter_naFREE$fittedIceInDOY<-as.numeric(arimaFit.ENSOcumT$fitted)
-
-#Predicted values
-MohonkWeatherSummary_winter_naFREE %>%
-  select(fittedIceInDOY,ENSO_index_fall,cumMeanDailyT_OctNovDec)%>%
-  rename("Fall ENSO index"="ENSO_index_fall",
-         "Cumulative mean daily fall air T (C)"="cumMeanDailyT_OctNovDec")%>%
-  pivot_longer(-1, names_to="predictorID", values_to="predictorValue")%>%
-  ggplot(aes(y=fittedIceInDOY, x=predictorValue))+
-  geom_jitter(shape=21,size=2, color="black", fill="#81b29a", width=0.05)+
-  scale_fill_viridis_c(guide = "colourbar")+
-  theme_MS() + 
-  ylab("Predicted Ice In DOY (days since Oct 1)")+
-  theme(strip.placement = "outside", #strip placement on outside of x-axis labels and ticks
-        panel.spacing=grid::unit(0,"lines"), #squish panels together
-        strip.text.x = element_text(margin = margin(0,0,0.2,0, "cm")), #increase strip box size
-        axis.title.x=element_blank(),
-        panel.grid.minor=element_blank(), panel.grid.major=element_blank()) +
-  facet_wrap(.~predictorID, scales="free_x", switch="x")
-# ggsave("figures/MohonkWinter/IceIn_predictors_TSmodelout.png", width=5, height=3,units="in", dpi=300)
-
-#Raw values
-MohonkWeatherSummary_winter_naFREE %>%
-  select(IceInDayofYear_fed,ENSO_index_fall,cumMeanDailyT_OctNovDec)%>%
-  rename("Fall ENSO index"="ENSO_index_fall",
-         "Cumulative mean daily fall air T (C)"="cumMeanDailyT_OctNovDec")%>%
-  pivot_longer(-1, names_to="predictorID", values_to="predictorValue")%>%
-  ggplot(aes(y=IceInDayofYear_fed, x=predictorValue))+
-  geom_jitter(shape=21,size=2, color="black", fill="#81b29a", width=0.05)+
-  scale_fill_viridis_c(guide = "colourbar")+
-  theme_MS() + 
-  ylab("Ice In DOY (days since Oct 1)")+
-  theme(strip.placement = "outside", #strip placement on outside of x-axis labels and ticks
-        panel.spacing=grid::unit(0,"lines"), #squish panels together
-        strip.text.x = element_text(margin = margin(0,0,0.2,0, "cm")), #increase strip box size
-        axis.title.x=element_blank(),
-        panel.grid.minor=element_blank(), panel.grid.major=element_blank()) +
-  facet_wrap(.~predictorID, scales="free_x", switch="x")
-
-
-# Ice-on DOY linear model --------------------------------------------
-#I think we are violating the assumptions of normality? so better to go with the non-parametric TS models. 
-
-mr_2a<-lm(IceInDayofYear_fed~ENSO_index_fall,data=MohonkIceWeather)
-summary(mr_2a)
-plot(mr_2a)
-
-mr_2b<-lm(IceInDayofYear_fed~cumMeanDailyT_OctNovDec,data=MohonkIceWeather)
-summary(mr_2b)
-plot(mr_2b)
-
-mr_2c<-lm(IceInDayofYear_fed~cumMeanDailyT_OctNovDec+ENSO_index_fall,data=MohonkIceWeather)
-summary(mr_2c)
-plot(mr_2c)
+May_incr<-data.frame(value_pred=unlist(m1.dsig$incr), water_year=MayTempMeanPred$water_year) %>%
+  # left_join(.,MayTempMeanPred) %>%
+  mutate(Month="May")
+
+MayWx %>%
+  ggplot(aes(x=water_year, y=TempMean_degC))+
+  geom_point()+
+  geom_line(data=MayTempMeanPred, aes(x=water_year, y=fit)) +
+  geom_line(data=MayTempMeanPred, aes(x=water_year, y=upper), linetype="dashed") +
+  geom_line(data=MayTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
+  geom_line(data=May_incr, aes(x=water_year, y=value_pred), color="red", size=1.5)
+
+
+# Fitting GAMs for mean June temperature -------------------------------------------
+JuneWx<-MohonkDailyWeatherFull %>%
+  filter(Month=="6") %>%
+  group_by(water_year) %>%
+  dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
+  mutate(Month="June")
+
+
+### Model
+modJuneTempMean <- gamm(TempMean_degC ~ s(water_year, k=20),
+                        data = JuneWx,
+                        method = "REML")
+
+###Since we're concerned with the response, include "response" in type of predict()
+###Since we're concerned with the response, include "response" in type of predict()
+JuneTempMeanPred <- with(JuneWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
+                                                             max(water_year, na.rm=TRUE),
+                                                             length.out = 200)))
+JuneTempMeanPred <- cbind(JuneTempMeanPred, data.frame(predict(modJuneTempMean$gam, JuneTempMeanPred,
+                                                               type="response",
+                                                               se.fit = TRUE)))
+### this calculates on the link scale (i.e., log)
+JuneTempMeanPred <- transform(JuneTempMeanPred, upper = fit + (2 * se.fit),
+                              lower = fit - (2 * se.fit)) %>%
+  mutate(Month="June")
+
+
+m1.dsig <- signifD(JuneTempMeanPred$fit,
+                   d = JuneTempMeanPred$deriv,
+                   JuneTempMeanPred$upper,
+                   JuneTempMeanPred$lower)
+
+
+
+# Plots periods of change
+#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
+Term <- "water_year"
+m1.d <- Deriv(modJuneTempMean)
+
+m1.dci <- confint(m1.d, term = "water_year")
+m1.dsig <- signifD(JuneTempMeanPred$fit,
+                   d = m1.d[[Term]]$deriv,
+                   m1.dci[[Term]]$upper,
+                   m1.dci[[Term]]$lower)
+
+June_incr<-data.frame(value_pred=unlist(m1.dsig$incr), water_year=JuneTempMeanPred$water_year) %>%
+  # left_join(.,JuneTempMeanPred) %>%
+  mutate(Month="June")
+
+JuneWx %>%
+  ggplot(aes(x=water_year, y=TempMean_degC))+
+  geom_point()+
+  geom_line(data=JuneTempMeanPred, aes(x=water_year, y=fit)) +
+  geom_line(data=JuneTempMeanPred, aes(x=water_year, y=upper), linetype="dashed") +
+  geom_line(data=JuneTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
+  geom_line(data=June_incr, aes(x=water_year, y=value_pred), color="red", size=1.5)
+
+# Fitting GAMs for mean July temperature -------------------------------------------
+JulyWx<-MohonkDailyWeatherFull %>%
+  filter(Month=="7") %>%
+  group_by(water_year) %>%
+  dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
+  mutate(Month="July")
+
+
+### Model
+modJulyTempMean <- gamm(TempMean_degC ~ s(water_year, k=20),
+                        data = JulyWx,
+                        method = "REML")
+
+###Since we're concerned with the response, include "response" in type of predict()
+###Since we're concerned with the response, include "response" in type of predict()
+JulyTempMeanPred <- with(JulyWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
+                                                             max(water_year, na.rm=TRUE),
+                                                             length.out = 200)))
+JulyTempMeanPred <- cbind(JulyTempMeanPred, data.frame(predict(modJulyTempMean$gam, JulyTempMeanPred,
+                                                               type="response",
+                                                               se.fit = TRUE)))
+### this calculates on the link scale (i.e., log)
+JulyTempMeanPred <- transform(JulyTempMeanPred, upper = fit + (2 * se.fit),
+                              lower = fit - (2 * se.fit)) %>%
+  mutate(Month="July")
+
+
+m1.dsig <- signifD(JulyTempMeanPred$fit,
+                   d = JulyTempMeanPred$deriv,
+                   JulyTempMeanPred$upper,
+                   JulyTempMeanPred$lower)
+
+
+
+# Plots periods of change
+#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
+Term <- "water_year"
+m1.d <- Deriv(modJulyTempMean)
+
+m1.dci <- confint(m1.d, term = "water_year")
+m1.dsig <- signifD(JulyTempMeanPred$fit,
+                   d = m1.d[[Term]]$deriv,
+                   m1.dci[[Term]]$upper,
+                   m1.dci[[Term]]$lower)
+
+July_incr<-data.frame(value_pred=unlist(m1.dsig$incr), water_year=JulyTempMeanPred$water_year) %>%
+  # left_join(.,JulyTempMeanPred) %>%
+  mutate(Month="July")
+
+JulyWx %>%
+  ggplot(aes(x=water_year, y=TempMean_degC))+
+  geom_point()+
+  geom_line(data=JulyTempMeanPred, aes(x=water_year, y=fit)) +
+  geom_line(data=JulyTempMeanPred, aes(x=water_year, y=upper), linetype="dashed") +
+  geom_line(data=JulyTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
+  geom_line(data=July_incr, aes(x=water_year, y=value_pred), color="red", size=1.5)
+
+# Fitting GAMs for mean Aug temperature -------------------------------------------
+AugWx<-MohonkDailyWeatherFull %>%
+  filter(Month=="8") %>%
+  group_by(water_year) %>%
+  dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
+  mutate(Month="Aug")
+
+
+### Model
+modAugTempMean <- gamm(TempMean_degC ~ s(water_year, k=20),
+                       data = AugWx,
+                       method = "REML")
+
+###Since we're concerned with the response, include "response" in type of predict()
+###Since we're concerned with the response, include "response" in type of predict()
+AugTempMeanPred <- with(AugWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
+                                                           max(water_year, na.rm=TRUE),
+                                                           length.out = 200)))
+AugTempMeanPred <- cbind(AugTempMeanPred, data.frame(predict(modAugTempMean$gam, AugTempMeanPred,
+                                                             type="response",
+                                                             se.fit = TRUE)))
+### this calculates on the link scale (i.e., log)
+AugTempMeanPred <- transform(AugTempMeanPred, upper = fit + (2 * se.fit),
+                             lower = fit - (2 * se.fit)) %>%
+  mutate(Month="Aug")
+
+
+m1.dsig <- signifD(AugTempMeanPred$fit,
+                   d = AugTempMeanPred$deriv,
+                   AugTempMeanPred$upper,
+                   AugTempMeanPred$lower)
+
+
+
+# Plots periods of change
+#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
+Term <- "water_year"
+m1.d <- Deriv(modAugTempMean)
+
+m1.dci <- confint(m1.d, term = "water_year")
+m1.dsig <- signifD(AugTempMeanPred$fit,
+                   d = m1.d[[Term]]$deriv,
+                   m1.dci[[Term]]$upper,
+                   m1.dci[[Term]]$lower)
+
+Aug_incr<-data.frame(value_pred=unlist(m1.dsig$incr), water_year=AugTempMeanPred$water_year) %>%
+  # left_join(.,AugTempMeanPred) %>%
+  mutate(Month="Aug")
+
+AugWx %>%
+  ggplot(aes(x=water_year, y=TempMean_degC))+
+  geom_point()+
+  geom_line(data=AugTempMeanPred, aes(x=water_year, y=fit)) +
+  geom_line(data=AugTempMeanPred, aes(x=water_year, y=upper), linetype="dashed") +
+  geom_line(data=AugTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
+  geom_line(data=Aug_incr, aes(x=water_year, y=value_pred), color="red", size=1.5)
+
+# Fitting GAMs for mean Sept temperature -------------------------------------------
+SeptWx<-MohonkDailyWeatherFull %>%
+  filter(Month=="9") %>%
+  group_by(water_year) %>%
+  dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
+  mutate(Month="Sept")
+
+
+### Model
+modSeptTempMean <- gamm(TempMean_degC ~ s(water_year, k=20),
+                        data = SeptWx,
+                        method = "REML")
+
+###Since we're concerned with the response, include "response" in type of predict()
+###Since we're concerned with the response, include "response" in type of predict()
+SeptTempMeanPred <- with(SeptWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
+                                                             max(water_year, na.rm=TRUE),
+                                                             length.out = 200)))
+SeptTempMeanPred <- cbind(SeptTempMeanPred, data.frame(predict(modSeptTempMean$gam, SeptTempMeanPred,
+                                                               type="response",
+                                                               se.fit = TRUE)))
+### this calculates on the link scale (i.e., log)
+SeptTempMeanPred <- transform(SeptTempMeanPred, upper = fit + (2 * se.fit),
+                              lower = fit - (2 * se.fit)) %>%
+  mutate(Month="Sept")
+
+
+m1.dsig <- signifD(SeptTempMeanPred$fit,
+                   d = SeptTempMeanPred$deriv,
+                   SeptTempMeanPred$upper,
+                   SeptTempMeanPred$lower)
+
+
+
+# Plots periods of change
+#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
+Term <- "water_year"
+m1.d <- Deriv(modSeptTempMean)
+
+m1.dci <- confint(m1.d, term = "water_year")
+m1.dsig <- signifD(SeptTempMeanPred$fit,
+                   d = m1.d[[Term]]$deriv,
+                   m1.dci[[Term]]$upper,
+                   m1.dci[[Term]]$lower)
+
+Sept_incr<-data.frame(value_pred=unlist(m1.dsig$incr), water_year=SeptTempMeanPred$water_year) %>%
+  # left_join(.,SeptTempMeanPred) %>%
+  mutate(Month="Sept")
+
+SeptWx %>%
+  ggplot(aes(x=water_year, y=TempMean_degC))+
+  geom_point()+
+  geom_line(data=SeptTempMeanPred, aes(x=water_year, y=fit)) +
+  geom_line(data=SeptTempMeanPred, aes(x=water_year, y=upper), linetype="dashed") +
+  geom_line(data=SeptTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
+  geom_line(data=Sept_incr, aes(x=water_year, y=value_pred), color="red", size=1.5)
+
+# Fitting GAMs for mean Oct temperature -------------------------------------------
+OctWx<-MohonkDailyWeatherFull %>%
+  filter(Month=="10") %>%
+  group_by(water_year) %>%
+  dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
+  mutate(Month="Oct")
+
+
+### Model
+modOctTempMean <- gamm(TempMean_degC ~ s(water_year, k=20),
+                       data = OctWx,
+                       method = "REML")
+
+###Since we're concerned with the response, include "response" in type of predict()
+###Since we're concerned with the response, include "response" in type of predict()
+OctTempMeanPred <- with(OctWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
+                                                           max(water_year, na.rm=TRUE),
+                                                           length.out = 200)))
+OctTempMeanPred <- cbind(OctTempMeanPred, data.frame(predict(modOctTempMean$gam, OctTempMeanPred,
+                                                             type="response",
+                                                             se.fit = TRUE)))
+### this calculates on the link scale (i.e., log)
+OctTempMeanPred <- transform(OctTempMeanPred, upper = fit + (2 * se.fit),
+                             lower = fit - (2 * se.fit)) %>%
+  mutate(Month="Oct")
+
+
+m1.dsig <- signifD(OctTempMeanPred$fit,
+                   d = OctTempMeanPred$deriv,
+                   OctTempMeanPred$upper,
+                   OctTempMeanPred$lower)
+
+
+
+# Plots periods of change
+#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
+Term <- "water_year"
+m1.d <- Deriv(modOctTempMean)
+
+m1.dci <- confint(m1.d, term = "water_year")
+m1.dsig <- signifD(OctTempMeanPred$fit,
+                   d = m1.d[[Term]]$deriv,
+                   m1.dci[[Term]]$upper,
+                   m1.dci[[Term]]$lower)
+
+Oct_incr<-data.frame(value_pred=unlist(m1.dsig$incr), water_year=OctTempMeanPred$water_year) %>%
+  # left_join(.,OctTempMeanPred) %>%
+  mutate(Month="Oct")
+
+OctWx %>%
+  ggplot(aes(x=water_year, y=TempMean_degC))+
+  geom_point()+
+  geom_line(data=OctTempMeanPred, aes(x=water_year, y=fit)) +
+  geom_line(data=OctTempMeanPred, aes(x=water_year, y=upper), linetype="dashed") +
+  geom_line(data=OctTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
+  geom_line(data=Oct_incr, aes(x=water_year, y=value_pred), color="red", size=1.5)
+
+# Fitting GAMs for mean Nov temperature -------------------------------------------
+NovWx<-MohonkDailyWeatherFull %>%
+  filter(Month=="11") %>%
+  group_by(water_year) %>%
+  dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
+  mutate(Month="Nov")
+
+
+### Model
+modNovTempMean <- gamm(TempMean_degC ~ s(water_year, k=20),
+                       data = NovWx,
+                       method = "REML")
+
+###Since we're concerned with the response, include "response" in type of predict()
+###Since we're concerned with the response, include "response" in type of predict()
+NovTempMeanPred <- with(NovWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
+                                                           max(water_year, na.rm=TRUE),
+                                                           length.out = 200)))
+NovTempMeanPred <- cbind(NovTempMeanPred, data.frame(predict(modNovTempMean$gam, NovTempMeanPred,
+                                                             type="response",
+                                                             se.fit = TRUE)))
+### this calculates on the link scale (i.e., log)
+NovTempMeanPred <- transform(NovTempMeanPred, upper = fit + (2 * se.fit),
+                             lower = fit - (2 * se.fit)) %>%
+  mutate(Month="Nov")
+
+
+m1.dsig <- signifD(NovTempMeanPred$fit,
+                   d = NovTempMeanPred$deriv,
+                   NovTempMeanPred$upper,
+                   NovTempMeanPred$lower)
+
+
+
+# Plots periods of change
+#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
+Term <- "water_year"
+m1.d <- Deriv(modNovTempMean)
+
+m1.dci <- confint(m1.d, term = "water_year")
+m1.dsig <- signifD(NovTempMeanPred$fit,
+                   d = m1.d[[Term]]$deriv,
+                   m1.dci[[Term]]$upper,
+                   m1.dci[[Term]]$lower)
+
+Nov_incr<-data.frame(value_pred=unlist(m1.dsig$incr), water_year=NovTempMeanPred$water_year) %>%
+  # left_join(.,NovTempMeanPred) %>%
+  mutate(Month="Nov")
+
+NovWx %>%
+  ggplot(aes(x=water_year, y=TempMean_degC))+
+  geom_point()+
+  geom_line(data=NovTempMeanPred, aes(x=water_year, y=fit)) +
+  geom_line(data=NovTempMeanPred, aes(x=water_year, y=upper), linetype="dashed") +
+  geom_line(data=NovTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
+  geom_line(data=Nov_incr, aes(x=water_year, y=value_pred), color="red", size=1.5)
+
+# Fitting GAMs for mean Dec temperature -------------------------------------------
+DecWx<-MohonkDailyWeatherFull %>%
+  filter(Month=="12") %>%
+  group_by(water_year) %>%
+  dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
+  mutate(Month="Dec")
+
+
+### Model
+modDecTempMean <- gamm(TempMean_degC ~ s(water_year, k=20),
+                       data = DecWx,
+                       method = "REML")
+
+###Since we're concerned with the response, include "response" in type of predict()
+###Since we're concerned with the response, include "response" in type of predict()
+DecTempMeanPred <- with(DecWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
+                                                           max(water_year, na.rm=TRUE),
+                                                           length.out = 200)))
+DecTempMeanPred <- cbind(DecTempMeanPred, data.frame(predict(modDecTempMean$gam, DecTempMeanPred,
+                                                             type="response",
+                                                             se.fit = TRUE)))
+### this calculates on the link scale (i.e., log)
+DecTempMeanPred <- transform(DecTempMeanPred, upper = fit + (2 * se.fit),
+                             lower = fit - (2 * se.fit)) %>%
+  mutate(Month="Dec")
+
+
+m1.dsig <- signifD(DecTempMeanPred$fit,
+                   d = DecTempMeanPred$deriv,
+                   DecTempMeanPred$upper,
+                   DecTempMeanPred$lower)
+
+
+
+# Plots periods of change
+#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
+Term <- "water_year"
+m1.d <- Deriv(modDecTempMean)
+
+m1.dci <- confint(m1.d, term = "water_year")
+m1.dsig <- signifD(DecTempMeanPred$fit,
+                   d = m1.d[[Term]]$deriv,
+                   m1.dci[[Term]]$upper,
+                   m1.dci[[Term]]$lower)
+
+Dec_incr<-data.frame(value_pred=unlist(m1.dsig$incr), water_year=DecTempMeanPred$water_year) %>%
+  # left_join(.,DecTempMeanPred) %>%
+  mutate(Month="Dec")
+
+DecWx %>%
+  ggplot(aes(x=water_year, y=TempMean_degC))+
+  geom_point()+
+  geom_line(data=DecTempMeanPred, aes(x=water_year, y=fit)) +
+  geom_line(data=DecTempMeanPred, aes(x=water_year, y=upper), linetype="dashed") +
+  geom_line(data=DecTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
+  geom_line(data=Dec_incr, aes(x=water_year, y=value_pred), color="red", size=1.5)
+
+# >> Combine -----------------------------------------------------------------
+theme_MS <- function () {
+  theme_base(base_size=6) %+replace%
+    theme(
+      panel.background  = element_blank(),
+      plot.background = element_rect(fill="white", colour=NA, size=1.0),
+      plot.title=element_text(face="plain",hjust=0.5),
+      plot.subtitle = element_text(color="dimgrey", hjust=0, size=6),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      strip.background = element_blank(),
+      strip.text.y = element_text(size=6, angle=270),
+      strip.text.x = element_text(size=6, angle=45),
+      panel.spacing=grid::unit(0,"lines"),
+      axis.ticks.length = unit(0.1, "cm")
+    )
+}
+
+
+theme_set(theme_MS())
+
+# Combine...
+emp_df<-bind_rows(JanWx, FebWx, MarchWx, AprilWx,
+                  MayWx, JuneWx, JulyWx, AugWx, 
+                  SeptWx, OctWx, NovWx, DecWx)%>%
+  mutate(Month=factor(Month, 
+                      levels=c("Jan","Feb","March","April",
+                               "May","June","July","Aug",
+                               "Sept","Oct","Nov","Dec")))
+sim_df<-bind_rows(JanTempMeanPred,FebTempMeanPred,MarchTempMeanPred,
+                  AprilTempMeanPred,MayTempMeanPred,JuneTempMeanPred,
+                  JulyTempMeanPred,AugTempMeanPred,SeptTempMeanPred,
+                  OctTempMeanPred,NovTempMeanPred,DecTempMeanPred)%>%
+  mutate(Month=factor(Month, 
+                      levels=c("Jan","Feb","March","April",
+                               "May","June","July","Aug",
+                               "Sept","Oct","Nov","Dec")))
+incr_df<-bind_rows(Jan_incr, Feb_incr, March_incr, April_incr,
+                   May_incr, June_incr, July_incr, Aug_incr,
+                   Sept_incr, Oct_incr, Nov_incr, Dec_incr)%>%
+  mutate(Month=factor(Month, 
+                      levels=c("Jan","Feb","March","April",
+                               "May","June","July","Aug",
+                               "Sept","Oct","Nov","Dec")))
+
+
+library(ggh4x) #add minor breaks to x-axis
+
+emp_df %>%
+  ggplot(aes(x=water_year, y=TempMean_degC))+
+  geom_point(size=0.5, color="grey80", alpha=0.8)+
+  geom_line(data=sim_df, aes(x=water_year, y=fit)) +
+  geom_ribbon(data=sim_df,aes(ymin = (lower), ymax = (upper), x = water_year),
+              alpha = 0.2, inherit.aes = FALSE, fill="grey80") +
+  # geom_line(data=sim_df, aes(x=water_year, y=upper), linetype="dashed") +
+  # geom_line(data=sim_df, aes(x=water_year, y=lower), linetype="dashed") +
+  geom_line(data=incr_df, aes(x=water_year, y=value_pred), color="maroon") +
+  facet_wrap(~Month,ncol=12)+
+  scale_x_continuous(limit = c(1932, 2022),
+                     breaks = seq(1960, 2000, by = 40),
+                     minor_breaks = seq(1940, 2020, 20),
+                     guide = "axis_minor" # add minor ticks
+                     )+
+  theme(axis.text.x=element_text(angle=45, hjust=1),
+        strip.text.x = element_text(margin = margin(b = -0.9)),
+        plot.margin=unit(c(0,0,0,0), "lines"))+
+  labs(y="Air temperature (°C)",
+       x="Year")
+
+ggsave( 
+  "figures/FigS2.MonthlyTempTrends.jpg",
+  width = 4,
+  height = 1.6,
+  units = "in",
+  dpi = 600
+)
 
