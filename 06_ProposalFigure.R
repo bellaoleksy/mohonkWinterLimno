@@ -15,20 +15,20 @@ panelLetter.normal <- data.frame(
 
 
 theme_MS <- function () { 
-  ggthemes::theme_base(base_size=9) %+replace% 
+  ggthemes::theme_base(base_size=6) %+replace% 
     theme(
       panel.background  = element_blank(),
       plot.background = element_rect(fill="white", colour=NA, size=1.0),
       plot.title=element_text(face="plain",hjust=0.5),
-      plot.subtitle = element_text(color="dimgrey", hjust=0, size=9),
+      plot.subtitle = element_text(color="dimgrey", hjust=0, size=6),
       panel.grid.major = element_blank(),
       panel.grid.minor = element_blank(),
       strip.background = element_blank(),
-      strip.text.x = element_text(size=9),
-      axis.text.x = element_text(size=9, face="bold"),
-      axis.text.y = element_text(size=9, face="bold"),
-      axis.title.x = element_text(size=9, face="bold"),
-      axis.title.y = element_text(size=9, face="bold"),
+      strip.text.x = element_text(size=6),
+      axis.text.x = element_text(size=6, face="bold"),
+      axis.text.y = element_text(size=6, face="bold"),
+      axis.title.x = element_text(size=6, face="bold"),
+      axis.title.y = element_text(size=6, face="bold"),
       panel.spacing=grid::unit(0,"lines"),
       axis.ticks.length = unit(0.1, "cm")
     )
@@ -74,7 +74,7 @@ a<-AnnualData %>%
   geom_text(aes(fontface="bold"),
             x=75, y = 10,
             label = "r = -0.64",
-            size = 10/.pt)+
+            size = 6/.pt)+
   geom_smooth(method="lm",se=F,color="black",size=0.5)+
   labs(x="Ice out (day of year)",
        y="Length of mixed period (days)")+
@@ -119,8 +119,8 @@ a
 
 ggsave(
   "figures/ProposalFigure3.jpg",
-  width = 3,
-  height = 3,
+  width = 1.75,
+  height = 1.75,
   units = "in",
   dpi = 600
 )
