@@ -904,9 +904,15 @@ iceDuration_variability_sequential%>%filter(segment_length==20)%>%ggplot(.,aes(x
 #Plot segment sd with facet wrap by starting position
 #plot with points and slope together
 #13 seems to be the cutoff for having 5+ points
-iceDuration_variability_sequential%>%filter(segment_length==4)%>%ggplot(.,aes(x=segment_midpoint_year,y=sd_segment))+geom_point()+geom_line(aes(y=sensSlope_fit))+facet_wrap(vars(starting_index))
-iceDuration_variability_sequential%>%filter(segment_length==9)%>%ggplot(.,aes(x=segment_midpoint_year,y=sd_segment))+geom_point()+geom_line(aes(y=sensSlope_fit))+facet_wrap(vars(starting_index))
-iceDuration_variability_sequential%>%filter(segment_length==13)%>%ggplot(.,aes(x=segment_midpoint_year,y=sd_segment))+geom_point()+geom_line(aes(y=sensSlope_fit))+facet_wrap(vars(starting_index))
+(gg.seq4<-iceDuration_variability_sequential%>%filter(segment_length==4)%>%ggplot(.,aes(x=segment_midpoint_year,y=sd_segment))+geom_point()+geom_line(aes(y=sensSlope_fit))+facet_wrap(vars(starting_index))+theme_bw()+ylab("Duration sd (days)")+xlab("Year"))
+(gg.seq9<-iceDuration_variability_sequential%>%filter(segment_length==9)%>%ggplot(.,aes(x=segment_midpoint_year,y=sd_segment))+geom_point()+geom_line(aes(y=sensSlope_fit))+facet_wrap(vars(starting_index))+theme_bw()+ylab("Duration sd (days)")+xlab("Year"))
+(gg.seq13<-iceDuration_variability_sequential%>%filter(segment_length==13)%>%ggplot(.,aes(x=segment_midpoint_year,y=sd_segment))+geom_point()+geom_line(aes(y=sensSlope_fit))+facet_wrap(vars(starting_index))+theme_bw()+ylab("Duration sd (days)")+xlab("Year"))
+
+#Print out each of these
+ggsave(paste("figures/FigXSupplement_Sequential4years.jpg",sep=""), plot=gg.seq4, width=6, height=5,units="in", dpi=300)
+ggsave(paste("figures/FigXSupplement_Sequential9years.jpg",sep=""), plot=gg.seq9, width=6, height=5,units="in", dpi=300)
+ggsave(paste("figures/FigXSupplement_Sequential13years.jpg",sep=""), plot=gg.seq13, width=6, height=5,units="in", dpi=300)
+
 
 #Find the significant sens slopes
   #note, there are only 2
