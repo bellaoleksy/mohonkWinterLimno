@@ -1044,7 +1044,8 @@ IceOn_isotherm<-
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=isotherm_TempMax_degC_17_days_0_degC_WaterYear_date,
                                         y=IceInDayofYear_fed))+
-  labs(x=expression(Iso["max,"]["17day,"]["0°C"]),
+  labs(x="Fall isotherm date",
+    # x=expression(Iso["max,"]["17day,"]["0°C"]),
     # x="Isotherm Formula: TempMax in degC, 17 day window, 0 degC threshold",
        y="Ice-on date")+
   scale_y_continuous(breaks=labels_IceOnDayofYear_fed,labels=c("22-Nov","12-Dec","01-Jan","21-Jan","10-Feb"),limits=c(50,130))+
@@ -1110,7 +1111,7 @@ IceOn_CumuNov<-ggplot(pred_Nov, aes(x = cumMeanDailyT_Nov, y = fitted_Nov)) +
                 fontface="bold"))
 
 
-# ~~ FIGURE 2.  Ice On Predictors -----------------------------------------
+# ~~ FIGURE 2a.  Ice On Predictors -----------------------------------------
 
 
 
@@ -1118,9 +1119,9 @@ Row1a<-(IceOn_isotherm+IceOn_CumuNov)
 Row1a
 
 
-ggsave("figures/Figure2.GamPredictions_IceOn.png", plot=Row1a, width=8, height=4,units="in", dpi=300)
-
-ggsave("figures/Figure2.GamPredictions_IceOn.jpg", plot=Row1a, width=180, height=120,units="mm", dpi=300)
+# ggsave("figures/Figure2.GamPredictions_IceOn.png", plot=Row1a, width=8, height=4,units="in", dpi=300)
+# 
+# ggsave("figures/Figure2.GamPredictions_IceOn.jpg", plot=Row1a, width=180, height=120,units="mm", dpi=300)
 
 
 
@@ -1584,7 +1585,8 @@ IceOut_isotherm<-ggplot(pred_isotherm, aes(x = isotherm_TempMean_degC_29_days_4_
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=isotherm_TempMean_degC_29_days_4_degC_WaterYear_date,
                                         y=IceOutDayofYear))+
-  labs(x=expression(Iso["avg,"]["29day,"]["4°C"]),
+  labs(x="Spring isotherm date",
+    # x=expression(Iso["avg,"]["29day,"]["4°C"]),
     # x="Isotherm Formula: TempAvg in degC, 29 day window, 4 degC threshold",
        y="Ice-off date")+
   # scale_y_continuous(breaks = seq(70, 120, by = 10) )+
@@ -1714,19 +1716,19 @@ IceOut_IceIn<-ggplot(pred_IceIn, aes(x = IceInDayofYear_fed, y = fitted_IceIn)) 
 
 
 
-# ~~FIGURE 3  Ice Off Predictors --------------------------------------
+# ~~FIGURE 2b  Ice Off Predictors --------------------------------------
 
 
 Row2a<-(IceOut_isotherm+IceOut_FebT)/(IceOut_FebMarAprSnow+IceOut_IceIn)
 Row2a
 
 
-ggsave("figures/Figure3.GamPredictions_IceOff.png", plot=Row2a, width=8, height=5,units="in", dpi=600)
+# ggsave("figures/Figure3.GamPredictions_IceOff.png", plot=Row2a, width=8, height=5,units="in", dpi=600)
 
 
 
 
-# ~~ FIGURE 2-3 combined --------------------------------------------------
+# ~~ FIGURE 3 -- final export --------------------------------------------------
 
 
 Combined23 <-(IceOn_isotherm+IceOn_CumuNov+plot_spacer())/(IceOut_isotherm+IceOut_FebT+
