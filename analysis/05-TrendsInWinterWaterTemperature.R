@@ -532,12 +532,12 @@ label_round = 2, name = "Correlation Scale", label_alpha = T, hjust = 0.75) +
                    arrow = arrow(length = unit(6, "pt"), type = "open",ends = "both"),lineend="round",linejoin="mitre",curvature=0) + #edges for the covariances
         geom_nodes(data=combined_edge_labels,aes(shape="observed"), color = "black",fill="white",size = 22,shape=22) +
         geom_nodetext(data=combined_edge_labels,aes(label = node.labels),parse=TRUE,fontface = "bold",size=4) + 
-        geom_label(data=combined_edge_labels%>%filter(op%in%c("~","~~")&lhs!=rhs),aes(x = midpoint.x, y = midpoint.y, label = est,color=edge_color), label.size = NA,hjust = .5,vjust=.5,size=3.7,label.padding=unit(0.1,"lines")) +
+        geom_label(data=combined_edge_labels%>%filter(op%in%c("~","~~")&lhs!=rhs),aes(x = midpoint.x, y = midpoint.y, label = est), color="black",label.size = NA,hjust = .5,vjust=.5,size=3.7,label.padding=unit(0.1,"lines")) +
         scale_y_continuous(expand = c(.07,0.07)) +
         scale_x_continuous(expand = c(.04,0.04)) +
         scale_shape_manual(values = c(15,19),guide=F) +
         # scale_color_manual(values=c(rgb(75,174,76,maxColorValue = 255),rgb(203,84,80,maxColorValue = 255)))+
-         scale_color_manual(values=c("blue","red"))+
+        scale_color_manual(values=c("cyan","red"))+
         scale_size_discrete(range=c(0.15,1.5))+
         theme_blank()+ 
         theme(legend.position = "none",plot.margin = unit(c(0.1,0.1,0.1,0.1),"pt"),
