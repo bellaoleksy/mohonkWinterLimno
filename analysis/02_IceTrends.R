@@ -118,8 +118,14 @@ panelLetter.normal <- data.frame(
   hjustvar = c(-0.5) ,
   vjustvar = c(1.5))
 
-
-
+# Add isotherm variables to dataframe
+MohonkIceWeather <- MohonkIceWeather %>%
+  left_join(., Isotherm_WaterYear_dates_IceIn %>%
+              select(WaterYear,isotherm_TempMax_degC_17_days_0_degC_WaterYear_date),
+            by = c("Year"="WaterYear")) %>%
+  left_join(., Isotherm_WaterYear_dates_IceOut %>%
+              select(WaterYear,isotherm_TempMean_degC_29_days_4_degC_WaterYear_date),
+            by = c("Year"="WaterYear")) 
 
 # Correlations of winter predictor variables -------------------------------------------
 ## Here I am looking at the massive list of potential predictors of ice-in or ice-out and seeing which ones are highly correlated (>0.7)
@@ -172,7 +178,7 @@ IceDurationVars <- MohonkIce_top10 %>% filter(row=="LengthOfIceCover_days") %>% 
 
 
 #Make bar plot
-jpeg(filename = 'figures/FigureSX.top10_correlations.jpg',
+jpeg(filename = 'figures/FigureS4.top10_correlations.jpg',
     width = 6, height = 7, units = 'in', res = 300)
 
 MohonkIce_top10 %>%
@@ -182,7 +188,7 @@ MohonkIce_top10 %>%
                   ifelse(row=="IceOutDayofYear", "Ice-off",""))) %>%
   select(row, column, cor_abs) %>%
   mutate(column=
-           ifelse(column=="cumMeanDailyT_OctNovDec", "cumul. mean daily temp. Oct-Dec", 
+           ifelse(column=="cumMeanDailyT_OctNovDec", "cumul. mean daily temp. Oct-Dec",
                   ifelse(column=="cumMeanDailyT_Dec","cumul. mean daily temp. Dec",
                          ifelse(column=="cumMeanDailyT_Nov", "cumul. mean daily temp. Nov",
                                 ifelse(column=="cumMeanDailyT_SepOctNov", "cumul. mean daily temp. Sept-Nov",
@@ -201,7 +207,9 @@ MohonkIce_top10 %>%
                            ifelse(column=="maxSnowDepth_mm", "max. winter snow depth",
                            ifelse(column=="cumSnow_MarApr", "cumul. snow Mar-Apr",
                                   ifelse(column=="cumSnow_Mar", "cumul. snow Mar.",
-                                         ifelse(column=="cumMeanDailyT_Feb", "cumul. mean daily temp. Feb",""))))))))))))))))))))) %>%
+                                         ifelse(column=="cumMeanDailyT_Feb", "cumul. mean daily temp. Feb",
+                                         ifelse(column=="isotherm_TempMax_degC_17_days_0_degC_WaterYear_date", "Fall isotherm date",
+                                         ifelse(column=="isotherm_TempMean_degC_29_days_4_degC_WaterYear_date", "Spring isotherm date",""))))))))))))))))))))))) %>%
   mutate(name=paste(row, "-", column)) %>%
   ggplot(aes(x=cor_abs,y=fct_reorder(column, cor_abs, .desc = FALSE), fill=cor_abs))+
   geom_bar(stat="identity", width=0.75, color="black")+
@@ -803,13 +811,6 @@ ggsave(
 
 hist(MohonkIceWeather$IceInDayofYear_fed)
 
-MohonkIceWeather <- MohonkIceWeather %>%
-  left_join(., Isotherm_WaterYear_dates_IceIn %>%
-              select(WaterYear,isotherm_TempMax_degC_17_days_0_degC_WaterYear_date),
-            by = c("Year"="WaterYear")) %>%
-  left_join(., Isotherm_WaterYear_dates_IceOut %>%
-              select(WaterYear,isotherm_TempMean_degC_29_days_4_degC_WaterYear_date),
-            by = c("Year"="WaterYear")) 
 
 ### IceInDayofYear_fed~nDaysMeanBelowZero_OctNovDec
 modIceOn1 <- gam(IceInDayofYear_fed ~  s(nDaysMeanBelowZero_OctNovDec),
@@ -847,8 +848,8 @@ plot(modIceOn2,
      pages =1, all.terms=TRUE)
 
 
-### IceInDayofYear_fed~Sept + Oct + Nov + Dec
-modIceOn3 <- gam(IceInDayofYear_fed ~  s(cumMeanDailyT_Sep) + s(cumMeanDailyT_Oct) + s(cumMeanDailyT_Nov) + s(cumMeanDailyT_Dec),
+### IceInDayofYear_fed~Nov + Dec
+modIceOn3 <- gam(IceInDayofYear_fed ~  s(cumMeanDailyT_Nov) + s(cumMeanDailyT_Dec),
                  family=Gamma(link="log"),
                  data = MohonkIceWeather,
                  # correlation = corCAR1(form = ~ Year),
@@ -863,7 +864,7 @@ plot(modIceOn3,
 
 ### IceInDayofYear_fed~Nov + Dec
 ### Last model contains only Nov + Dec since individually Sep and Oct were not statistically significantly. 
-modIceOn4 <- gam(IceInDayofYear_fed ~  s(cumMeanDailyT_Nov) + s(cumMeanDailyT_Dec),
+modIceOn4 <- gam(IceInDayofYear_fed ~  s(cumMeanDailyT_Nov) + s(cumMeanDailyT_Dec) + s(NAO_index_Nov),
                  family=Gamma(link="log"),
                  data = MohonkIceWeather,
                  # correlation = corCAR1(form = ~ Year),
@@ -958,6 +959,13 @@ draw(modIceOn6,
      smooth_col="navyblue",
      resid_col="navyblue")
 
+
+modIceOn7 <- gam(IceInDayofYear_fed ~  s(isotherm_TempMax_degC_17_days_0_degC_WaterYear_date) + s(cumMeanDailyT_OctNov),
+                 family=Gamma(link="log"),
+                 data = MohonkIceWeather,
+                 # correlation = corCAR1(form = ~ Year),
+                 method = "REML")
+summary(modIceOn7)
 
 #How to compare the fits of multiple GAMs models? 
 #Would be worth digging into more but found this as a solution:
