@@ -901,12 +901,18 @@ iceDuration_variability_sequential%>%filter(segment_length==4)%>%ggplot(.,aes(x=
 iceDuration_variability_sequential%>%filter(segment_length==9)%>%ggplot(.,aes(x=segment_midpoint_year,y=sensSlope_fit,color=as.factor(starting_index)))+geom_line()
 iceDuration_variability_sequential%>%filter(segment_length==20)%>%ggplot(.,aes(x=segment_midpoint_year,y=sensSlope_fit,color=as.factor(starting_index)))+geom_line()
 
+#Make into 
+iceDuration_variability_sequential_4years<-left_join(iceDuration_variability_sequential%>%filter(segment_length==4),iceDuration_variability_sequential%>%filter(grouping_var==1,segment_length==4)%>%mutate(YearOfStart=segment_end_year+1)%>%dplyr::select(starting_index,YearOfStart),by="starting_index")  #%>%arrange(Min_segment_start_year,grouping_var)
+iceDuration_variability_sequential_9years<-left_join(iceDuration_variability_sequential%>%filter(segment_length==9),iceDuration_variability_sequential%>%filter(grouping_var==1,segment_length==9)%>%mutate(YearOfStart=segment_end_year+1)%>%dplyr::select(starting_index,YearOfStart),by="starting_index")  
+iceDuration_variability_sequential_13years<-left_join(iceDuration_variability_sequential%>%filter(segment_length==13),iceDuration_variability_sequential%>%filter(grouping_var==1,segment_length==13)%>%mutate(YearOfStart=segment_end_year+1)%>%dplyr::select(starting_index,YearOfStart),by="starting_index")  
+
+
 #Plot segment sd with facet wrap by starting position
 #plot with points and slope together
 #13 seems to be the cutoff for having 5+ points
-(gg.seq4<-iceDuration_variability_sequential%>%filter(segment_length==4)%>%ggplot(.,aes(x=segment_midpoint_year,y=sd_segment))+geom_point()+geom_line(aes(y=sensSlope_fit))+facet_wrap(vars(starting_index))+theme_bw()+ylab("Duration sd (days)")+xlab("Year"))
-(gg.seq9<-iceDuration_variability_sequential%>%filter(segment_length==9)%>%ggplot(.,aes(x=segment_midpoint_year,y=sd_segment))+geom_point()+geom_line(aes(y=sensSlope_fit))+facet_wrap(vars(starting_index))+theme_bw()+ylab("Duration sd (days)")+xlab("Year"))
-(gg.seq13<-iceDuration_variability_sequential%>%filter(segment_length==13)%>%ggplot(.,aes(x=segment_midpoint_year,y=sd_segment))+geom_point()+geom_line(aes(y=sensSlope_fit))+facet_wrap(vars(starting_index))+theme_bw()+ylab("Duration sd (days)")+xlab("Year"))
+(gg.seq4<-ggplot(iceDuration_variability_sequential_4years,aes(x=segment_midpoint_year,y=sd_segment))+geom_point()+geom_line(aes(y=sensSlope_fit))+facet_wrap(vars(YearOfStart))+theme_bw()+ylab("Duration sd (days)")+xlab("Year"))
+(gg.seq9<-ggplot(iceDuration_variability_sequential_9years,aes(x=segment_midpoint_year,y=sd_segment))+geom_point()+geom_line(aes(y=sensSlope_fit))+facet_wrap(vars(YearOfStart))+theme_bw()+ylab("Duration sd (days)")+xlab("Year"))
+(gg.seq13<-ggplot(iceDuration_variability_sequential_13years,aes(x=segment_midpoint_year,y=sd_segment))+geom_point()+geom_line(aes(y=sensSlope_fit))+facet_wrap(vars(YearOfStart))+theme_bw()+ylab("Duration sd (days)")+xlab("Year"))
 
 #Print out each of these
 ggsave(paste("figures/FigXSupplement_Sequential4years.jpg",sep=""), plot=gg.seq4, width=6, height=5,units="in", dpi=300)
