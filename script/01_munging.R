@@ -1363,15 +1363,14 @@ MohonkDailyWeather_monthly <- MohonkDailyWeatherFull %>%
   mutate(water_year_corrected = case_when(month == '9' ~ water_year + 1,
                          TRUE ~ water_year)) %>% #This is a little janky but we want to pretend that Sept is part of the same water year as the next month (Oct) for the purposes of summarizing the data below
   group_by(water_year, month_name) %>%
-  dplyr::summarize(
-    cumMeanDailyT = sum(TempMean_degC, na.rm = TRUE),
-    cumSnow = sum(Snow_mm, na.rm = TRUE),
-    cumRain = sum(Precip_mm, na.rm = TRUE),
+  dplyr::summarize( #I don't think it makes sense to remove NAs for sum? 
+    cumMeanDailyT = sum(TempMean_degC),
+    cumSnow = sum(Snow_mm),
+    cumRain = sum(Precip_mm),
     percPrecipRain = (cumRain / (cumRain + cumSnow)) *
       100,
-    nDaysMeanBelowZero = sum(TempMean_degC < 0, na.rm =
-                               TRUE),
-    nDaysMinBelowZero = sum(TempMin_degC < 0, na.rm = TRUE)
+    nDaysMeanBelowZero = sum(TempMean_degC < 0),
+    nDaysMinBelowZero = sum(TempMin_degC < 0)
   ) %>%
   #Convert dataframe from long to wide format
   pivot_wider(
