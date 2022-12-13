@@ -2388,7 +2388,7 @@ quick_docx(Climate.SensSlopeSummary_hux, file = 'figures/TableS1.SensSlopesClima
 
 
 
-# ~~ FIGURE S2.  Monthly temp.  trends  -----------------------------------
+# ~~ FIGURE S2.  MEAN Monthly temp.  trends  -----------------------------------
 
 
 
@@ -3756,7 +3756,6 @@ modNovTempMean <- gamm(TempMean_degC ~ s(water_year, k=20),
                        method = "REML")
 
 
-###Since we're concerned with the response, include "response" in type of predict()
 ###Since we're concerned with the response, include "response" in type of predict()
 NovTempMeanPred <- with(NovWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
                                                            max(water_year, na.rm=TRUE),
