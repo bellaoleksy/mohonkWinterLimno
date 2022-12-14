@@ -2394,7 +2394,7 @@ quick_docx(Climate.SensSlopeSummary_hux, file = 'figures/TableS1.SensSlopesClima
 
 # Fitting GAMs for mean Jan temperature -------------------------------------------
 JanWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="1") %>%
+  filter(water_year >= 1932 & Month=="1") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
   mutate(Month="Jan")
@@ -2454,7 +2454,7 @@ JanWx %>%
 
 # Fitting GAMs for mean Feb temperature -------------------------------------------
 FebWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="2") %>%
+  filter(water_year >= 1932 & Month=="2") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
   mutate(Month="Feb")
@@ -2511,7 +2511,7 @@ FebWx %>%
 
 # Fitting GAMs for mean March temperature -------------------------------------------
 MarchWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="3") %>%
+  filter(water_year >= 1932 & Month=="3") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
   mutate(Month="March")
@@ -2570,7 +2570,7 @@ MarchWx %>%
 
 # Fitting GAMs for mean April temperature -------------------------------------------
 AprilWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="4") %>%
+  filter(water_year >= 1932 & Month=="4") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
   mutate(Month="April")
@@ -2627,7 +2627,7 @@ AprilWx %>%
 
 # Fitting GAMs for mean May temperature -------------------------------------------
 MayWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="5") %>%
+  filter(water_year >= 1932 & Month=="5") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
   mutate(Month="May")
@@ -2685,7 +2685,7 @@ MayWx %>%
 
 # Fitting GAMs for mean June temperature -------------------------------------------
 JuneWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="6") %>%
+  filter(water_year >= 1932 & Month=="6") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
   mutate(Month="June")
@@ -2742,7 +2742,7 @@ JuneWx %>%
 
 # Fitting GAMs for mean July temperature -------------------------------------------
 JulyWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="7") %>%
+  filter(water_year >= 1932 & Month=="7") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
   mutate(Month="July")
@@ -2799,7 +2799,7 @@ JulyWx %>%
 
 # Fitting GAMs for mean Aug temperature -------------------------------------------
 AugWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="8") %>%
+  filter(water_year >= 1932 & Month=="8") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
   mutate(Month="Aug")
@@ -2856,7 +2856,7 @@ AugWx %>%
 
 # Fitting GAMs for mean Sept temperature -------------------------------------------
 SeptWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="9") %>%
+  filter(water_year >= 1932 & Month=="9") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
   mutate(Month="Sept")
@@ -2913,7 +2913,7 @@ SeptWx %>%
 
 # Fitting GAMs for mean Oct temperature -------------------------------------------
 OctWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="10") %>%
+  filter(water_year >= 1932 & Month=="10") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
   mutate(Month="Oct")
@@ -2970,7 +2970,7 @@ OctWx %>%
 
 # Fitting GAMs for mean Nov temperature -------------------------------------------
 NovWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="11") %>%
+  filter(water_year >= 1932 & Month=="11") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
   mutate(Month="Nov")
@@ -3027,7 +3027,7 @@ NovWx %>%
 
 # Fitting GAMs for mean Dec temperature -------------------------------------------
 DecWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="12") %>%
+  filter(water_year >= 1932 & Month=="12") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=mean(TempMean_degC, na.rm=TRUE)) %>%
   mutate(Month="Dec")
@@ -3168,7 +3168,7 @@ ggsave(
 
 # Fitting GAMs for mean Jan temperature -------------------------------------------
 JanWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="1") %>%
+  filter(water_year >= 1932 & Month=="1") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=sum(TempMean_degC)) %>%
   mutate(Month="Jan")
@@ -3228,7 +3228,7 @@ JanWx %>%
 
 # Fitting GAMs for mean Feb temperature -------------------------------------------
 FebWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="2") %>%
+  filter(water_year >= 1932 & Month=="2") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=sum(TempMean_degC)) %>%
   mutate(Month="Feb")
@@ -3285,7 +3285,7 @@ FebWx %>%
 
 # Fitting GAMs for mean March temperature -------------------------------------------
 MarchWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="3") %>%
+  filter(water_year >= 1932 & Month=="3") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=sum(TempMean_degC)) %>%
   mutate(Month="March")
@@ -3344,7 +3344,7 @@ MarchWx %>%
 
 # Fitting GAMs for mean April temperature -------------------------------------------
 AprilWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="4") %>%
+  filter(water_year >= 1932 & Month=="4") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=sum(TempMean_degC)) %>%
   mutate(Month="April")
@@ -3401,7 +3401,7 @@ AprilWx %>%
 
 # Fitting GAMs for mean May temperature -------------------------------------------
 MayWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="5") %>%
+  filter(water_year >= 1932 & Month=="5") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=sum(TempMean_degC)) %>%
   mutate(Month="May")
@@ -3459,7 +3459,7 @@ MayWx %>%
 
 # Fitting GAMs for mean June temperature -------------------------------------------
 JuneWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="6") %>%
+  filter(water_year >= 1932 & Month=="6") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=sum(TempMean_degC)) %>%
   mutate(Month="June")
@@ -3516,7 +3516,7 @@ JuneWx %>%
 
 # Fitting GAMs for mean July temperature -------------------------------------------
 JulyWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="7") %>%
+  filter(water_year >= 1932 & Month=="7") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=sum(TempMean_degC)) %>%
   mutate(Month="July")
@@ -3573,7 +3573,7 @@ JulyWx %>%
 
 # Fitting GAMs for mean Aug temperature -------------------------------------------
 AugWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="8") %>%
+  filter(water_year >= 1932 & Month=="8") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=sum(TempMean_degC)) %>%
   mutate(Month="Aug")
@@ -3630,7 +3630,7 @@ AugWx %>%
 
 # Fitting GAMs for mean Sept temperature -------------------------------------------
 SeptWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="9") %>%
+  filter(water_year >= 1932 & Month=="9") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=sum(TempMean_degC)) %>%
   mutate(Month="Sept")
@@ -3687,7 +3687,7 @@ SeptWx %>%
 
 # Fitting GAMs for mean Oct temperature -------------------------------------------
 OctWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="10") %>%
+  filter(water_year >= 1932 & Month=="10") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=sum(TempMean_degC)) %>%
   mutate(Month="Oct")
@@ -3744,7 +3744,7 @@ OctWx %>%
 
 # Fitting GAMs for mean Nov temperature -------------------------------------------
 NovWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="11") %>%
+  filter(water_year >= 1932 & Month=="11") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=sum(TempMean_degC)) %>%
   mutate(Month="Nov")
@@ -3799,9 +3799,12 @@ NovWx %>%
   geom_line(data=NovTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
   geom_line(data=Nov_incr, aes(x=water_year, y=value_pred), color="red", linewidth=1.5)
 
+
+
+
 # Fitting GAMs for mean Dec temperature -------------------------------------------
 DecWx<-MohonkDailyWeatherFull %>%
-  filter(Month=="12") %>%
+  filter(water_year >= 1932 & Month=="12") %>%
   group_by(water_year) %>%
   dplyr::summarize(TempMean_degC=sum(TempMean_degC)) %>%
   mutate(Month="Dec")
@@ -3912,7 +3915,7 @@ emp_df %>%
               alpha = 0.5, inherit.aes = FALSE, fill="black") +
   # geom_line(data=sim_df, aes(x=water_year, y=upper), linetype="dashed") +
   # geom_line(data=sim_df, aes(x=water_year, y=lower), linetype="dashed") +
-  geom_line(data=incr_df, aes(x=water_year, y=value_pred), color="maroon", linewidth=0.2) +
+  geom_line(data=incr_df, aes(x=water_year, y=value_pred), color="red", linewidth=0.2) +
   facet_wrap(~Month,ncol=12)+
   scale_x_continuous(limit = c(1932, 2022),
                      breaks = seq(1960, 2000, by = 40),
@@ -3920,6 +3923,7 @@ emp_df %>%
                      guide = "axis_minor" # add minor ticks
   )+
   theme(axis.text.x=element_text(angle=45, hjust=1),
+        axis.ticks=element_line(linewidth=0.2),
         strip.text.x = element_text(margin = margin(b = -0.9)),
         plot.margin=unit(c(0,0,0,0), "lines"))+
   labs(y="Cumulative mean daily\nair temperature (°C)",
