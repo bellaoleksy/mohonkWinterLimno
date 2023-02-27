@@ -37,6 +37,7 @@ if(!require(gratia)){install.packages("gratia")}
 if(!require(itsadug)){install.packages("itsadug")} 
 if(!require(visreg)){install.packages("visreg")} 
 if(!require(visreg)){install.packages("huxtable")} 
+if(!require(visreg)){install.packages("grafify")} 
 
 
 library(huxtable) #Pretty tables
@@ -68,6 +69,7 @@ library(gratia)
 library(itsadug)
 library(visreg)
 library(huxtable)
+library(grafify)
 
 
 # Set theme ---------------------------------------------------------------
@@ -635,73 +637,6 @@ MohonkIce.Predicted <- MohonkIce %>% dplyr::select(Year) %>%
 
 
 
-# ggplot() +
-#   geom_segment(
-#     data = MohonkIce,
-#     aes(
-#       x = Year,
-#       xend = Year,
-#       y = IceInDayofYear_fed,
-#       yend = IceOutDayofYear_fed,
-#       col = LengthOfIceCover_days
-#     )
-#   ) +
-#   # col="grey")+
-#   geom_point(
-#     data = MohonkIce,
-#     aes(x = Year, y = IceInDayofYear_fed, fill = LengthOfIceCover_days),
-#     shape = 21,
-#     color = "black",
-#     size = 1
-#   ) +
-#   geom_line(
-#     data = MohonkIce.Predicted,
-#     aes(x = Year, y = IceInDayofYear_fed_yhat),
-#     color = "black",
-#     lty = 1
-#   ) +
-#   geom_point(
-#     data = MohonkIce,
-#     aes(x = Year,
-#         y = IceOutDayofYear_fed,
-#         fill = LengthOfIceCover_days),
-#     shape = 21,
-#     color = "black",
-#     size = 1
-#   ) +
-#   scale_color_continuous(high = "green", low = "red",
-#                          name = "Ice duration\n(days)") +
-#   scale_fill_continuous(high = "green", low = "red",
-#                         name = "Ice duration\n(days)") +
-#   scale_y_continuous(lim = c(50, 200),
-#                      breaks = seq(50, 250, by = 25)) +
-#   scale_x_continuous(limit = c(1930, 2020),
-#                      breaks = seq(1930, 2020, by = 10)) +
-#   theme_MS() +
-#   theme(
-#     panel.grid.major = element_blank(),
-#     panel.grid.minor = element_blank(),
-#     axis.line = element_line(colour = "black"),
-#     panel.border = element_rect(
-#       fill = NA,
-#       colour = "black",
-#       size = 1
-#     ),
-#     axis.text.x = element_text(color = "black"),
-#     axis.text.y = element_text(color = "black"),
-#     axis.ticks = element_line(color = "black")
-#   ) +
-#   xlab("Year") +
-#   ylab("Days since Oct 1 (beginning of water-year)")
-# ggsave(
-#   "figures/Fig1.IcePhenology.jpg",
-#   width = 80,
-#   height = 60,
-#   units = "mm",
-#   dpi = 300
-# )
-# 
-
 
 #DCR requested date labels for the y-axis... so will have to do something crafty here. 
 
@@ -766,23 +701,22 @@ ggplot() +
     color = "black",
     size = 1
   ) +
-  scale_color_continuous(high = "cyan", low = "red",
-                         name = "Ice duration\n(days)") +
-  scale_fill_continuous(high = "cyan", low = "red",
-                        name = "Ice duration\n(days)") +
-  # scale_y_continuous(lim = c(50, 200),
-  #                    breaks = seq(50, 250, by = 25)) +
+  
+  scale_fill_grafify(palette = "blue_conti", name = "Ice duration\n(days)")+ #yellow_conti scheme
+  scale_color_grafify(palette = "blue_conti", name = "Ice duration\n(days)")+ #yellow_conti scheme
+  # scale_color_continuous(high = "cyan", low = "red",
+  #                        name = "Ice duration\n(days)") +
+  # scale_fill_continuous(high = "cyan", low = "red",
+  #                       name = "Ice duration\n(days)") +
   scale_x_continuous(limit = c(1932, 2022),
                      breaks = seq(1940, 2020, by = 20)) +
-  # scale_y_continuous(
-  #   trans = c("date", "reverse2")
-  # )
-  scale_y_date(date_breaks = "45 days", date_minor_breaks = "1 week",
+  scale_y_date(date_breaks = "30 days", date_minor_breaks = "15 days",
                date_labels = "%d-%b")+
   theme_MS() +
   theme(
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_line(color="grey90", size=0.5),
+    panel.grid.major.x = element_line(color="grey90", size=0.5),
+    panel.grid.minor.y = element_line(color="grey90", linetype="dashed", size=0.5),
     axis.line = element_line(colour = "black"),
     panel.border = element_rect(
       fill = NA,
