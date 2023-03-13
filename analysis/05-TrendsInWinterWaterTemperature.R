@@ -199,6 +199,8 @@ model4<-'MeanUnderIce_HypoTemp_degC_scale~LengthOfIceCover_days_scale+ IceOutDay
          MeanUnderIce_EpiTemp_degC_scale~~MeanUnderIce_HypoTemp_degC_scale
          
         '
+
+
       #MeanSchmidtStabilityUnderIce_Jdayspm2_scale~MeanDelta1_11mWaterDensity_kgperm3_scale
       #FinalVolumeWeightedMeanTemp_degC_scale~MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale+MeanDelta1_11mWaterDensity_kgperm3_scale
       #FinalHeatContent_MegaJoules_scale~MeanDelta1_11mWaterDensity_kgperm3_scale+LengthOfIceCover_days_scale+ IceOutDayofYear_fed_scale
@@ -582,6 +584,35 @@ label_round = 2, name = "Correlation Scale", label_alpha = T, hjust = 0.75) +
         )
 #*Export the four panel figure####        
 ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4panel.SEM,width=6,height=5,units="in", dpi=600)
+
+#Model 5 includes a more linear version####
+      model5<-'
+        IceInDayofYear_fed_scale~LengthFallMixedPeriod_days_scale
+        MeanUnderIce_HypoTemp_degC_scale~IceInDayofYear_fed_scale
+        MeanUnderIce_EpiTemp_degC_scale~IceInDayofYear_fed_scale
+        MeanDelta1_11mWaterDensity_kgperm3_scale ~ MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
+        TotalHeatContent_MegaJoules_scale~MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
+        IceOutDayofYear_fed_scale~MeanDelta1_11mWaterDensity_kgperm3_scale+MeanUnderIce_EpiTemp_degC_scale+MeanUnderIce_HypoTemp_degC_scale+TotalHeatContent_MegaJoules_scale
+         LengthSpringMixedPeriod_days_scale ~  IceOutDayofYear_fed_scale
         
-     
+         
+         MeanUnderIce_EpiTemp_degC_scale~~MeanUnderIce_HypoTemp_degC_scale
+         
+         
+        '              
+ 
+      #FinalHeatContent_MegaJoules_scale~MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
+      
+#**Fit the new temporal model####
+      #From lavaan package
+      fit<-sem(model5,data=AnnualUnderIceSummary_SEM,meanstructure=TRUE)
+      varTable(fit)
+      
+      #***view the results####
+      summary(fit, fit.measures = TRUE, standardized=T,rsquare=T)
+      
+      parameterEstimates(fit)
+      
+      #Visualize the SEM
+      semPlot::semPaths(fit,'std',layout='tree2',edge.label.cex = 1.3,label.cex=1.1,intercepts=FALSE,curve=TRUE)          
 

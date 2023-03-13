@@ -459,6 +459,10 @@ AnnualData$DeepWaterTemp_SpringMixed_degC <- NA
 #Use ice off (IceOutDayofYear) to +7 days
 AnnualData$SurfaceWaterTemp_SpringPostIce_degC <- NA
 AnnualData$DeepWaterTemp_SpringPostIce_degC <- NA
+#**Calculate the average for pre ice period for each year####
+#Use ice oon (IceOnDayofYear) to -7 days
+AnnualData$SurfaceWaterTemp_FallPreIce_degC <- NA
+AnnualData$DeepWaterTemp_FallPreIce_degC <- NA
 #**Calcuate the slope and intercept for the Delta Surface to Deep water during the spring mix period####
 AnnualData$DeltaSurfaceDeepTemp_slope_degCpDay <- NA
 AnnualData$DeltaSurfaceDeepTemp_intercept_degC <- NA
@@ -607,6 +611,15 @@ for (k in 2:length(AnnualData$Year)) {
   AnnualData$DeepWaterTemp_SpringPostIce_degC[k] <-
     mean(as.matrix(bottom101112.tmp[dayofyear.tmp > AnnualData$IceOutDayofYear[k] &
                                       dayofyear.tmp <= AnnualData$IceOutDayofYear[k] + 7, ]), na.rm = T)
+  
+  #**Calculate the average for spring mixed post ice period for each year####
+  #Use ice off (IceOutDayofYear) to +7 days
+  AnnualData$SurfaceWaterTemp_FallPreIce_degC[k] <-
+    mean(as.matrix(top123temp.tmp[dayofyear.tmp < AnnualData$IceInDayofYear[k] &
+                                    dayofyear.tmp >= AnnualData$IceInDayofYear[k] - 14, ]), na.rm = T)
+  AnnualData$DeepWaterTemp_FallPreIce_degC[k] <-
+    mean(as.matrix(bottom101112.tmp[dayofyear.tmp < AnnualData$IceInDayofYear[k] &
+                                      dayofyear.tmp >= AnnualData$IceInDayofYear[k] - 14, ]), na.rm = T)
   
   #**Caclulate the slope of the delta temperature for each year####
   #Use ice off (IceOutDayofYear) to StartOfStratification_Day
@@ -1326,15 +1339,18 @@ AnnualUnderIceSummary<-DailyInterpol_winter%>%group_by(wateryear)%>%filter(Daily
         print(n=Inf)
 
 #Calculate/pull the day of the onset of stratification and merge with Annual summary####
-AnnualUnderIceSummary<-left_join(AnnualUnderIceSummary,AnnualData%>%dplyr::select(Year,StartOfStratification_Day)%>%
+AnnualUnderIceSummary<-left_join(AnnualUnderIceSummary,AnnualData%>%dplyr::select(Year,StartOfStratification_Day,EndOfStratification_Day,SurfaceWaterTemp_FallPreIce_degC)%>%
                               mutate(StartOfStratification_Day=ifelse(Year==2022,131,StartOfStratification_Day), #2022 is not calculated
                                 StartOfStratification_Day=ifelse(Year==2020,NA,StartOfStratification_Day))%>% #2020 should be NA because of missing data
-                              mutate(DateOfStratification=as.Date(StartOfStratification_Day,origin=paste(Year-1,"-12-31",sep="")))%>%
+                              mutate(DateOfStratification=as.Date(StartOfStratification_Day,origin=paste(Year-1,"-12-31",sep="")),
+                                     DateOfEndStratification=as.Date(EndOfStratification_Day,origin=paste(Year-1,"-12-31",sep="")))%>%
                               rename(wateryear=Year),
                       by="wateryear")%>%
-                      mutate(StartOfStratification_HydroDay=hydro.day(DateOfStratification))%>% #Calculate hydro day for start of spring stratification
+                      mutate(StartOfStratification_HydroDay=hydro.day(DateOfStratification),
+                             EndOfStratification_HydroDay=hydro.day(DateOfEndStratification))%>% #Calculate hydro day for start of spring stratification
                       left_join(.,MohonkIce%>%rename(wateryear=Year)%>%dplyr::select(wateryear,LengthOfIceCover_days,IceInDayofYear_fed,IceOutDayofYear_fed),by="wateryear")%>% #get ice phenology stats back in
-                      mutate(LengthSpringMixedPeriod_days=StartOfStratification_HydroDay-IceOutDayofYear_fed) #calculate length of mixed period
+                      mutate(LengthSpringMixedPeriod_days=StartOfStratification_HydroDay-IceOutDayofYear_fed, #calculate length of mixed period in spring
+                             LengthFallMixedPeriod_days=ifelse(wateryear==1999,IceInDayofYear_fed-(EndOfStratification_HydroDay-365),IceInDayofYear_fed-EndOfStratification_HydroDay)) #calculate length of mixed period in fall (in 1999, it was 7 days before the start of the wateryear so catch that)
 
 
 #Graph various facets of under ice vs. year after removing bad with not enough data years####
