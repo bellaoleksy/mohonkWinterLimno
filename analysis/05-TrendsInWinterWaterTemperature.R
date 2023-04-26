@@ -587,21 +587,23 @@ ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4
 
 #Model 5 includes a more linear version####
       model5<-'
-        IceInDayofYear_fed_scale~LengthFallMixedPeriod_days_scale
+        
+        IceInDayofYear_fed_scale~EndOfStratification_HydroDay_scale
         MeanUnderIce_HypoTemp_degC_scale~IceInDayofYear_fed_scale
         MeanUnderIce_EpiTemp_degC_scale~IceInDayofYear_fed_scale
         MeanDelta1_11mWaterDensity_kgperm3_scale ~ MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
-        TotalHeatContent_MegaJoules_scale~MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
-        IceOutDayofYear_fed_scale~MeanDelta1_11mWaterDensity_kgperm3_scale+MeanUnderIce_EpiTemp_degC_scale+MeanUnderIce_HypoTemp_degC_scale+TotalHeatContent_MegaJoules_scale
-         LengthSpringMixedPeriod_days_scale ~  IceOutDayofYear_fed_scale
+        MeanHeatContent_MegaJoules_scale~MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
+        IceOutDayofYear_fed_scale~MeanDelta1_11mWaterDensity_kgperm3_scale+MeanUnderIce_EpiTemp_degC_scale+MeanUnderIce_HypoTemp_degC_scale+MeanHeatContent_MegaJoules_scale
+        StartOfStratification_HydroDay_scale ~  IceOutDayofYear_fed_scale
         
-         
-         MeanUnderIce_EpiTemp_degC_scale~~MeanUnderIce_HypoTemp_degC_scale
+        MeanUnderIce_EpiTemp_degC_scale~~MeanUnderIce_HypoTemp_degC_scale
          
          
         '              
- 
+      #IceInDayofYear_fed_scale~LengthFallMixedPeriod_days_scale
+      # LengthSpringMixedPeriod_days_scale ~  IceOutDayofYear_fed_scale
       #FinalHeatContent_MegaJoules_scale~MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
+      #LengthFallMixedPeriod_days_scale~~EndOfStratification_HydroDay_scale
       
 #**Fit the new temporal model####
       #From lavaan package
@@ -616,3 +618,41 @@ ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4
       #Visualize the SEM
       semPlot::semPaths(fit,'std',layout='tree2',edge.label.cex = 1.3,label.cex=1.1,intercepts=FALSE,curve=TRUE)          
 
+#Model 6 includes a more linear version with latent variables####
+      model6<-'
+       
+        FALLMIX=~IceInDayofYear_fed_scale+EndOfStratification_HydroDay_scale
+        MeanUnderIce_HypoTemp_degC_scale~FALLMIX
+        MeanUnderIce_EpiTemp_degC_scale~FALLMIX
+        MeanDelta1_11mWaterDensity_kgperm3_scale ~ MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
+        TotalHeatContent_MegaJoules_scale~MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
+        IceOutDayofYear_fed_scale~MeanDelta1_11mWaterDensity_kgperm3_scale+MeanUnderIce_EpiTemp_degC_scale+MeanUnderIce_HypoTemp_degC_scale+TotalHeatContent_MegaJoules_scale
+        
+         MeanUnderIce_EpiTemp_degC_scale~~MeanUnderIce_HypoTemp_degC_scale
+         
+         
+        '              
+      
+      #FinalHeatContent_MegaJoules_scale~MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
+      
+      #**Fit the new temporal model####
+      #From lavaan package
+      fit<-sem(model6,data=AnnualUnderIceSummary_SEM,meanstructure=TRUE)
+      varTable(fit)
+      
+      #***view the results####
+      summary(fit, fit.measures = TRUE, standardized=T,rsquare=T)
+      
+      parameterEstimates(fit)
+      
+      #Visualize the SEM
+      semPlot::semPaths(fit,'std',layout='tree2',edge.label.cex = 1.3,label.cex=1.1,intercepts=FALSE,curve=TRUE)          
+   
+      plot(AnnualUnderIceSummary_SEM$LengthFallMixedPeriod_days~AnnualUnderIceSummary_SEM$EndOfStratification_HydroDay)
+      plot(AnnualUnderIceSummary_SEM$LengthFallMixedPeriod_days~AnnualUnderIceSummary_SEM$IceInDayofYear_fed)
+      
+      plot(AnnualUnderIceSummary_SEM$LengthSpringMixedPeriod_days~AnnualUnderIceSummary_SEM$IceOutDayofYear_fed)
+      
+      plot(AnnualUnderIceSummary_SEM$IceInDayofYear_fed~AnnualUnderIceSummary_SEM$IceOutDayofYear_fed)
+      cor.test(AnnualUnderIceSummary_SEM$IceInDayofYear_fed,AnnualUnderIceSummary_SEM$IceOutDayofYear_fed)
+      
