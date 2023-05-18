@@ -656,3 +656,69 @@ ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4
       plot(AnnualUnderIceSummary_SEM$IceInDayofYear_fed~AnnualUnderIceSummary_SEM$IceOutDayofYear_fed)
       cor.test(AnnualUnderIceSummary_SEM$IceInDayofYear_fed,AnnualUnderIceSummary_SEM$IceOutDayofYear_fed)
       
+      
+      #Model 7 includes a more linear version####
+      model7<-'
+        
+        MeanUnderIce_HypoTemp_degC_scale~IceInDayofYear_fed_scale
+        MeanUnderIce_EpiTemp_degC_scale~IceInDayofYear_fed_scale
+        MeanDelta1_11mWaterDensity_kgperm3_scale ~ MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
+        MeanHeatContent_MegaJoules_scale~MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale+ MeanDelta1_11mWaterDensity_kgperm3_scale
+        IceOutDayofYear_fed_scale~MeanDelta1_11mWaterDensity_kgperm3_scale+MeanUnderIce_EpiTemp_degC_scale+MeanUnderIce_HypoTemp_degC_scale+MeanHeatContent_MegaJoules_scale
+        LengthSpringMixedPeriod_days_scale ~~  IceOutDayofYear_fed_scale
+       
+        LengthFallMixedPeriod_days_scale~~IceInDayofYear_fed_scale
+        MeanUnderIce_EpiTemp_degC_scale~~MeanUnderIce_HypoTemp_degC_scale
+        LengthFallMixedPeriod_days_scale~~0*LengthSpringMixedPeriod_days_scale
+        LengthFallMixedPeriod_days_scale~~0*MeanHeatContent_MegaJoules_scale
+         
+         
+        '    
+      #IceOutDayofYear_fed_scale~MeanDelta1_11mWaterDensity_kgperm3_scale+MeanUnderIce_EpiTemp_degC_scale+MeanUnderIce_HypoTemp_degC_scale+MeanHeatContent_MegaJoules_scale
+      # LengthSpringMixedPeriod_days_scale ~  IceOutDayofYear_fed_scale
+      #StartOfStratification_HydroDay_scale~LengthSpringMixedPeriod_days_scale
+      #StartOfStratification_HydroDay_scale~IceOutDayofYear_fed_scale
+      #StartOfStratification_HydroDay_scale~~LengthSpringMixedPeriod_days_scale
+      #IceInDayofYear_fed_scale~LengthFallMixedPeriod_days_scale
+      # LengthSpringMixedPeriod_days_scale ~  IceOutDayofYear_fed_scale
+      #FinalHeatContent_MegaJoules_scale~MeanUnderIce_HypoTemp_degC_scale + MeanUnderIce_EpiTemp_degC_scale
+      #LengthFallMixedPeriod_days_scale~~EndOfStratification_HydroDay_scale
+      
+      #**Fit the new temporal model####
+      #From lavaan package
+      fit<-sem(model7,data=AnnualUnderIceSummary_SEM,meanstructure=TRUE)
+      varTable(fit)
+      
+      #***view the results####
+      summary(fit, fit.measures = TRUE, standardized=T,rsquare=T)
+      
+      parameterEstimates(fit)
+      
+      #Visualize the SEM
+      semPlot::semPaths(fit,'std',layout='spring',edge.label.cex = 1.3,label.cex=1.1,intercepts=FALSE,curve=TRUE)          
+      
+      #Look at all the fall inter-comparisons####
+      ggplot(data=AnnualUnderIceSummary_SEM,aes(x=LengthFallMixedPeriod_days_scale,y=EndOfStratification_HydroDay_scale))+geom_point()
+      ggplot(data=AnnualUnderIceSummary_SEM,aes(x=LengthFallMixedPeriod_days_scale,y=IceInDayofYear_fed_scale))+geom_point()
+      ggplot(data=AnnualUnderIceSummary_SEM,aes(x=LengthFallMixedPeriod_days,y=IceInDayofYear_fed))+geom_point()
+      ggplot(data=AnnualUnderIceSummary_SEM,aes(x=EndOfStratification_HydroDay_scale,y=IceInDayofYear_fed_scale))+geom_point()
+      
+      #Fall mixing and ice####
+      ggplot(data=AnnualUnderIceSummary_SEM,aes(y=LengthFallMixedPeriod_days,x=IceInDayofYear_fed))+geom_point()
+      
+      #Under ice dynamics####
+      ggplot(data=AnnualUnderIceSummary_SEM,aes(x=IceInDayofYear_fed,y=MeanUnderIce_HypoTemp_degC))+geom_point()
+      ggplot(data=AnnualUnderIceSummary_SEM,aes(x=IceInDayofYear_fed,y=MeanUnderIce_EpiTemp_degC))+geom_point()
+      ggplot(data=AnnualUnderIceSummary_SEM,aes(x=IceInDayofYear_fed,y=MeanDelta1_11mWaterDensity_kgperm3))+geom_point()
+      ggplot(data=AnnualUnderIceSummary_SEM,aes(x=MeanUnderIce_EpiTemp_degC,y=MeanDelta1_11mWaterDensity_kgperm3))+geom_point()
+      ggplot(data=AnnualUnderIceSummary_SEM,aes(x=MeanUnderIce_HypoTemp_degC,y=MeanDelta1_11mWaterDensity_kgperm3))+geom_point()
+      cor.test(AnnualUnderIceSummary_SEM$MeanUnderIce_EpiTemp_degC,AnnualUnderIceSummary_SEM$MeanDelta1_11mWaterDensity_kgperm3)
+      
+      #Under water affecting ice off####
+      ggplot(data=AnnualUnderIceSummary_SEM,aes(x=MeanUnderIce_HypoTemp_degC,y=IceOutDayofYear_fed))+geom_point()
+      cor.test(AnnualUnderIceSummary_SEM$MeanUnderIce_HypoTemp_degC,AnnualUnderIceSummary_SEM$IceOutDayofYear_fed)
+      
+      #Ice off and spring mixing####
+      ggplot(data=AnnualUnderIceSummary_SEM,aes(x=IceOutDayofYear_fed,y=LengthSpringMixedPeriod_days))+geom_point()
+      cor.test(AnnualUnderIceSummary_SEM$IceOutDayofYear_fed,AnnualUnderIceSummary_SEM$LengthSpringMixedPeriod_days)
+      
