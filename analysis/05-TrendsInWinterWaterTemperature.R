@@ -954,10 +954,10 @@ ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4
 
 #################################################################################################      
  #STOPPED HERE - COPIED CODE FROM Line 264 - Create partial residual plots for the following:####
-      #ice in vs. Length of fall mix (y vs. x) - this is a covariance so figure out how to do that
+      #ice in vs. Length of fall mix (y vs. x) - this is a covariance  DONE!!
       #Hypo temp vs. Ice in (y vs. x) - regression residual
       #Delta density vs. hypo temp (y vs. x) - regression residual
-      #Length of spring mix vs. ice off (y vs. x) - this is a covariance so figure out how to do that
+      #Length of spring mix vs. ice off (y vs. x) - this is a covariance so do in the same way as above
       #Partial residual plots for variables of interest####
       #*https://en.wikipedia.org/wiki/Partial_residual_plot
       #*Calculate the resiudals for the variable using the equation
@@ -965,6 +965,31 @@ ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4
       #*use Beta*x for the CCPR - component and compenent plus residual showing where the fitted line would lie
       #***Plot the partial residuals for the top variable for Length of mixing####
       #****Create labels and breaks in the right spots to back transform####
+
+      #MS partial figure: Ice in with length of fall mix####
+      #For covariance
+      labels_lengthfallmixed<-c(50,75,100)
+      breaks_lengthfallmixed<-(labels_lengthfallmixed-mean(AnnualUnderIceSummary_SEM$LengthFallMixedPeriod_days,na.rm=TRUE))/sd(AnnualUnderIceSummary_SEM$LengthFallMixedPeriod_days,na.rm=TRUE)
+      
+      labels_IceInDayofYear_fed<-c(76,93,107,124)
+      breaks_IceInDayofYear_fed<-(labels_IceInDayofYear_fed-mean(AnnualUnderIceSummary_SEM$IceInDayofYear_fed,na.rm=TRUE))/sd(AnnualUnderIceSummary_SEM$IceInDayofYear_fed,na.rm=TRUE)
+      limits_IceInDayofYear_fed_scale<-(c(70,124)-mean(AnnualUnderIceSummary_SEM$IceInDayofYear_fed,na.rm=TRUE))/sd(AnnualUnderIceSummary_SEM$IceInDayofYear_fed,na.rm=TRUE)
+      
+      ggplot(data=AnnualUnderIceSummary_SEM,aes(x=LengthFallMixedPeriod_days,y=IceInDayofYear_fed))+
+        geom_point()
+      
+      (gg.covariance.iceInvsFallMixed<-ggplot(data=AnnualUnderIceSummary_SEM,aes(x=LengthFallMixedPeriod_days_scale,y=IceInDayofYear_fed_scale))+
+                                      geom_point()+
+                                      #geom_line(aes(y=LengthFallMixedPeriod_days_scale*0.836))+
+                                      ylab("Ice on date")+
+                                      xlab("Fall mixed period (d)")+
+                                      theme_bw()+
+                                      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.text.y = element_text(angle = 90, hjust=0.5))+
+                                      #Can modify to actual day here... but is better to get more evenly spaced numbers and then figure out the z-score of those numbers for the breaks
+                                      scale_x_continuous(breaks=breaks_lengthfallmixed,labels=labels_lengthfallmixed)+
+                                      scale_y_continuous(breaks=breaks_IceInDayofYear_fed,labels=c("15-Dec","01-Jan","15-Jan","01-Feb"),limits=limits_IceInDayofYear_fed_scale) #,limits=c(70,139)
+      )                             
+      
       labels_lengthspringmixed<-c(10,20,30,40,50)
       breaks_lengthspringmixed<-(labels_lengthspringmixed-mean(AnnualUnderIceSummary_SEM$LengthSpringMixedPeriod_days,na.rm=TRUE))/sd(AnnualUnderIceSummary_SEM$LengthSpringMixedPeriod_days,na.rm=TRUE)
       
@@ -985,4 +1010,13 @@ ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4
           scale_x_continuous(breaks=breaks_IceOutDayofYear_fed,labels=c("15-Mar","01-Apr","15-Apr"),limits=limits_IceOutDayofYear_fed)
       )
       
+      
+      #Alternative arrangement
+      #****If we go with this one, modify arrow locations, increase size of the nodes****####
+      (Fig5_update<-plot_grid(gg.networkplot,
+                              plot_grid(gg.covariance.iceInvsFallMixed,gg.partialResid.epiTempVsWaterDensity,gg.partialResid.iceOutVsSpringMixed,gg.covariance.iceInvsFallMixed,
+                                        ncol=4,nrow=1,labels=c("b","c","d","e"),label_size=11,label_x=c(0.25,0.26,0.26,0.26),hjust=0,label_y=0.98)
+                              ,ncol=1,nrow=2,labels=c("a",""),label_size=11,label_x=c(0.05),hjust=0,label_y=0.98,rel_heights = c(0.65,0.5)))
+      
+      ggsave("figures/Figure5.SEMplot5panelsPartialResids_update.jpg", plot=Fig5_update, width=7.4, height=5.6,units="in", dpi=300)      
       
