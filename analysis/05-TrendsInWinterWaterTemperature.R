@@ -775,8 +775,8 @@ ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4
           p.code     = ifelse(pvalue<.05,"p < .05","p > .05"),
           shape      = "observed",
 
-          node.labels=case_when(name=="MeanUnderIce_HypoTemp_degC_scale" ~ as.character(expression(Hypo~degree*C)),
-                                name=="MeanUnderIce_EpiTemp_degC_scale" ~ as.character(expression(Epi~degree*C)),
+          node.labels=case_when(name=="MeanUnderIce_HypoTemp_degC_scale" ~ as.character(expression(Deep*degree*C)),
+                                name=="MeanUnderIce_EpiTemp_degC_scale" ~ as.character(expression(Shal*degree*C)),
                                 name=="MeanDelta1_11mWaterDensity_kgperm3_scale" ~ as.character(expression(paste("Dens ",Delta))),
                                 name=="LengthSpringMixedPeriod_days_scale" ~ as.character(expression(paste("Spr Mix"))),
                                 name=="LengthOfIceCover_days_scale" ~ as.character(expression(paste("Ice Dur"))),
@@ -1028,7 +1028,7 @@ ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4
           geom_point()+
           geom_line(aes(y=(IceInDayofYear_fed_scale*-0.426)+0.103))+
           xlab("Ice-on date")+
-          ylab(bquote(Under~ice~hypo.~(degree*C)))+
+          ylab(bquote(Under~ice~deep~(degree*C)))+
           theme_bw()+
           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.text.y = element_text(angle = 90, hjust=0.5))+
           #Can modify to actual day here... but is better to get more evenly spaced numbers and then figure out the z-score of those numbers for the breaks
@@ -1054,7 +1054,7 @@ ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4
           ggplot(.,aes(y=(MeanDelta1_11mWaterDensity_kgperm3_scale_Resids-0.874*MeanUnderIce_HypoTemp_degC_scale),x=MeanUnderIce_HypoTemp_degC_scale))+
           geom_point()+
           geom_line(aes(y=(MeanUnderIce_HypoTemp_degC_scale*-0.874)+0.005))+
-          xlab(bquote(Under~ice~hypo.~(degree*C)))+
+          xlab(bquote(Under~ice~deep~(degree*C)))+
           ylab(bquote(Density~Delta~(kg~m^-3)))+
           theme_bw()+
           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.text.y = element_text(angle = 90, hjust=0.5))+
