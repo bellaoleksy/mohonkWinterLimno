@@ -8,6 +8,7 @@ if(!require(patchwork)){install.packages("patchwork")}
 if(!require(forecast)){install.packages("forecast")}
 if(!require(corrplot)){install.packages("corrplot")}
 if(!require(MTS)){install.packages("MTS")}
+if(!require(ggpubr)){install.packages("ggpubr")}
 
 #Try using zoo package
 library(zoo)
@@ -15,6 +16,7 @@ library(patchwork) #laying out multipanel plots with the same size
 library(forecast)
 library(corrplot)
 library(MTS)
+library(ggpubr)
 
 #consecutive ensemble analysis######
 
@@ -92,7 +94,9 @@ variability_sequential_fits<-
 
 #Graph the median for each window size vs. the window size####
 ggplot(data=variability_sequential_fits%>%ungroup()%>%group_by(segment_length)%>%summarize(median_iceIn_sensSlope_slope=median(iceIn_sensSlope_slope,na.rm=TRUE)),aes(x=segment_length,y=median_iceIn_sensSlope_slope))+geom_point()+geom_hline(yintercept=median(variability_sequential_fits$iceIn_sensSlope_slope,na.rm=TRUE))
+
 ggplot(data=variability_sequential_fits%>%ungroup()%>%group_by(segment_length)%>%summarize(median_iceOut_sensSlope_slope=median(iceOut_sensSlope_slope,na.rm=TRUE)),aes(x=segment_length,y=median_iceOut_sensSlope_slope))+geom_point()+geom_hline(yintercept=median(variability_sequential_fits$iceOut_sensSlope_slope,na.rm=TRUE))
+
 ggplot(data=variability_sequential_fits%>%ungroup()%>%group_by(segment_length)%>%summarize(median_duration_sensSlope_slope=median(duration_sensSlope_slope,na.rm=TRUE)),aes(x=segment_length,y=median_duration_sensSlope_slope))+geom_point()+geom_hline(yintercept=median(variability_sequential_fits$duration_sensSlope_slope,na.rm=TRUE))
 
 
@@ -130,28 +134,113 @@ sensSlopeFitsInterpolated_sequential<-sensSlopeFitsInterpolated_sequential%>%
             iceOut_q95_sensSlope_fit=quantile(iceOut_sensSlope_fit_interpolate,probs=0.95,na.rm=TRUE))
 
 #Ice in density plot with all the segments####
-gg.segmentValidation.iceIn<-ggplot()+geom_abline(data=variability_sequential_fits,aes(slope=iceIn_sensSlope_slope,intercept=iceIn_sensSlope_intercept),color=rgb(108, 171, 221,max=255),alpha=0.2)+ #,color=as.factor(segment_length) add this in aes to get them by color
-  geom_ribbon(data=sensSlopeFitsInterpolated_sequential,aes(x=year,ymin=iceIn_q5_sensSlope_fit,ymax=iceIn_q95_sensSlope_fit),fill="#dcdcdc",color="#dcdcdc",alpha=0.6)+
-  geom_line(data=sensSlopeFitsInterpolated_sequential,aes(x=year,y=iceIn_median_sensSlope_fit),size=1)+
+gg.segmentValidation.iceIn <-
+  ggplot() + geom_abline(
+    data = variability_sequential_fits,
+    aes(slope = iceIn_sensSlope_slope, intercept =
+          iceIn_sensSlope_intercept,
+        color=segment_length, alpha=segment_length),
+    # color = rgb(108, 171, 221, max = 255),
+    # alpha = 0.2
+  ) + #,color=as.factor(segment_length) add this in aes to get them by color
+  geom_ribbon(data=sensSlopeFitsInterpolated_sequential,aes(x=year,ymin=iceIn_q5_sensSlope_fit,ymax=iceIn_q95_sensSlope_fit),linetype=2, fill=NA, color="#000000",alpha=0.6)+
+  scale_color_gradient(low = "#FFC20A", high = "#0C7BDC",
+                       name="Segment length",
+                       guide = guide_colorbar(label = TRUE,
+                                              draw.ulim = TRUE, 
+                                              draw.llim = TRUE,
+                                              frame.colour = "black",
+                                              ticks = TRUE, 
+                                              nbin = 10,
+                                              label.position = "bottom",
+                                              barwidth = 13,
+                                              barheight = 1.3, 
+                                              direction = 'horizontal'))+
+  scale_alpha_continuous(range=c(0.8,0.1)) +
+  geom_line(data = sensSlopeFitsInterpolated_sequential,
+            aes(x = year, y = iceIn_median_sensSlope_fit),
+            linewidth = 1) +
   #geom_ribbon(aes(ymin=q25_sensSlope_fit,ymax=q75_sensSlope_fit),alpha=0.1,fill="light grey",color="grey")+
   #coord_cartesian(xlim = c(1932, 2022))
-  scale_x_continuous(limits=c(1932,2022),expand = c(0, 0))+scale_y_continuous(limits=c(0,30))+theme_bw()
+  scale_x_continuous(limits = c(1932, 2022), expand = c(0, 0)) +
+  scale_y_continuous(limits =c(5, 15)) +
+  theme_pubr(border=TRUE, base_size=8)+
+  guides(
+    alpha = "none" 
+  )
+
   
 #Ice out density plot with all the segments####
-gg.segmentValidation.iceOut<-ggplot()+geom_abline(data=variability_sequential_fits,aes(slope=iceOut_sensSlope_slope,intercept=iceOut_sensSlope_intercept),color=rgb(108, 171, 221,max=255),alpha=0.2)+ #,color=as.factor(segment_length) add this in aes to get them by color
-  geom_ribbon(data=sensSlopeFitsInterpolated_sequential,aes(x=year,ymin=iceOut_q5_sensSlope_fit,ymax=iceOut_q95_sensSlope_fit),fill="#dcdcdc",color="#dcdcdc",alpha=0.6)+
-  geom_line(data=sensSlopeFitsInterpolated_sequential,aes(x=year,y=iceOut_median_sensSlope_fit),size=1)+
+gg.segmentValidation.iceOut <-
+  ggplot() + geom_abline(
+    data = variability_sequential_fits,
+    aes(slope = iceOut_sensSlope_slope, intercept = iceOut_sensSlope_intercept,
+        color=segment_length, alpha=segment_length)
+    # color = rgb(108, 171, 221, max = 255),
+    # alpha = 0.4
+  ) + #,color=as.factor(segment_length) add this in aes to get them by color
+  geom_ribbon(data=sensSlopeFitsInterpolated_sequential,aes(x=year,ymin=iceOut_q5_sensSlope_fit,ymax=iceOut_q95_sensSlope_fit),fill=NA, linetype=2, color="#000000",alpha=0.6)+
+  scale_color_gradient(low = "#FFC20A", high = "#0C7BDC",
+                       name="Segment length",
+                       guide = guide_colorbar(label = TRUE,
+                                              draw.ulim = TRUE, 
+                                              draw.llim = TRUE,
+                                              frame.colour = "black",
+                                              ticks = TRUE, 
+                                              nbin = 10,
+                                              label.position = "bottom",
+                                              barwidth = 13,
+                                              barheight = 1.3, 
+                                              direction = 'horizontal'))+
+  scale_alpha_continuous(range=c(0.8,0.1)) +
+  geom_line(data = sensSlopeFitsInterpolated_sequential,
+            aes(x = year, y = iceOut_median_sensSlope_fit),
+            linewidth = 1) +
   #geom_ribbon(aes(ymin=q25_sensSlope_fit,ymax=q75_sensSlope_fit),alpha=0.1,fill="light grey",color="grey")+
   #coord_cartesian(xlim = c(1932, 2022))
-  scale_x_continuous(limits=c(1932,2022),expand = c(0, 0))+scale_y_continuous(limits=c(5,15))+theme_bw()
+  scale_x_continuous(limits = c(1932, 2022), expand = c(0, 0)) +
+  scale_y_continuous(limits =c(5, 15)) +
+  theme_pubr(border=TRUE, base_size=8)+
+  guides(
+    alpha = "none" 
+  )
 
 #Ice duration density plot with all the segments####
-gg.segmentValidation.iceDuration<-ggplot()+geom_abline(data=variability_sequential_fits,aes(slope=duration_sensSlope_slope,intercept=duration_sensSlope_intercept),color=rgb(108, 171, 221,max=255),alpha=0.2)+ #,color=as.factor(segment_length) add this in aes to get them by color
-  geom_ribbon(data=sensSlopeFitsInterpolated_sequential,aes(x=year,ymin=duration_q5_sensSlope_fit,ymax=duration_q95_sensSlope_fit),fill="#dcdcdc",color="#dcdcdc",alpha=0.6)+
-  geom_line(data=sensSlopeFitsInterpolated_sequential,aes(x=year,y=duration_median_sensSlope_fit),size=1)+
+gg.segmentValidation.iceDuration <-
+  ggplot() + geom_abline(
+    data = variability_sequential_fits,
+    aes(slope = duration_sensSlope_slope, intercept = duration_sensSlope_intercept,
+        color=segment_length, alpha=segment_length),
+    # color = rgb(108, 171, 221, max = 255),
+    # alpha = 0.2
+  ) + #,color=as.factor(segment_length) add this in aes to get them by color
+  geom_ribbon(data=sensSlopeFitsInterpolated_sequential,aes(x=year,ymin=duration_q5_sensSlope_fit,ymax=duration_q95_sensSlope_fit),fill=NA,color="#000000",linetype=2,alpha=0.6)+
+  geom_line(
+    data = sensSlopeFitsInterpolated_sequential,
+    aes(x = year, y = duration_median_sensSlope_fit),
+    linewidth = 1
+  ) +
   #geom_ribbon(aes(ymin=q25_sensSlope_fit,ymax=q75_sensSlope_fit),alpha=0.1,fill="light grey",color="grey")+
   #coord_cartesian(xlim = c(1932, 2022))
-  scale_x_continuous(limits=c(1932,2022),expand = c(0, 0))+scale_y_continuous(limits=c(0,35))+theme_bw()
+  scale_color_gradient(low = "#FFC20A", high = "#0C7BDC",
+                       name="Segment length",
+                       guide = guide_colorbar(label = TRUE,
+                                              draw.ulim = TRUE, 
+                                              draw.llim = TRUE,
+                                              frame.colour = "black",
+                                              ticks = TRUE, 
+                                              nbin = 10,
+                                              label.position = "bottom",
+                                              barwidth = 13,
+                                              barheight = 1.3, 
+                                              direction = 'horizontal'))+
+  scale_alpha_continuous(range=c(0.8,0.1)) +
+  scale_x_continuous(limits = c(1932, 2022), expand = c(0, 0)) +
+  scale_y_continuous(limits =c(5, 15)) +
+  theme_pubr(border=TRUE, base_size=8)+
+  guides(
+    alpha = "none" 
+  )
 
 panel.size<-10
 List<-list(
@@ -161,24 +250,29 @@ List<-list(
               xlab("Year")+
               ylab("Ice-on sd (days)")+
               geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="a"))+
-              theme(plot.margin=unit(c(0.5,0.5,0.5,0.5), "lines"),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.text.y = element_text(angle = 90, hjust=0.5)),
+              theme(plot.margin=unit(c(1,1,1,1), "lines"),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.text.y = element_text(angle = 90, hjust=0.5)),
             gg.segmentValidation.iceOut+
               scale_y_continuous(limits=c(5,28),breaks=c(5,15,25))+
               scale_x_continuous(limits=c(1932,2022),breaks = seq(1940, 2022, by = 20),expand = c(0, 0))+
               xlab("Year")+
               ylab("Ice-off sd (days)")+
               geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="b"))+
-              theme(plot.margin=unit(c(0.5,0.5,0.5,0.5), "lines"),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.text.y = element_text(angle = 90, hjust=0.5)),
+              theme(plot.margin=unit(c(1,1,1,1), "lines"),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.text.y = element_text(angle = 90, hjust=0.5)),
             gg.segmentValidation.iceDuration+
               scale_y_continuous(limits=c(5,28),breaks=c(5,15,25))+
               scale_x_continuous(limits=c(1932,2022),breaks = seq(1940, 2022, by = 20),expand = c(0, 0))+
               xlab("Year")+
               ylab("Duration sd (days)")+
               geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="c"))+
-              theme(plot.margin=unit(c(0.5,0.5,0.5,0.5), "lines"),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.text.y = element_text(angle = 90, hjust=0.5))
+              theme(plot.margin=unit(c(1,1,1,1), "lines"),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.text.y = element_text(angle = 90, hjust=0.5))
             )
 
 #Plot them using patchwork####
-(gg.3panel.senSlopeValidation<-wrap_plots(List,ncol = 3,nrow = 1)&theme(plot.margin = unit(c(4,3,3,3),"pt")))
+(gg.3panel.senSlopeValidation<-wrap_plots(List,ncol = 3,nrow = 1)&theme(legend.position="bottom", plot.margin = unit(c(4,6,3,3),"pt"))) +
+  plot_layout(guides="collect")
+
+
+ggsave("figures/FigureSupp.rollingwindow_9year.png", width=7, height=3,units="in", dpi=300)
+
 
 
