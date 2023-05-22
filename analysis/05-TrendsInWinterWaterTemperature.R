@@ -946,8 +946,7 @@ ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4
 
 
 
-#################################################################################################      
- #STOPPED HERE - COPIED CODE FROM Line 264 - Create partial residual plots for the following:####
+###Section for partial residual plots#################################      
       #ice in vs. Length of fall mix (y vs. x) - this is a covariance  DONE!!
       #Hypo temp vs. Ice in (y vs. x) - regression residual DONE!!
       #Delta density vs. hypo temp (y vs. x) - regression residual
