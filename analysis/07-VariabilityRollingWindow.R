@@ -102,7 +102,7 @@ ggplot(data=variability_sequential_fits%>%ungroup()%>%group_by(segment_length)%>
 
 datalist_sensfits=list()  #initialize empty list for storing a bunch of ice duration variabilities of different lengths
 #Set the segment length here####
-choice_segment_length<-9
+choice_segment_length<-8
 #Filter down to a single segment length###
 variability_sequential_fits_singleSegment<-variability_sequential_fits%>%filter(segment_length==choice_segment_length)
 #loop through to generate sens slope fits for each year, each segment_length, each fit location####
@@ -272,7 +272,7 @@ List<-list(
   plot_layout(guides="collect")
 
 
-ggsave("figures/FigureSupp.rollingwindow_9year.png", width=7, height=3,units="in", dpi=300)
+ggsave("figures/FigureSupp.rollingwindow_8year.png", width=7, height=3,units="in", dpi=300)
 
 
 
