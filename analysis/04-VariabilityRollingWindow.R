@@ -23,7 +23,7 @@ summarize <- dplyr::summarize
 
 #Calculate moving average and bollinger bounds for each of teh ice phenology metrics####
 #First calculate as days since Oct 1####
-window_size<-9
+window_size<-10
 
 #*Create a dataframe with the rolling mean and sd for rolling window size specified above####
 singleRollingWindow<-tibble(year_median=as.vector(rollapply(MohonkIce%>%dplyr::select(Year), width=window_size, FUN = median)), #median year for that window
