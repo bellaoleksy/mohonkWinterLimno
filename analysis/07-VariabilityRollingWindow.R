@@ -386,7 +386,7 @@ gg.segmentValidation.iceIn <-
     # color = rgb(108, 171, 221, max = 255),
     # alpha = 0.2
   ) + #,color=as.factor(segment_length) add this in aes to get them by color
-  geom_ribbon(data=sensSlopeFitsInterpolated_sequential,aes(x=year,ymin=iceIn_q5_sensSlope_fit,ymax=iceIn_q95_sensSlope_fit),linetype=2, fill=NA, color="#000000",alpha=0.6)+
+  # geom_ribbon(data=sensSlopeFitsInterpolated_sequential,aes(x=year,ymin=iceIn_q5_sensSlope_fit,ymax=iceIn_q95_sensSlope_fit),linetype=2, fill=NA, color="#000000",alpha=0.6)+
   scale_color_gradient(low = "#FFC20A", high = "#0C7BDC",
                        name="Segment length",
                        guide = guide_colorbar(label = TRUE,
@@ -400,9 +400,9 @@ gg.segmentValidation.iceIn <-
                                               barheight = 1.3, 
                                               direction = 'horizontal'))+
   scale_alpha_continuous(range=c(0.8,0.1)) +
-  geom_line(data = sensSlopeFitsInterpolated_sequential,
-            aes(x = year, y = iceIn_median_sensSlope_fit),
-            linewidth = 1) +
+  # geom_line(data = sensSlopeFitsInterpolated_sequential,
+  #           aes(x = year, y = iceIn_median_sensSlope_fit),
+  #           linewidth = 1) +
   #geom_ribbon(aes(ymin=q25_sensSlope_fit,ymax=q75_sensSlope_fit),alpha=0.1,fill="light grey",color="grey")+
   #coord_cartesian(xlim = c(1932, 2022))
   scale_x_continuous(limits = c(1932, 2022), expand = c(0, 0)) +
@@ -422,7 +422,7 @@ gg.segmentValidation.iceOut <-
     # color = rgb(108, 171, 221, max = 255),
     # alpha = 0.4
   ) + #,color=as.factor(segment_length) add this in aes to get them by color
-  geom_ribbon(data=sensSlopeFitsInterpolated_sequential,aes(x=year,ymin=iceOut_q5_sensSlope_fit,ymax=iceOut_q95_sensSlope_fit),fill=NA, linetype=2, color="#000000",alpha=0.6)+
+  # geom_ribbon(data=sensSlopeFitsInterpolated_sequential,aes(x=year,ymin=iceOut_q5_sensSlope_fit,ymax=iceOut_q95_sensSlope_fit),fill=NA, linetype=2, color="#000000",alpha=0.6)+
   scale_color_gradient(low = "#FFC20A", high = "#0C7BDC",
                        name="Segment length",
                        guide = guide_colorbar(label = TRUE,
@@ -436,9 +436,9 @@ gg.segmentValidation.iceOut <-
                                               barheight = 1.3, 
                                               direction = 'horizontal'))+
   scale_alpha_continuous(range=c(0.8,0.1)) +
-  geom_line(data = sensSlopeFitsInterpolated_sequential,
-            aes(x = year, y = iceOut_median_sensSlope_fit),
-            linewidth = 1) +
+  # geom_line(data = sensSlopeFitsInterpolated_sequential,
+  #           aes(x = year, y = iceOut_median_sensSlope_fit),
+  #           linewidth = 1) +
   #geom_ribbon(aes(ymin=q25_sensSlope_fit,ymax=q75_sensSlope_fit),alpha=0.1,fill="light grey",color="grey")+
   #coord_cartesian(xlim = c(1932, 2022))
   scale_x_continuous(limits = c(1932, 2022), expand = c(0, 0)) +
@@ -457,12 +457,12 @@ gg.segmentValidation.iceDuration <-
     # color = rgb(108, 171, 221, max = 255),
     # alpha = 0.2
   ) + #,color=as.factor(segment_length) add this in aes to get them by color
-  geom_ribbon(data=sensSlopeFitsInterpolated_sequential,aes(x=year,ymin=duration_q5_sensSlope_fit,ymax=duration_q95_sensSlope_fit),fill=NA,color="#000000",linetype=2,alpha=0.6)+
-  geom_line(
-    data = sensSlopeFitsInterpolated_sequential,
-    aes(x = year, y = duration_median_sensSlope_fit),
-    linewidth = 1
-  ) +
+  # geom_ribbon(data=sensSlopeFitsInterpolated_sequential,aes(x=year,ymin=duration_q5_sensSlope_fit,ymax=duration_q95_sensSlope_fit),fill=NA,color="#000000",linetype=2,alpha=0.6)+
+  # geom_line(
+  #   data = sensSlopeFitsInterpolated_sequential,
+  #   aes(x = year, y = duration_median_sensSlope_fit),
+  #   linewidth = 1
+  # ) +
   #geom_ribbon(aes(ymin=q25_sensSlope_fit,ymax=q75_sensSlope_fit),alpha=0.1,fill="light grey",color="grey")+
   #coord_cartesian(xlim = c(1932, 2022))
   scale_color_gradient(low = "#FFC20A", high = "#0C7BDC",
@@ -515,7 +515,7 @@ List<-list(
   plot_layout(guides="collect")
 
 
-ggsave("figures/FigureSupp.rollingwindow_9year.png", width=7, height=3,units="in", dpi=300)
+ggsave("figures/MS/FigureS4.rollingwindows_all.png", width=7, height=3,units="in", dpi=300)
 
 
 #MS FIGURE: Figure 2####
@@ -580,7 +580,7 @@ List<-list(gg.iceIn_RW+
 #Plot them using patchwork####
 (gg.6panel.variability<-wrap_plots(List,ncol = 3,nrow = 2)&theme(plot.margin = unit(c(4,3,3,3),"pt")))
 #Could do a 3x3 with width 6, height = 5
-ggsave(paste("figures/Fig2.Variability6panels.jpg",sep=""), plot=gg.6panel.variability, width=7, height=4,units="in", dpi=300)
+ggsave(paste("figures/MS/Fig2.Variability6panels.jpg",sep=""), plot=gg.6panel.variability, width=7, height=4,units="in", dpi=300)
 
 
 
