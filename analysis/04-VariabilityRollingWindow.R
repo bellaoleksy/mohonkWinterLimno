@@ -263,8 +263,9 @@ variability_sequential<-do.call(bind_rows,datalist_sequential)
   
   #Plot them using patchwork####
   (gg.3panel.variability<-wrap_plots(List,ncol = 3,nrow = 2)&theme(plot.margin = unit(c(4,3,3,3),"pt")))
+  #NOTE THIS IS COMMENTED OUT - SEE SCRIPT 07 FOR FINALIZE FIGURE 2
   #Could do a 3x3 with width 6, height = 5
-  ggsave(paste("figures/Fig2.Variability6panels.jpg",sep=""), plot=gg.3panel.variability, width=7, height=4,units="in", dpi=300)
+  #ggsave(paste("figures/Fig2.Variability6panels.jpg",sep=""), plot=gg.3panel.variability, width=7, height=4,units="in", dpi=300)
   
   
   
