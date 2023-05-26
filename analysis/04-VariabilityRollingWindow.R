@@ -38,7 +38,7 @@ singleRollingWindow<-tibble(year_median=as.vector(rollapply(MohonkIce%>%dplyr::s
 #*Duration Rolling Window Graph a single plot with rolling window SDs as shaded region####
 #These are bollinger band in econ/finance: https://www.investopedia.com/terms/b/bollingerbands.asp
 gg.duration_RW<-ggplot(data=singleRollingWindow)+
-  geom_ribbon(aes(x=year_median,ymin=rw_duration_days_mean-rw_duration_days_sd,ymax=rw_duration_days_mean+rw_duration_days_sd),color="#dcdcdc",fill="#dcdcdc")+
+  geom_ribbon(aes(x=year_median,ymin=rw_duration_days_mean-rw_duration_days_sd,ymax=rw_duration_days_mean+rw_duration_days_sd),color="darkgrey",fill="lightgrey")+
   geom_line(aes(x=year_median,y=rw_duration_days_mean),color="black",size=1)+ #Moving average
   #geom_errorbar(aes(x=Year,ymin=min_sd,ymax=max_sd),size=1)+
   geom_point(data=MohonkIce,aes(x=Year,y=LengthOfIceCover_days),shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+ #actual days of ice cover
@@ -49,7 +49,7 @@ gg.duration_RW<-ggplot(data=singleRollingWindow)+
 #*Ice In Rolling Window Graph a single plot with rolling window SDs as shaded region####
 #These are bollinger band in econ/finance: https://www.investopedia.com/terms/b/bollingerbands.asp
 gg.iceIn_RW<-ggplot(data=singleRollingWindow)+
-  geom_ribbon(aes(x=year_median,ymin=rw_iceIn_doy_wateryear_mean-rw_iceIn_doy_wateryear_sd,ymax=rw_iceIn_doy_wateryear_mean+rw_iceIn_doy_wateryear_sd),color="#dcdcdc",fill="#dcdcdc")+
+  geom_ribbon(aes(x=year_median,ymin=rw_iceIn_doy_wateryear_mean-rw_iceIn_doy_wateryear_sd,ymax=rw_iceIn_doy_wateryear_mean+rw_iceIn_doy_wateryear_sd),color="darkgrey",fill="lightgrey")+
   geom_line(aes(x=year_median,y=rw_iceIn_doy_wateryear_mean),color="black",size=1)+ #Moving average
   #geom_errorbar(aes(x=Year,ymin=min_sd,ymax=max_sd),size=1)+
   geom_point(data=MohonkIce,aes(x=Year,y=IceInDayofYear_fed),shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+ #actual days of ice cover
@@ -60,7 +60,7 @@ gg.iceIn_RW<-ggplot(data=singleRollingWindow)+
 #*Ice Out Rolling Window Graph a single plot with rolling window SDs as shaded region####
 #These are bollinger band in econ/finance: https://www.investopedia.com/terms/b/bollingerbands.asp
 gg.iceOut_RW<-ggplot(data=singleRollingWindow)+
-  geom_ribbon(aes(x=year_median,ymin=rw_iceOut_doy_wateryear_mean-rw_iceOut_doy_wateryear_sd,ymax=rw_iceOut_doy_wateryear_mean+rw_iceOut_doy_wateryear_sd),color="#dcdcdc",fill="#dcdcdc")+
+  geom_ribbon(aes(x=year_median,ymin=rw_iceOut_doy_wateryear_mean-rw_iceOut_doy_wateryear_sd,ymax=rw_iceOut_doy_wateryear_mean+rw_iceOut_doy_wateryear_sd),color="darkgrey",fill="lightgrey")+
   geom_line(aes(x=year_median,y=rw_iceOut_doy_wateryear_mean),color="black",size=1)+ #Moving average
   #geom_errorbar(aes(x=Year,ymin=min_sd,ymax=max_sd),size=1)+
   geom_point(data=MohonkIce,aes(x=Year,y=IceOutDayofYear_fed),shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+ #actual days of ice cover
