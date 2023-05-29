@@ -732,6 +732,48 @@ ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4
       #https://www.ethan-young.com/code/sem-diagrams-for-lavaan-models/
       #*Extract all the parameters####
       lavaan_parameters <- parameterestimates(fit)
+      
+      #Supplemental table: Create an output file for optimal SEM model####
+      ms_suppTable_sem<-lavaan_parameters%>%
+        #filter(!op=="~1")%>% #remove all the intercepts
+        dplyr::select(-ci.lower,-ci.upper)%>%
+        rename(estimate=est,
+               estimate_se=se,
+               z_statistic=z,
+               )%>%
+        filter(!is.na(z_statistic))%>% #remove the na's for z stat
+        filter(!(op=="~~"&z_statistic>3.3))%>% #remove the extraneous covariances
+        mutate(type=case_when(op=="~"~"Regression",
+                              op=="~~"~"Covariance",
+                              op=="~1"~"Intercept"))%>%
+        filter(!(lhs=="IceInDayofYear_fed_scale"&op=="~1"))%>%
+        filter(!(lhs=="LengthSpringMixedPeriod_days_scale"&op=="~1"))%>%
+        filter(!(lhs=="LengthFallMixedPeriod_days_scale"&op=="~1"))%>%
+        mutate(reorder_index=c(4,
+                               2,
+                               7,
+                               8,
+                               10,
+                               11,
+                               12,
+                               14,
+                               15,
+                               16,
+                               17,
+                               19,
+                               1,
+                               6,
+                               5,
+                               3,
+                               9,
+                               13,
+                               18))%>% #create an index to arrange the rows left to right
+        arrange(reorder_index)
+      
+      #export supplemental table####
+      write_csv(file="output/MohkWinterLimno_SupplementalTable_SEM.csv",x=ms_suppTable_sem)
+      
+      
       #*Create graphical locations for each of the nodes####
       nodes <- lavaan_parameters %>% 
         dplyr::select(lhs) %>% 
