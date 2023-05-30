@@ -11,6 +11,7 @@ if(!require(patchwork)){install.packages("patchwork")}
 if(!require(forecast)){install.packages("forecast")}
 if(!require(corrplot)){install.packages("corrplot")}
 if(!require(MTS)){install.packages("MTS")}
+if(!require(ggthemes)){install.packages("ggthemes")} 
 
 #Try using zoo package
 library(zoo)
@@ -18,6 +19,29 @@ library(patchwork) #laying out multipanel plots with the same size
 library(forecast)
 library(corrplot)
 library(MTS)
+library(ggthemes)
+
+# Set theme ---------------------------------------------------------------
+
+
+theme_MS <- function () {
+  theme_base(base_size=10) %+replace%
+    theme(
+      panel.background = element_blank(),
+      plot.background = element_rect(fill="white", colour=NA, size=1.0),
+      plot.title=element_text(face="plain",hjust=0.5),
+      plot.subtitle = element_text(color="dimgrey", hjust=0, size=10),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      strip.background = element_blank(),
+      strip.text.y = element_text(size=10, angle=270),
+      strip.text.x = element_text(size=10),
+      panel.spacing=grid::unit(0,"lines"),
+      axis.ticks.length = unit(0.1, "cm")
+    )
+}
+
+theme_set(theme_MS())
 
 summarize <- dplyr::summarize
 

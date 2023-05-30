@@ -532,6 +532,7 @@ ggsave("figures/MS/FigureS4.rollingwindows_all.png", width=7, height=3,units="in
 #goes left to right
 #panel letter size
 panel.size<-10
+theme_set(theme_MS())
 List<-list(gg.iceIn_RW+
              #theme(axis.title.y=element_text(size=10),axis.text.y = element_text(angle = 90,hjust=0.5),axis.title.x=element_blank(),axis.text.x=element_blank(),plot.title = element_text(size = panel.size, face = "bold"))+ #Rotate and center the x axis labels
              #scale_y_continuous(limits=c(10,10000),trans="log10",breaks=c(10,100,1000,10000),labels=trans_format("log10",math_format(10^.x)))+
@@ -540,7 +541,7 @@ List<-list(gg.iceIn_RW+
              scale_y_continuous(limits=c(60,130),breaks=c(62,93,124),labels=c("01-Dec","01-Jan","01-Feb"))+
              theme(axis.text.x=element_blank(),axis.title.x=element_blank(),
                    plot.margin=unit(c(1.5,0.5,0.5,0.5), "lines"))+
-             geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="a")),
+             geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="a",fontface="bold")),
            gg.iceOut_RW+
              #theme(axis.title.y=element_text(size=10),axis.text.y = element_text(angle = 90,hjust=0.5),axis.title.x=element_blank(),axis.text.x=element_blank(),plot.title = element_text(size = panel.size, face = "bold"))+ #Rotate and center the x axis labels
              #scale_y_continuous(limits=c(1,10000),trans="log10",breaks=trans_breaks("log10", function(x) 10^x),labels=trans_format("log10",math_format(10^.x)))+ 
@@ -548,7 +549,7 @@ List<-list(gg.iceIn_RW+
              scale_y_continuous(limits=c(150,214),breaks=c(152,183,213),labels=c("01-Mar","01-Apr","01-May"))+
              theme(axis.text.x=element_blank(),axis.title.x=element_blank(),
                    plot.margin=unit(c(1.5,0.5,0.5,0.5), "lines"))+
-             geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="b")),
+             geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="b",fontface="bold")),
            gg.duration_RW+
              #theme(axis.title.y=element_text(size=10),axis.text.y = element_text(angle = 90,hjust=0.5),axis.title.x=element_text(size=10),plot.title = element_text(size = panel.size, face = "bold"))+ #Rotate and center the x axis labels
              #scale_y_continuous(breaks=c(3,6,9))+ 
@@ -556,25 +557,25 @@ List<-list(gg.iceIn_RW+
              scale_x_continuous(limits=c(1931,2023),breaks = seq(1940, 2020, by = 20))+
              theme(axis.text.x=element_blank(),axis.title.x=element_blank(),
                    plot.margin=unit(c(1.5,0.5,0.5,0.5), "lines"))+
-             geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="c")),
+             geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="c",fontface="bold")),
            gg.iceIn_SD_abline_summary+
              scale_y_continuous(limits=c(5,28),breaks=c(5,15,25))+
              scale_x_continuous(limits=c(1931,2023),breaks = seq(1940, 2020, by = 20))+
              xlab("Year")+
-             geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="d"))+
+             geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="d",fontface="bold"))+
              theme(plot.margin=unit(c(0.5,0.5,0.5,0.5), "lines")),
            gg.iceOut_SD_abline_summary+
              scale_y_continuous(limits=c(5,28),breaks=c(5,15,25))+
              scale_x_continuous(limits=c(1931,2023),breaks = seq(1940, 2020, by = 20))+
              xlab("Year")+
-             geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="e"))+
+             geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="e",fontface="bold"))+
              theme(plot.margin=unit(c(0.5,0.5,0.5,0.5), "lines")),
            gg.duration_SD_abline_summary+
              scale_y_continuous(limits=c(5,28),breaks=c(5,15,25))+
              scale_x_continuous(limits=c(1931,2023),breaks = seq(1940, 2020, by = 20))+
              xlab("Year")+
-             geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="f"))+
-             theme(plot.margin=unit(c(0.5,0.5,0.5,0.5), "lines"))
+             geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="f",fontface="bold"))
+             #theme(plot.margin=unit(c(0.5,0.5,0.5,0.5), "lines"))
 )
 
 #Plot them using patchwork####

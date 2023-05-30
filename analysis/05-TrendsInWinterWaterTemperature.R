@@ -31,6 +31,26 @@ library(ggnetwork) #Makes nice network plots in ggplot from lavaan object
 library(cowplot) #laying out multipanel plots with different sizes
 library(ggnewscale) #reset the scale for the gradient fill
 
+# Set theme ---------------------------------------------------------------
+theme_MS <- function () {
+  theme_base(base_size=10) %+replace%
+    theme(
+      panel.background = element_blank(),
+      plot.background = element_rect(fill="white", colour=NA, size=1.0),
+      plot.title=element_text(face="plain",hjust=0.5),
+      plot.subtitle = element_text(color="dimgrey", hjust=0, size=10),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      strip.background = element_blank(),
+      strip.text.y = element_text(size=10, angle=270),
+      strip.text.x = element_text(size=10),
+      panel.spacing=grid::unit(0,"lines"),
+      axis.ticks.length = unit(0.1, "cm")
+    )
+}
+
+theme_set(theme_MS())
+
 summarize <- dplyr::summarize 
 
 #Graph  each water year with ice in/out as vertical lines, and temperature as spaghetti plot####
