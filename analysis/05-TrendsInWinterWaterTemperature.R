@@ -1037,7 +1037,7 @@ ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4
         geom_point()
       
       (gg.covariance.iceInvsFallMixed<-ggplot(data=AnnualUnderIceSummary_SEM,aes(x=LengthFallMixedPeriod_days_scale,y=IceInDayofYear_fed_scale))+
-                                      geom_point()+
+                                      geom_point(shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+
                                       #geom_line(aes(y=LengthFallMixedPeriod_days_scale*0.836))+
                                       ylab("Ice-on date")+
                                       xlab("Fall mixed period (d)")+
@@ -1062,7 +1062,7 @@ ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4
         geom_point()
       
       (gg.covariance.iceOutvsSpringMixed<-ggplot(data=AnnualUnderIceSummary_SEM,aes(x=IceOutDayofYear_fed_scale,y=LengthSpringMixedPeriod_days_scale))+
-          geom_point()+
+          geom_point(shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+
           #geom_line(aes(y=LengthFallMixedPeriod_days_scale*0.836))+
           xlab("Ice-off date")+
           ylab("Spring mixed period (d)")+
@@ -1090,7 +1090,7 @@ ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4
       
       (gg.partialResid.HypoTempvsIceIn<-AnnualUnderIceSummary_SEM%>%mutate(MeanUnderIce_HypoTemp_degC_scale_Resids=MeanUnderIce_HypoTemp_degC_scale-(-0.426*IceInDayofYear_fed_scale+0.103))%>%
           ggplot(.,aes(y=(MeanUnderIce_HypoTemp_degC_scale_Resids-0.426*IceInDayofYear_fed_scale),x=IceInDayofYear_fed_scale))+
-          geom_point()+
+          geom_point(shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+
           geom_line(aes(y=(IceInDayofYear_fed_scale*-0.426)+0.103))+
           xlab("Ice-on date")+
           ylab(bquote(Under~ice~deep~(degree*C)))+
@@ -1117,7 +1117,7 @@ ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4
       
       (gg.partialResid.DeltaDensityvsHypoTemp<-AnnualUnderIceSummary_SEM%>%mutate(MeanDelta1_11mWaterDensity_kgperm3_scale_Resids=MeanDelta1_11mWaterDensity_kgperm3_scale-(-0.874*MeanUnderIce_HypoTemp_degC_scale+1.267*MeanUnderIce_EpiTemp_degC_scale+0.005))%>%
           ggplot(.,aes(y=(MeanDelta1_11mWaterDensity_kgperm3_scale_Resids-0.874*MeanUnderIce_HypoTemp_degC_scale),x=MeanUnderIce_HypoTemp_degC_scale))+
-          geom_point()+
+          geom_point(shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+
           geom_line(aes(y=(MeanUnderIce_HypoTemp_degC_scale*-0.874)+0.005))+
           xlab(bquote(Under~ice~deep~(degree*C)))+
           ylab(bquote(Density~Delta~(kg~m^-3)))+
