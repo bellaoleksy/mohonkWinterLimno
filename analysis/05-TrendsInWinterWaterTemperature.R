@@ -16,7 +16,7 @@ if(!require(ggplotify)){install.packages("ggplotify")}
 if(!require(ggnetwork)){install.packages("ggnetwork")}
 if(!require(cowplot)){install.packages("cowplot")}
 if(!require(ggnewscale)){install.packages("ggnewscale")}
-
+if(!require(ggthemes)){install.packages("ggthemes")}
 
 
 #Load libraries
@@ -30,8 +30,11 @@ library(ggplotify) #create gg objects or grobs from other graphical systems
 library(ggnetwork) #Makes nice network plots in ggplot from lavaan object
 library(cowplot) #laying out multipanel plots with different sizes
 library(ggnewscale) #reset the scale for the gradient fill
+library(ggthemes)
 
 # Set theme ---------------------------------------------------------------
+
+
 theme_MS <- function () {
   theme_base(base_size=10) %+replace%
     theme(
@@ -1157,5 +1160,5 @@ ggsave(paste("figures/Figure5.SEMplot4panelsPartialResids.jpg",sep=""),plot=gg.4
                                         ncol=4,nrow=1,labels=c("b","c","d","e"),label_size=11,label_x=c(0.25,0.28,0.28,0.24),hjust=0,label_y=0.98)
                               ,ncol=1,nrow=2,labels=c("a",""),label_size=11,label_x=c(0.05),hjust=0,label_y=0.98,rel_heights = c(0.9,0.5)))
       
-      ggsave("figures/Figure5.SEMplot5panelsPartialResids_update.jpg", plot=Fig5_update, width=7.4, height=5.6,units="in", dpi=300)      
+      ggsave("figures/MS/Fig5.SEMplot5panelsPartialResids_update.jpg", plot=Fig5_update, width=7.4, height=5.6,units="in", dpi=300)      
       
