@@ -180,7 +180,7 @@ IceDurationVars <- MohonkIce_top10 %>% filter(row=="LengthOfIceCover_days") %>% 
 
 
 #Make bar plot
-jpeg(filename = 'figures/FigureS4.top10_correlations.jpg',
+jpeg(filename = 'figures/MS/FigureS5.top10_correlations.jpg',
     width = 6, height = 7, units = 'in', res = 300)
 
 MohonkIce_top10 %>%
@@ -660,10 +660,10 @@ MohonkIce.Predicted.test <- MohonkIce.Predicted %>%
 
 
 
-jpeg(filename = 'figures/Fig1.IcePhenology_withDates.jpg',
+jpeg(filename = 'figures/MS/Fig1.IcePhenology_withDates.jpg',
     width = 3.14,
     height = 2.5,
-    res = 300,
+    res = 600,
     units = 'in')
 
 ggplot() +
@@ -710,7 +710,7 @@ ggplot() +
   #                       name = "Ice duration\n(days)") +
   scale_x_continuous(limit = c(1932, 2022),
                      breaks = seq(1940, 2020, by = 20)) +
-  scale_y_date(date_breaks = "30 days", date_minor_breaks = "15 days",
+  scale_y_date(date_breaks = "45 days", date_minor_breaks = "15 days",
                date_labels = "%d-%b")+
   theme_MS() +
   theme(
@@ -723,7 +723,7 @@ ggplot() +
       colour = "black",
       size = 1
     ),
-    plot.margin=unit(c(0.7,0,0,0), "lines"),
+    plot.margin=unit(c(1,0,0,0), "lines"),
     axis.text.x = element_text(color = "black"),
     axis.text.y = element_text(color = "black", angle=90, hjust=0.5),
     axis.ticks = element_line(color = "black")
@@ -734,7 +734,7 @@ ggplot() +
 dev.off()
 
 ggsave(
-  "figures/Fig1.IcePhenology_withDates_inches.jpg",
+  "figures/MS/Fig1.IcePhenology_withDates_inches.jpg",
   width = 3.14,
   height = 2.5,
   units = "in",
@@ -982,10 +982,13 @@ labels_IsoMax_fed<-c(70,90,110)
 
 IceOn_isotherm<-
   ggplot(pred_isotherm, aes(x = isotherm_TempMax_degC_17_days_0_degC_WaterYear_date, y = fitted_isotherm)) +
-  geom_ribbon(aes(ymin = lwr_ci_isotherm, ymax = upr_ci_isotherm), alpha = 0.2) +
+  geom_ribbon(aes(ymin = lwr_ci_isotherm, ymax = upr_ci_isotherm),
+              fill="lightgrey", color="darkgrey") +
   geom_line() +
-  geom_point(data=MohonkIceWeather, aes(x=isotherm_TempMax_degC_17_days_0_degC_WaterYear_date,
-                                        y=IceInDayofYear_fed))+
+  geom_point(data=MohonkIceWeather,
+             aes(x=isotherm_TempMax_degC_17_days_0_degC_WaterYear_date,
+                                        y=IceInDayofYear_fed),
+             shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+
   labs(x="Fall isotherm date",
     # x=expression(Iso["max,"]["17day,"]["0°C"]),
     # x="Isotherm Formula: TempMax in degC, 17 day window, 0 degC threshold",
@@ -1030,10 +1033,13 @@ pred_Nov <- pred_Nov %>%
 
 
 IceOn_CumuNov<-ggplot(pred_Nov, aes(x = cumMeanDailyT_Nov, y = fitted_Nov)) +
-  geom_ribbon(aes(ymin = lwr_ci_Nov, ymax = upr_ci_Nov), alpha = 0.2) +
+  geom_ribbon(aes(ymin = lwr_ci_Nov, ymax = upr_ci_Nov),
+              fill="lightgrey", color="darkgrey") +
   geom_line() +
-  geom_point(data=MohonkIceWeather, aes(x=cumMeanDailyT_Nov,
-                                        y=IceInDayofYear_fed))+
+  geom_point(data=MohonkIceWeather,
+             aes(x=cumMeanDailyT_Nov,
+                 y=IceInDayofYear_fed),
+             shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+
   labs(x="Nov. cumulative\nmean daily temp. (°C)",
        y="Ice on (days since Oct 1)")+
   # scale_y_continuous(breaks = seq(50, 130, by = 20) )+
@@ -1461,10 +1467,12 @@ breaks_IceOffDayofYear_fed<-c(70,80,90,100,110,120) #these are julian day
 
 
 IceOut_FebT<-ggplot(pred_FebT, aes(x = cumMeanDailyT_Feb, y = fitted_FebT)) +
-  geom_ribbon(aes(ymin = lwr_ci_FebT, ymax = upr_ci_FebT), alpha = 0.2) +
+  geom_ribbon(aes(ymin = lwr_ci_FebT, ymax = upr_ci_FebT),
+              fill="lightgrey", color="darkgrey") +
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=cumMeanDailyT_Feb,
-                                        y=IceOutDayofYear))+
+                                        y=IceOutDayofYear),
+             shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+
   labs(x="Feb cumulative\nmean daily temp. (°C)",
        y="Ice Off (Julian Day)")+
   # scale_y_continuous(breaks = seq(70, 120, by = 10) )+
@@ -1523,10 +1531,12 @@ as.Date(210-91, origin="2014-01-02")
 
 
 IceOut_isotherm<-ggplot(pred_isotherm, aes(x = isotherm_TempMean_degC_29_days_4_degC_WaterYear_date, y = fitted_isotherm)) +
-  geom_ribbon(aes(ymin = lwr_ci_isotherm, ymax = upr_ci_isotherm), alpha = 0.2) +
+  geom_ribbon(aes(ymin = lwr_ci_isotherm, ymax = upr_ci_isotherm), 
+              fill="lightgrey", color="darkgrey") +
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=isotherm_TempMean_degC_29_days_4_degC_WaterYear_date,
-                                        y=IceOutDayofYear))+
+                                        y=IceOutDayofYear),
+             shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+
   labs(x="Spring isotherm date",
     # x=expression(Iso["avg,"]["29day,"]["4°C"]),
     # x="Isotherm Formula: TempAvg in degC, 29 day window, 4 degC threshold",
@@ -1579,10 +1589,12 @@ pred_FebMarAprSnow <- pred_FebMarAprSnow %>%
 
 
 IceOut_FebMarAprSnow<-ggplot(pred_FebMarAprSnow, aes(x = cumSnow_FebMarApr, y = fitted_FebMarAprSnow)) +
-  geom_ribbon(aes(ymin = lwr_ci_FebMarAprSnow, ymax = upr_ci_FebMarAprSnow), alpha = 0.2) +
+  geom_ribbon(aes(ymin = lwr_ci_FebMarAprSnow, ymax = upr_ci_FebMarAprSnow),
+              fill="lightgrey", color="darkgrey") +
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=cumSnow_FebMarApr,
-                                        y=IceOutDayofYear))+
+                                        y=IceOutDayofYear),
+             shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+
   labs(x="Feb-Apr Cumulative\nSnowfall (mm)",
        y="Ice-off date")+
   # scale_y_continuous(breaks = seq(70, 120, by = 10) )+
@@ -1633,10 +1645,12 @@ pred_IceIn <- pred_IceIn %>%
 
 
 IceOut_IceIn<-ggplot(pred_IceIn, aes(x = IceInDayofYear_fed, y = fitted_IceIn)) +
-  geom_ribbon(aes(ymin = lwr_ci_IceIn, ymax = upr_ci_IceIn), alpha = 0.2) +
+  geom_ribbon(aes(ymin = lwr_ci_IceIn, ymax = upr_ci_IceIn),
+              fill="lightgrey", color="darkgrey") +
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=IceInDayofYear_fed,
-                                        y=IceOutDayofYear))+
+                                        y=IceOutDayofYear),
+             shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+
   labs(x="Ice-on date",
        y="Ice-off date")+
   # scale_y_continuous(breaks = seq(70, 120, by = 10) )+
@@ -1683,10 +1697,11 @@ Combined23
 
 # ggsave("figures/Figure2-3.IceOn_IceOff_combined.png", plot=Combined23, width=8, height=8,units="in", dpi=600)
 
-ggsave("figures/Fig3.IceOn_IceOff_combined.jpg", plot=Combined23, width=180, height=160,units="mm", dpi=300)
+# ggsave("figures/MS/Fig3.IceOn_IceOff_combined.jpg", plot=Combined23, width=180, height=160,units="mm", dpi=300)
 
+ggsave("figures/MS/Fig3.IceOn_IceOff_combined.jpg", plot=Combined23, width=7.2, height=6.4,units="in", dpi=600)
 
-
+# 7.2 inches = 2 panels wide
 
 # Fitting GAMs for iceDuration_days -------------------------------------------
 
@@ -1916,10 +1931,12 @@ pred_GlobalT <- pred_GlobalT %>%
 
 IceDuration_GlobalT<-
   ggplot(pred_GlobalT, aes(x = GlobalTempanomaly_C, y = LengthOfIceCover_days)) +
-  geom_ribbon(aes(ymin = lwr_ci_GlobalT, ymax = upr_ci_GlobalT), alpha = 0.2) +
+  geom_ribbon(aes(ymin = lwr_ci_GlobalT, ymax = upr_ci_GlobalT),
+              fill="lightgrey", color="darkgrey") +
   geom_line() +
   geom_point(data=MohonkIceWeather , aes(x=GlobalTempanomaly_C,
-                                        y=LengthOfIceCover_days))+
+                                        y=LengthOfIceCover_days),
+             shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+
   labs(x="Global Temperature Anomaly (°C)",
        y="Ice duration (days)")+
   scale_y_continuous(breaks = seq(30, 150, by = 30) )+
@@ -1969,13 +1986,16 @@ pred_DecNAO <- pred_DecNAO %>%
          LengthOfIceCover_days = fitted)
 
 IceDuration_DecNAO<-ggplot(pred_DecNAO, aes(x = NAO_index_Dec, y = LengthOfIceCover_days)) +
-  geom_ribbon(aes(ymin = lwr_ci_DecNAO, ymax = upr_ci_DecNAO), alpha = 0.2) +
+  geom_ribbon(aes(ymin = lwr_ci_DecNAO, ymax = upr_ci_DecNAO), 
+              fill="lightgrey", color="darkgrey") +
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=NAO_index_Dec,
-                                        y=LengthOfIceCover_days))+
+                                        y=LengthOfIceCover_days),
+             shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+
   labs(x="Dec NAO index",
        y="Length of ice cover (days)")+
   scale_y_continuous(breaks = seq(30, 150, by = 30) )+
+  scale_x_continuous(breaks = seq(-250, 150, by = 100) )+
   coord_cartesian(ylim = c(30, 150), expand = TRUE) +
   theme(axis.text.y=element_blank(),
         axis.ticks.y=element_blank(),
@@ -2022,10 +2042,12 @@ pred_NovNAO <- pred_NovNAO %>%
          LengthOfIceCover_days = fitted)
 
 IceDuration_NovNAO<-ggplot(pred_NovNAO, aes(x = NAO_index_Nov, y = LengthOfIceCover_days)) +
-  geom_ribbon(aes(ymin = lwr_ci_NovNAO, ymax = upr_ci_NovNAO), alpha = 0.2) +
+  geom_ribbon(aes(ymin = lwr_ci_NovNAO, ymax = upr_ci_NovNAO),
+              fill="lightgrey", color="darkgrey") +
   geom_line() +
   geom_point(data=MohonkIceWeather, aes(x=NAO_index_Nov,
-                                        y=LengthOfIceCover_days))+
+                                        y=LengthOfIceCover_days),
+             shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+
   labs(x="Nov NAO index",
        y="Length of ice cover (days)")+
   scale_y_continuous(breaks = seq(30, 150, by = 30) )+
@@ -2051,235 +2073,12 @@ composite_noLegend
 
 
 
-ggsave("figures/Figure4.GamPredictions_IceDuration.png", width=7, height=3,units="in", dpi=300)
+ggsave("figures/MS/Figure4.GamPredictions_IceDuration.png", width=7.2, height=3,units="in", dpi=600)
 
 
 
 
 
-
-
-# 10 year rolling window of C.V.? -----------------------------------------
-#Try using zoo package
-library(zoo)
-#Code snagged from Gavin in this response:
-#https://stackoverflow.com/questions/13195442/moving-variance-in-r
-
-
-
-# >> Ice phenology cv -----------------------------------------------------
-
-
-
-##Ice Duration
-iceDuration_days_withNAs<-MohonkIce %>%
-  select(LengthOfIceCover_days,Year) 
-
-iceDuration_days<-MohonkIce %>%
-  select(LengthOfIceCover_days) %>%
-  drop_na()
-
-
-iceDuration_cv<-data.frame(rollapply(iceDuration_days, width =7, FUN = cv)) %>%
-  rownames_to_column(., var = "rollingwindow_timepoint")  #convert column name to row name 
-
-iceDuration_cv %>%
-  ggplot(aes(x=as.numeric(rollingwindow_timepoint),
-             y=LengthOfIceCover_days))+geom_point()+
-  xlab("7-year rolling window timepoint")+
-  ylab("Ice duration (c.v.)")+
-  geom_smooth(method="gam", color="black", size=0.5)
-
-
-#Fitting a GAM to ice duration c.v. and the rolling average timepoint. 
-
-
-
-
-
-##Ice On
-iceOnDOY_fed<-MohonkIce %>%
-  select(IceInDayofYear_fed) %>%
-  drop_na()
-
-iceOnDOY_fed_cv<-data.frame(rollapply(iceOnDOY_fed, width = 10, FUN = cv)) %>%
-  rownames_to_column(., var = "rollingwindow_timepoint")  #convert column name to row name 
-
-iceOnDOY_fed_cv %>%
-  ggplot(aes(x=as.numeric(rollingwindow_timepoint),
-             y=IceInDayofYear_fed))+geom_point()+
-  xlab("10-year rolling window timepoint")+
-  ylab("Ice on (c.v.)")
-
-
-
-##Ice Off
-iceOffDOY<-MohonkIce %>%
-  select(IceOutDayofYear) %>%
-  drop_na()
-
-iceOffDOY_cv<-data.frame(rollapply(iceOffDOY, width = 10, FUN = cv)) %>%
-  rownames_to_column(., var = "rollingwindow_timepoint")  #convert column name to row name 
-
-iceOffDOY_cv %>%
-  ggplot(aes(x=as.numeric(rollingwindow_timepoint),
-             y=IceOutDayofYear))+geom_point()+
-  xlab("10-year rolling window timepoint")+
-  ylab("Ice off (c.v.)")
-
-
-#Shorter rolling window timepoint since there doesn't appear to be any periodicity. Just want to answer the question: is ice-out day getting more variable?
-
-##Ice Off - again but shorter duration
-
-iceOffDOY_cv<-data.frame(rollapply(iceOffDOY, width = 2, FUN = cv)) %>%
-  rownames_to_column(., var = "rollingwindow_timepoint")  #convert column name to row name 
-
-iceOffDOY_cv %>%
-  ggplot(aes(x=as.numeric(rollingwindow_timepoint),
-             y=IceOutDayofYear))+geom_point()+
-  xlab("2-year rolling window timepoint")+
-  ylab("Ice off (c.v.)")
-
-
-lm_iceOffDOY_cv <- lm(IceOutDayofYear~as.numeric(rollingwindow_timepoint),
-                      iceOffDOY_cv)
-summary(lm_iceOffDOY_cv)
-#No strong evidence of increasing variability in ice-out day.
-
-# >> rolling avgs of weather patterns -------------------------------------
-
-
-#ENSO 7-year rolling average... 
-ENSO_withNAs<-MohonkIceWeather %>%
-  select(ENSO_index_fall,Year) 
-ENSO<-MohonkIceWeather %>%
-  select(ENSO_index_fall) %>%
-  drop_na()
-
-ENSO_mean<-data.frame(rollapply(ENSO, width =7, FUN = mean)) %>%
-  rownames_to_column(., var = "rollingwindow_timepoint")  #convert column name to row name 
-
-ENSO_mean %>%
-  ggplot(aes(x=as.numeric(rollingwindow_timepoint),
-             y=ENSO_index_fall))+geom_point()+
-  xlab("7-year rolling window timepoint (1979-2020")+
-  ylab("ENSO (mean)")+
-  geom_smooth(method="lm", color="black", size=0.5)
-
-#Is the 7-year rolling average of winter ENSO related to the c.v. of ice duration?
-#I guses we can only examine 1978-2020 because of limited ENSO record. Let's try.
-iceDuration_days_short<-MohonkIceWeather %>%
-  select(LengthOfIceCover_days, Year) %>%
-  left_join(.,ENSO_withNAs, by="Year")%>% ##This step ensures we have all the same years.
-  drop_na()%>%                                        ##we have some missing obs. of ice duration early on.
-  select(-Year,-ENSO_index_fall)
-
-iceDuration_short_cv<-data.frame(rollapply(iceDuration_days_short, width =7, FUN = cv)) %>%
-  rownames_to_column(., var = "rollingwindow_timepoint")  #convert column name to row name 
-
-iceDuration_short_cv %>%
-  ggplot(aes(x=as.numeric(rollingwindow_timepoint),
-             y=LengthOfIceCover_days))+geom_point()+
-  xlab("7-year rolling window timepoint")+
-  ylab("Ice duration (c.v.) - 1979-2020")+
-  geom_smooth(method="gam", color="black", size=0.5)
-
-#is there a correlation btwn the two?
-#Are they correlated?
-left_join(ENSO_mean,iceDuration_short_cv)%>%
-  ggplot(aes(x=ENSO_index_fall,y=LengthOfIceCover_days))+
-  geom_point()
-corr_temp<-left_join(ENSO_mean,iceDuration_short_cv)%>%
-  mutate(rollingwindow_timepoint=as.numeric(rollingwindow_timepoint))%>%
-  arrange(rollingwindow_timepoint) %>%
-  drop_na()
-cor.test(corr_temp$ENSO_index_fall, corr_temp$LengthOfIceCover_days)
-#No
-
-#But do they look related *at all*???
-left_join(ENSO_mean,iceDuration_short_cv)%>%
-  pivot_longer(-rollingwindow_timepoint) %>%
-  ggplot(aes(x=as.numeric(rollingwindow_timepoint),y=value))+
-  geom_point()+facet_wrap(.~name, scales="free_y",nrow=2)+
-  xlab("7-year rolling winter ")
-##I wouldn't expect much of a relationship here because most likely the cv of ice over length
-##is more directly related to temp or precipitation. The periodicity is brought on by the ENSO cycles.
-
-
-##Is the 7-year rolling average of cumulative fall temperature related to the c.v. of ice duration?
-cumfall_T<-MohonkIceWeather %>%
-  select(cumMeanDailyT_OctNovDec, Year) %>%
-  left_join(.,iceDuration_days_withNAs, by="Year")%>% ##This step ensures we have all the same years.
-  drop_na()%>%                                        ##we have some missing obs. of ice duration early on.
-  select(-Year,-LengthOfIceCover_days)
-
-cumfall_T_mean<-data.frame(rollapply(cumfall_T, width =7, FUN = mean)) %>%
-  rownames_to_column(., var = "rollingwindow_timepoint")  #convert column name to row name 
-
-cumfall_T_mean %>%
-  ggplot(aes(x=as.numeric(rollingwindow_timepoint),
-             y=cumMeanDailyT_OctNovDec))+geom_point()+
-  xlab("7-year rolling window timepoint")+
-  ylab("Cum. mean daily T of fall (mean)")+
-  geom_smooth(method="lm", color="black", size=0.5)
-
-#Are they correlated?
-left_join(cumfall_T_mean,iceDuration_cv)%>%
-  ggplot(aes(x=cumMeanDailyT_OctNovDec,y=LengthOfIceCover_days))+
-  geom_point()+
-  xlab("7-year rolling average of cumulative mean daily fall temps (Oct+Nov+Dec)")+
-  ylab("7-year rolling average of the c.v. in ice over duration")
-
-corr_temp<-left_join(cumfall_T_mean,iceDuration_cv)
-print(cor.test(corr_temp$cumMeanDailyT_OctNovDec,corr_temp$LengthOfIceCover_days))
-#Does't look like much, but there *is* a significant correlation between the two. 
-
-##Is the 7-year rolling average of cumulative fall precip related to the c.v. of ice duration?
-cumfall_rain<-MohonkIceWeather %>%
-  select(cumRain_OctNovDec, Year) %>%
-  left_join(.,iceDuration_days_withNAs, by="Year")%>% ##This step ensures we have all the same years.
-  drop_na()%>%                                        ##we have some missing obs. of ice duration early on.
-  select(-Year,-LengthOfIceCover_days)
-
-cumfall_rain_mean<-data.frame(rollapply(cumfall_rain, width =7, FUN = mean)) %>%
-  rownames_to_column(., var = "rollingwindow_timepoint")  #convert column name to row name 
-
-cumfall_rain_mean %>%
-  ggplot(aes(x=as.numeric(rollingwindow_timepoint),
-             y=cumRain_OctNovDec))+geom_point()+
-  xlab("7-year rolling window timepoint")+
-  ylab("Cum. fall rain (7-year rolling mean)")+
-  geom_smooth(method="lm", color="black", size=0.5)
-#It does look cyclicall.. 
-
-
-#Are they correlated?
-left_join(cumfall_rain_mean,iceDuration_cv)%>%
-  ggplot(aes(x=cumRain_OctNovDec,y=LengthOfIceCover_days))+
-  geom_point()
-corr_temp<-left_join(cumfall_rain_mean,iceDuration_cv)
-print(cor.test(corr_temp$cumRain_OctNovDec,corr_temp$LengthOfIceCover_days))
-#No...
-
-##Is the 7-year rolling average of prop. fall precip as RAIN related to the c.v. of ice duration?
-propfall_rain<-MohonkIceWeather %>%
-  select(cumRain_OctNovDec, cumSnow_OctNovDec, Year) %>%
-  mutate(prop_rain=cumRain_OctNovDec/(cumRain_OctNovDec+cumSnow_OctNovDec)) %>%
-  left_join(.,iceDuration_days_withNAs, by="Year")%>% ##This step ensures we have all the same years.
-  drop_na()%>%                                        ##we have some missing obs. of ice duration early on.
-  select(-Year,-LengthOfIceCover_days,
-         -cumRain_OctNovDec,-cumSnow_OctNovDec)
-
-propfall_rain_mean<-data.frame(rollapply(propfall_rain, width =7, FUN = mean)) %>%
-  rownames_to_column(., var = "rollingwindow_timepoint")  #convert column name to row name 
-
-propfall_rain_mean %>%
-  ggplot(aes(x=as.numeric(rollingwindow_timepoint),
-             y=prop_rain))+geom_point()+
-  xlab("7-year rolling window timepoint")+
-  ylab("Cum. fall rain (7-year rolling mean)")+
-  geom_smooth(method="lm", color="black", size=0.5)
 
 
 
