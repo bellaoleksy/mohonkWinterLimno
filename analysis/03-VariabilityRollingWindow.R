@@ -3,7 +3,7 @@
 #Created 16Mar2022, by David Richardson (DCR)
 
 #Run the main script to bring in all data and functions####
-source('00_main.R')
+source('analysis/00_main.R')
 
 #Libraries
 if (!require(zoo)) {install.packages("zoo")}

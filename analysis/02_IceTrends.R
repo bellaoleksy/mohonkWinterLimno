@@ -2,7 +2,7 @@
 
 
 #Run the main script to bring in all data and functions####
-# source('00_main.R')MohonkIceWeather
+# source('analysis/00_main.R')MohonkIceWeather
 source('analysis/01_Isotherm.R') #this script already sources 00_main.R
 
 
