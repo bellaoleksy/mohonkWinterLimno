@@ -61,4 +61,4 @@ vignettes/*.pdf
 */data/exported/
 
 #Ignore exploratory scripts
-*05-TrendsInWinterWaterTemperature.R
+*/analysis/05-TrendsInWinterWaterTemperature.R
