@@ -58,3 +58,6 @@ vignettes/*.pdf
 #Ignore Archive files
 /script/Archive
 .Rproj.user
+
+#Ignore data folders not needed for analysis
+**/data/LOL
