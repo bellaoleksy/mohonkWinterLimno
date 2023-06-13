@@ -60,4 +60,5 @@ vignettes/*.pdf
 .Rproj.user
 
 #Ignore data folders not needed for analysis
-/data/LOL
+/data/LOL/
+/data/exported/
