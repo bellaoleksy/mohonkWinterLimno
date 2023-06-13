@@ -56,9 +56,5 @@ vignettes/*.pdf
 /script/Archive
 .Rproj.user
 
-#Ignore data folders not needed for analysis
-*/data/LOL/
-*/data/exported/
-
-#Ignore exploratory scripts
-*/analysis/05-TrendsInWinterWaterTemperature.R
+#Ignore/archive old analyses
+/analysis/archive/
