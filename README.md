@@ -1,16 +1,17 @@
 # Mohonk Winter Limnology
-
-- For a directory of notes, see our <a href="MohonkIceWeather">google drive folder</a>.
-- We've already done a number of preliminary/exploratory analyses that are <a href="https://docs.google.com/document/d/1h14IiBCiFjiq_SBtdyfelAApQIOxmKM-x_6lMpSBn6o/edit?usp=sharing">summarized here</a>.
-
-The navigation of this repo is pretty straightforward and mirrors the MTCC project. Use `00_main.R` to call all the necessary scripts (prefix: `01_`) prior to jumping into any analyses. 
+ß
+Use `00_main.R` to call all the necessary scripts needed for data compilation. 
+Actual analysis starts at `analysis/02_IceTrends.R`
 
 <pre>
-├── 00_main.R
 ├── README.md
 ├── analysis
-│   ├── 02_IceTrends.R
-│   └── 03_RandomForest_Christianson.R
+│   ├── 00_main.R # data wrangling script
+│   └── 01_isotherm.R # calculates all the isotherm metrics
+│   ├── 02_IceTrends.R # analysis file for ice phenology trends and GAMs (Figure 1, 3, 4)
+│   └── 03_VariabilityRollingWindow.R # original script used for variability analysis
+│   ├── 04_VariabilityRollingWindow.R # updated script for variability analysis (Figure 2)
+│   └── 05_SEM-analysis.R # structural equation modeling (Figuer 5)
 ├── data
 ├── figures
 ├── mohonkWinterLimno.Rproj
@@ -18,5 +19,3 @@ The navigation of this repo is pretty straightforward and mirrors the MTCC proje
 │    ├── 01_functions.R
 │    ├── 01_munging.R
 │    ├── 01_QAQC.R
-</pre>A line I wrote on my local computer  
-A line I wrote on my local computer  
