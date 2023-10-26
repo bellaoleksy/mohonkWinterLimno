@@ -1,7 +1,7 @@
 # Created 2022-07-07 by IAO with script copied over from DCR et al.'s Forecasting_MohonkLake github repository.
 
 #Run the main script to bring in all data and functions####
-source('00_main.R')
+source('analysis/00_main.R')
 
 
 
