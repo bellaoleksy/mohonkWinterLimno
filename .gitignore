@@ -38,9 +38,6 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
-#Exclude any data
-/data_export
-
 #Exclude rsconnect
 /rsconnect
 
@@ -58,3 +55,6 @@ vignettes/*.pdf
 #Ignore Archive files
 /script/Archive
 .Rproj.user
+
+#Ignore/archive old analyses
+/analysis/archive/
