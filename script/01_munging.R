@@ -850,7 +850,7 @@ AnnualData <- left_join(AnnualData, ENSO_summary, by = c("Year"="water_year"))
 
 # * Load NOAA annual temperature anomaly ----------------------------------
 #Pulled from: https://www.ncdc.noaa.gov/cag/global/time-series
-#Specs: Time scale = Annual
+#Specs: Time scale = Monthly
 #       Region = Global
 #       Surface = Land and Ocean
 
