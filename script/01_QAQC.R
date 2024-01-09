@@ -16,8 +16,8 @@ MohonkBathy<-read.csv('data/Mohonk_area_bathymetry_csv2.csv', fill = TRUE)
 MohonkWeeklyProfiles<-read.csv("data/2016_MohonkLake_tblSecchi-Thermistor.csv", fill = TRUE)
 #2020-11-30 IAO: Added in new data####
 MohonkWeeklyProfiles_2018_19<-read.csv("data/2018_2019_Mohonklake_Secchi_Thermistor.csv", fill = TRUE)
-#2022-07-12 DCR: Added in new data####
-MohonkWeeklyProfiles_2020_22<-read.csv("data/MohonkLake_Secchi_Thermistor2020-2022.csv", fill = TRUE)
+#2024-01-09 DCR: Added in new data####
+MohonkWeeklyProfiles_2020_23<-read.csv("data/MohonkLake_Secchi_Thermistor2020-2023.csv", fill = TRUE)
 
 #Bind the dataframes together
 MohonkWeeklyProfiles<-bind_rows(MohonkWeeklyProfiles,MohonkWeeklyProfiles_2018_19)
@@ -127,14 +127,14 @@ MohonkWeeklyProfilesMetric$Secchi_m<-MohonkWeeklyProfiles$SECCHI*0.3048
 
 #Clean up the 2020-2022 data####
 #*rename column headers####
-names(MohonkWeeklyProfiles_2020_22)<-names(MohonkWeeklyProfilesMetric)[1:19]
+names(MohonkWeeklyProfiles_2020_23)<-names(MohonkWeeklyProfilesMetric)[1:19]
 #*Make the Date column into a date
-MohonkWeeklyProfiles_2020_22<-MohonkWeeklyProfiles_2020_22%>%mutate(Date=dmy(Date))
+MohonkWeeklyProfiles_2020_23<-MohonkWeeklyProfiles_2020_23%>%mutate(Date=dmy(Date))
 #*Check each of the depthsby plotting to look for anomalies
-plot(MohonkWeeklyProfiles_2020_22$Temp_12m~MohonkWeeklyProfiles_2020_22$Date)
+plot(MohonkWeeklyProfiles_2020_23$Temp_12m~MohonkWeeklyProfiles_2020_23$Date)
 
-#Bind the 2020-2022 to the other years###################
-MohonkWeeklyProfilesMetric<-bind_rows(MohonkWeeklyProfilesMetric,MohonkWeeklyProfiles_2020_22)
+#Bind the 2020-2023 to the other years###################
+MohonkWeeklyProfilesMetric<-bind_rows(MohonkWeeklyProfilesMetric,MohonkWeeklyProfiles_2020_23)
 
 #Loop through all the temperature readings for quality control histograms
 for(j in 5:18){
@@ -237,15 +237,14 @@ MohonkWeeklyProfiles2017metric.sensor.daily<-MohonkWeeklyProfilesSensorDaily.col
 MohonkWeeklyProfiles2017Metric<-MohonkWeeklyProfiles2017Metric[order(MohonkWeeklyProfiles2017Metric$Date),]
 
 # Seasonal NAO indices ----------------------------------------------------
-#2022-03-16 New Data from: https://psl.noaa.gov/data/timeseries/daily/
-#Data only available through 2020 for the time being
+#2024-01-09 New Data from: https://psl.noaa.gov/data/timeseries/daily/
 #Read in data
-NAO_daily<-read.csv("data/NAO_index_daily_1948-2023.csv")
+NAO_daily<-read.csv("data/NAO_index_daily_1948-2024.csv")
 
 # NAO_index_daily_1948-2024.csv
 # Accessed from the site above with the following specifications:
 # Time series selection = "pregenerated" for Daily NAO
-# It's not a 1:1 match with NAO_index_daily_1948-2020.csv
+# It's not a 1:1 match with NAO_index_daily_1948-2020.csv, but very close
 
 
 #Make date column
@@ -264,7 +263,7 @@ NAO_daily<-NAO_daily %>%
 # ENSO_MEI_monthly<-read.csv("data/ENSO_MEI_1979-2020.csv")
 ENSO_monthly<-read.csv("data/ONI_index_monthly_1950-2022.csv")
 
-
+ 
 ## Local weather ####   
 #2020-12-01 IAO downloaded wx data going back to 1930
 #2022-07-08 IAO added 1930-2021 data in metric units
