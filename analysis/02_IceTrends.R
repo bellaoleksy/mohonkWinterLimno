@@ -79,7 +79,7 @@ theme_MS <- function () {
   theme_base(base_size=10) %+replace% 
     theme(
       panel.background  = element_blank(),
-      plot.background = element_rect(fill="white", colour=NA, size=1.0),
+      plot.background = element_rect(fill="white", colour=NA, linewidth=1.0),
       plot.title=element_text(face="plain",hjust=0.5),
       plot.subtitle = element_text(color="dimgrey", hjust=0, size=10),
       panel.grid.major = element_blank(),
