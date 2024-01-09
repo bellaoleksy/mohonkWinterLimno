@@ -240,7 +240,13 @@ MohonkWeeklyProfiles2017Metric<-MohonkWeeklyProfiles2017Metric[order(MohonkWeekl
 #2022-03-16 New Data from: https://psl.noaa.gov/data/timeseries/daily/
 #Data only available through 2020 for the time being
 #Read in data
-NAO_daily<-read.csv("data/NAO_index_daily_1948-2020.csv")
+NAO_daily<-read.csv("data/NAO_index_daily_1948-2023.csv")
+
+# NAO_index_daily_1948-2024.csv
+# Accessed from the site above with the following specifications:
+# Time series selection = "pregenerated" for Daily NAO
+# It's not a 1:1 match with NAO_index_daily_1948-2020.csv
+
 
 #Make date column
 NAO_daily$Date <- paste(NAO_daily$Year, NAO_daily$Month, NAO_daily$Day, sep="-") %>%
