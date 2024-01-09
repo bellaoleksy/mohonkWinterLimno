@@ -320,30 +320,73 @@ MohonkDailyWeather<-MohonkDailyWeather.upload[,c("Date","Precip_mm","Snow_mm",
 
 
 ##Upload Mohonk Ice on and Ice off data####
-MohonkIce.upload<-read.csv("data/MohonkLake-IceOnIceOff-1932-2022.csv", fill = TRUE) 
-MohonkIce.upload$Year<-seq(1932,2022,by=1) #Corrected the script to include 2019
+# MohonkIce.upload<-read.csv("data/MohonkLake-IceOnIceOff-1932-2022.csv", fill = TRUE) 
+MohonkIce.upload<-read.csv("data/MohonkLake-IceOnIceOff-1932-2023.csv", fill = TRUE) 
+MohonkIce.upload$Year<-seq(1932,2023,by=1) #Corrected the script to include 2019
 
+#replace "No Date" with NAs
+MohonkIce.upload$ICEIN_1[MohonkIce.upload$ICEIN_1=="No date"]<-NA
+MohonkIce.upload$ICEIN_2[MohonkIce.upload$ICEIN_2=="No date"]<-NA
+MohonkIce.upload$ICEIN_3[MohonkIce.upload$ICEIN_3=="No date"]<-NA
+MohonkIce.upload$ICEOUT_1[MohonkIce.upload$ICEOUT_1=="No date"]<-NA
+MohonkIce.upload$ICEOUT_2[MohonkIce.upload$ICEOUT_2=="No date"]<-NA
+MohonkIce.upload$ICEOUT_3[MohonkIce.upload$ICEOUT_3=="No date"]<-NA
 
-#Create new column of ice in date. Replace "No Date" with NA, format the others to dates
-MohonkIce.upload$IceInDate<-as.character(MohonkIce.upload$ICEIN)
-MohonkIce.upload$IceInDate[MohonkIce.upload$IceInDate=="No date"]<-NA
-# MohonkIce.upload$IceInDate<-as.Date(MohonkIce.upload$IceInDate)
+#Convert columns to dates
 MohonkIce.upload <- MohonkIce.upload %>%
-  mutate(IceInDate=mdy(IceInDate))
-
-#Create new column of ice in date. Replace "No Date
-MohonkIce.upload$IceOutDate<-as.character(MohonkIce.upload$ICEOUT)
-MohonkIce.upload$IceOutDate[MohonkIce.upload$IceOutDate=="No date"]<-NA
-MohonkIce.upload <- MohonkIce.upload %>%
-  mutate(IceOutDate=mdy(IceOutDate))
-# MohonkIce.upload$IceOutDate<-as.Date(MohonkIce.upload$IceOutDate)
+  mutate(across(ICEIN_1:ICEOUT_3, as.character)) %>%
+  mutate(across(ICEIN_1:ICEOUT_3, mdy))
+str(MohonkIce.upload)
 
 #Create new data frame with only relevant columns
-MohonkIce<-MohonkIce.upload[,c("Year","IceInDate","IceOutDate")]
+#Here, let's add back 2019 and 2023 later. These are the years with intermittant ice cover
+MohonkIce <- MohonkIce.upload %>%
+  filter(!Year %in% c(2019,2023)) %>%
+  select(Year, ICEIN_1, ICEOUT_1) %>%
+  rename(IceInDate=ICEIN_1,
+         IceOutDate=ICEOUT_1)
+
+MohonkIce_2019 <- MohonkIce.upload %>%
+  filter(Year == 2019) %>%
+  select(Year, ICEIN_1, ICEOUT_2) %>%  #earliest ice on date, and latest ice off date
+  rename(IceInDate=ICEIN_1,
+         IceOutDate=ICEOUT_2) 
+
+MohonkIce_2023 <- MohonkIce.upload %>%
+  filter(Year == 2023) %>%
+  select(Year, ICEIN_1, ICEOUT_3) %>%  #earliest ice on date, and latest ice off date
+  rename(IceInDate=ICEIN_1,
+         IceOutDate=ICEOUT_3) 
+
+MohonkIce <- bind_rows(MohonkIce, MohonkIce_2019, MohonkIce_2023) %>%
+  arrange(Year)
+
 MohonkIce$IceInDayofYear<-as.POSIXlt(MohonkIce$IceInDate, format = "%d%b%y")$yday+1
 MohonkIce$IceOutDayofYear<-as.POSIXlt(MohonkIce$IceOutDate, format = "%d%b%y")$yday+1
 MohonkIce$LengthOfIceCover_days<-as.numeric(MohonkIce$IceOutDate-MohonkIce$IceInDate)
 MohonkIcePost1985<-MohonkIce[MohonkIce$Year>=1984,]
+
+
+# #Create new column of ice in date. Replace "No Date" with NA, format the others to dates
+# MohonkIce.upload$IceInDate<-as.character(MohonkIce.upload$ICEIN)
+# MohonkIce.upload$IceInDate[MohonkIce.upload$IceInDate=="No date"]<-NA
+# # MohonkIce.upload$IceInDate<-as.Date(MohonkIce.upload$IceInDate)
+# MohonkIce.upload <- MohonkIce.upload %>%
+#   mutate(IceInDate=mdy(IceInDate))
+
+#Create new column of ice in date. Replace "No Date
+# MohonkIce.upload$IceOutDate<-as.character(MohonkIce.upload$ICEOUT)
+# MohonkIce.upload$IceOutDate[MohonkIce.upload$IceOutDate=="No date"]<-NA
+# MohonkIce.upload <- MohonkIce.upload %>%
+#   mutate(IceOutDate=mdy(IceOutDate))
+# MohonkIce.upload$IceOutDate<-as.Date(MohonkIce.upload$IceOutDate)
+
+#Create new data frame with only relevant columns
+# MohonkIce<-MohonkIce.upload[,c("Year","IceInDate","IceOutDate")]
+# MohonkIce$IceInDayofYear<-as.POSIXlt(MohonkIce$IceInDate, format = "%d%b%y")$yday+1
+# MohonkIce$IceOutDayofYear<-as.POSIXlt(MohonkIce$IceOutDate, format = "%d%b%y")$yday+1
+# MohonkIce$LengthOfIceCover_days<-as.numeric(MohonkIce$IceOutDate-MohonkIce$IceInDate)
+# MohonkIcePost1985<-MohonkIce[MohonkIce$Year>=1984,]
 
 str(MohonkIce)
 
@@ -398,7 +441,7 @@ MohonkWeeklySecchi<-MohonkWeeklyProfilesMetric[,c("Date","Secchi_m")]
 rm(find.errors2)
 rm(MohonkDailyWeatherFull.upload) #Can remove beause MohonkDailyWeatherFull.upload includes data back to 1930s
 rm(MohonkDailyWeather.upload) #Can remove beause MohonkDailyWeatherFull.upload includes data back to 1930s
-rm(MohonkIce.upload)
+# rm(MohonkIce.upload) #Keep this for data vis of Figure 1
 rm(MohonkWeeklyProfilesSensor)
 rm(MohonkWeeklyProfiles)
 rm(MohonkWeeklyProfiles2017)
