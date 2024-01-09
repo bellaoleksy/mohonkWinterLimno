@@ -857,7 +857,7 @@ AnnualData <- left_join(AnnualData, ENSO_summary, by = c("Year"="water_year"))
 # NOAA_anomaly <- read.csv("data/NOAA_globaltempanomaly.csv") %>%
 #   rename(GlobalTempanomaly_C = Value)
 
-NOAA_anomaly_monthly <- read.csv("data/NOAA_globaltempanomaly_monthly_1929-2022.csv") %>%
+NOAA_anomaly_monthly <- read.csv("data/NOAA_globaltempanomaly_monthly_1929-2023.csv") %>%
   rename(GlobalTempanomaly_C = Value)
 
 NOAA_anomaly <- NOAA_anomaly_monthly %>%
