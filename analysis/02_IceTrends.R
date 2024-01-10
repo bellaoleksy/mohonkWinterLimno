@@ -714,9 +714,10 @@ ggplot() +
                date_labels = "%d-%b")+
   theme_MS() +
   theme(
-    panel.grid.major.y = element_line(color="grey90", size=0.5),
-    panel.grid.major.x = element_line(color="grey90", size=0.5),
-    panel.grid.minor.y = element_line(color="grey90", linetype="dashed", size=0.5),
+    # panel.grid.major.y = element_line(color="grey90", size=0.5),
+    # panel.grid.major.x = element_line(color="grey90", size=0.5),
+    # panel.grid.minor.y = element_line(color="grey90", linetype="dashed", size=0.5),
+    #GET RID OF THESE-- a pesky LOL reviewer wanted these
     axis.line = element_line(colour = "black"),
     panel.border = element_rect(
       fill = NA,
@@ -737,6 +738,177 @@ ggsave(
   "figures/MS/Fig1.IcePhenology_withDates_inches.jpg",
   width = 3.14,
   height = 2.5,
+  units = "in",
+  dpi = 600
+)
+
+
+
+#Experiment with plotting multiple ice-on and ice-off dates
+head(MohonkIce.upload)
+
+MohonkIce_vis <- MohonkIce.upload %>%
+  mutate(IceCover_1 = as.numeric(difftime(ICEOUT_1,ICEIN_1,units="days")),
+         IceCover_2 = as.numeric(difftime(ICEOUT_2,ICEIN_2,units="days")),
+         IceCover_3 = as.numeric(difftime(ICEOUT_3,ICEIN_3,units="days"))) %>%
+  # mutate(across(ICEIN_1:ICEOUT_3, hydro.day)) %>%
+  mutate(ICEIN_1_month=month(ICEIN_1),
+         ICEIN_1_day=day(ICEIN_1),
+         ICEIN_1_newdate=case_when(ICEIN_1_month %in% c("10","11","12") ~ ymd(paste("2014", ICEIN_1_month, ICEIN_1_day, sep = "-")),
+                                   ICEIN_1_month %in% c("1","2","3","4") ~ ymd(paste("2015", ICEIN_1_month, ICEIN_1_day, sep = "-"))),
+         ICEOUT_1_month=month(ICEOUT_1),
+         ICEOUT_1_day=day(ICEOUT_1),
+         ICEOUT_1_newdate=case_when(ICEOUT_1_month %in% c("10","11","12") ~ ymd(paste("2014", ICEOUT_1_month, ICEOUT_1_day, sep = "-")),
+                                    ICEOUT_1_month %in% c("1","2","3","4") ~ ymd(paste("2015", ICEOUT_1_month, ICEOUT_1_day, sep = "-"))),
+         ICEIN_2_month=month(ICEIN_2),
+         ICEIN_2_day=day(ICEIN_2),
+         ICEIN_2_newdate=case_when(ICEIN_2_month %in% c("10","11","12") ~ ymd(paste("2014", ICEIN_2_month, ICEIN_2_day, sep = "-")),
+                                   ICEIN_2_month %in% c("1","2","3","4") ~ ymd(paste("2015", ICEIN_2_month, ICEIN_2_day, sep = "-"))),
+         ICEOUT_2_month=month(ICEOUT_2),
+         ICEOUT_2_day=day(ICEOUT_2),
+         ICEOUT_2_newdate=case_when(ICEOUT_2_month %in% c("10","11","12") ~ ymd(paste("2014", ICEOUT_2_month, ICEOUT_2_day, sep = "-")),
+                                    ICEOUT_2_month %in% c("1","2","3","4") ~ ymd(paste("2015", ICEOUT_2_month, ICEOUT_2_day, sep = "-"))),
+         ICEIN_3_month=month(ICEIN_3),
+         ICEIN_3_day=day(ICEIN_3),
+         ICEIN_3_newdate=case_when(ICEIN_3_month %in% c("10","11","12") ~ ymd(paste("2014", ICEIN_3_month, ICEIN_3_day, sep = "-")),
+                                   ICEIN_3_month %in% c("1","2","3","4") ~ ymd(paste("2015", ICEIN_3_month, ICEIN_3_day, sep = "-"))),
+         ICEOUT_3_month=month(ICEOUT_3),
+         ICEOUT_3_day=day(ICEOUT_3),
+         ICEOUT_3_newdate=case_when(ICEOUT_3_month %in% c("10","11","12") ~ ymd(paste("2014", ICEOUT_3_month, ICEOUT_3_day, sep = "-")),
+                                    ICEOUT_3_month %in% c("1","2","3","4") ~ ymd(paste("2015", ICEOUT_3_month, ICEOUT_3_day, sep = "-"))))
+
+str(MohonkIce_vis)
+
+ggplot() +
+  geom_segment(
+    data = MohonkIce_vis,
+    aes(
+      x = Year,
+      xend = Year,
+      y = ICEIN_1_newdate,
+      yend = ICEOUT_1_newdate,
+      col = IceCover_1
+    )
+  ) +
+  geom_point(
+    data = MohonkIce_vis,
+    aes(x = Year, y = ICEIN_1_newdate, fill = IceCover_1),
+    shape = 21,
+    color = "black",
+    size = 0.75
+  ) +
+  geom_smooth(
+    data = MohonkIce.Predicted.test,
+    aes(x = Year, y = IceInDayofYear_yhat_newdate),
+    color = "black",
+    lty = 1,
+    size= 0.5
+  ) +
+  #Alternatively... nearly identical to geom_smooth above
+  # geom_smooth(
+  #   data = MohonkIce_vis,
+  #   aes(x = Year, y = ICEIN_1_newdate),
+  #   method="lm",
+  #   color = "black",
+  #   lty = 1,
+  #   size= 0.5,
+  #   se=FALSE
+  # ) +
+  geom_point(
+    data = MohonkIce_vis,
+    aes(x = Year,
+        y = ICEOUT_1_newdate,
+        fill = IceCover_1),
+    shape = 21,
+    color = "black",
+    size = 0.75
+  ) +
+  #Add in the intermittant years
+  geom_segment(
+    data = MohonkIce_vis,
+    aes(
+      x = Year,
+      xend = Year,
+      y = ICEIN_2_newdate,
+      yend = ICEOUT_2_newdate,
+      col = IceCover_2
+    )
+  ) +
+  geom_point(
+    data = MohonkIce_vis,
+    aes(x = Year, y = ICEIN_2_newdate, fill = IceCover_2),
+    shape = 21,
+    color = "black",
+    size = 0.75
+  ) +
+  geom_point(
+    data = MohonkIce_vis,
+    aes(x = Year,
+        y = ICEOUT_2_newdate,
+        fill = IceCover_2),
+    shape = 21,
+    color = "black",
+    size = 0.75
+  ) +
+  geom_segment(
+    data = MohonkIce_vis,
+    aes(
+      x = Year,
+      xend = Year,
+      y = ICEIN_3_newdate,
+      yend = ICEOUT_3_newdate,
+      col = IceCover_3
+    )
+  ) +
+  geom_point(
+    data = MohonkIce_vis,
+    aes(x = Year, y = ICEIN_3_newdate, fill = IceCover_3),
+    shape = 21,
+    color = "black",
+    size = 0.75
+  ) +
+  geom_point(
+    data = MohonkIce_vis,
+    aes(x = Year,
+        y = ICEOUT_3_newdate,
+        fill = IceCover_3),
+    shape = 21,
+    color = "black",
+    size = 0.75
+  ) +
+  # scale_fill_grafify(palette = "blue_conti", name = "Ice duration\n(days)", reverse=TRUE)+ #yellow_conti scheme
+  # scale_color_grafify(palette = "blue_conti", name = "Ice duration\n(days)", reverse=TRUE)+ #yellow_conti scheme
+  scale_color_continuous(high = "#1A85FF", low = "#FFC20A",
+                         name = "Ice duration\n(days)") +
+  scale_fill_continuous(high = "#1A85FF", low = "#FFC20A",
+                        name = "Ice duration\n(days)") +
+  scale_x_continuous(limit = c(1932, 2023),
+                     breaks = seq(1940, 2020, by = 20)) +
+  scale_y_date(date_breaks = "28 days", date_minor_breaks = "14 days",
+               date_labels = "%d-%b")+
+  theme_MS() +
+  theme(
+    # panel.grid.major.y = element_line(color="grey90", size=0.5),
+    # panel.grid.major.x = element_line(color="grey90", size=0.5),
+    # panel.grid.minor.y = element_line(color="grey90", linetype="dashed", size=0.5),
+    #GET RID OF THESE-- a pesky LOL reviewer wanted these
+    axis.line = element_line(colour = "black"),
+    panel.border = element_rect(
+      fill = NA,
+      colour = "black",
+      size = 1
+    ),
+    plot.margin=unit(c(1,0,0,0), "lines"),
+    axis.text.x = element_text(color = "black"),
+    axis.text.y = element_text(color = "black", angle=90, hjust=0.5),
+    axis.ticks = element_line(color = "black")
+  ) +
+  xlab("Year") +
+  ylab("Date of ice formation or clearance")
+ggsave(
+  "figures/MS/Fig1.IcePhenology_withDates_intermittant.jpg",
+  width = 5,
+  height = 3,
   units = "in",
   dpi = 600
 )
