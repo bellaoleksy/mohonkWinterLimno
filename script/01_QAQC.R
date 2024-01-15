@@ -267,6 +267,7 @@ ENSO_monthly<-read.csv("data/ONI_index_monthly_1950-2022.csv")
 ## Local weather ####   
 #2020-12-01 IAO downloaded wx data going back to 1930
 #2022-07-08 IAO added 1930-2021 data in metric units
+#2024-01-15 IAO added 2023 data in metric units
 MohonkDailyWeatherFull.upload<-read.csv("data/MohonkPreserveWeatherData-1896-2022-NOAA-NCEI-metric.csv", fill = TRUE) 
 str(MohonkDailyWeatherFull.upload)
 MohonkDailyWeatherFull.upload <- MohonkDailyWeatherFull.upload %>%
