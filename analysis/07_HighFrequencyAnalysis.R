@@ -42,6 +42,25 @@ IceDataExtraction<-read_csv("data/MohonkIceDataExtraction.csv")%>%
                     mutate(Date_format=mdy(Date))%>%
                     mutate(year=year(Date_format))
 
+
+#Read in mesonet data####
+#Identify all the individual .csv files####
+Mesonet_files<-list.files("data/MesonetWeatherData",pattern = "*.csv")
+#initialize empty list####
+list_data<-list()
+
+#Loop through all files and upload each months data####
+for(fileIndex in 1:length(Mesonet_files)){
+  list_data[[fileIndex]]<-read_csv(paste0("data/MesonetWeatherData/",Mesonet_files[fileIndex]))
+}
+
+#Bind all the months together####
+MesonetData<-do.call(bind_rows, list_data)
+######STOPPED HERE#####
+#FIX COLUMN NAMES, CONVERT time_end to dateTime variable####
+
+##########################End of loading data####################
+
 #plot ice % cover####
 ggplot(data=IceDataExtraction%>%filter(year>=2016&year<=2018),aes(x=Date_format,y=IceCover_Percent))+geom_point()
 
