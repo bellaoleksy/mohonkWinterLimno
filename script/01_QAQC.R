@@ -275,13 +275,48 @@ MohonkDailyWeatherFull.upload <- MohonkDailyWeatherFull.upload %>%
   rename(Precip_mm = Precipitation_mm, 
          Snow_mm = Snowfall_mm,#check units-- is this m or mm? 
          SnowDepth_mm = SnowDepth_mm,
-         TempMean_degC = TempAvg_degC) 
+         TempMean_degC = TempAvg_degC)
+
+#Get more recent files in#### 
+#Identify all the individual .csv files####
+MohonkDailyWeather2022_2023_files<-list.files("data/MohonkPreserveWeatherData2022_2023/csvs",pattern = "*.csv")
+  
+#initialize empty list####
+list_DailyWeather<-list()
+
+#Loop through all files and upload each months data####
+for(fileIndex2 in 1:length(MohonkDailyWeather2022_2023_files)){
+  list_DailyWeather[[fileIndex2]]<-read_csv(paste0("data/MohonkPreserveWeatherData2022_2023/csvs/",MohonkDailyWeather2022_2023_files[fileIndex2]))%>%
+    mutate(Snowfall=as.character(Snowfall),
+           Snow_on_Ground=as.character(Snow_on_Ground),
+           Precip_Total=as.character(Precip_Total))
+}
+
+#Bind all the months together####
+MohonkDailyWeather2022_2023<-do.call(bind_rows, list_DailyWeather)
+
+#Do some cleaning up and unit conversion, the units in the csvs are degrees F and inches####
+MohonkDailyWeather2022_2023_metric<-MohonkDailyWeather2022_2023%>%
+  filter(!is.na(Date))%>%
+  mutate(Date = mdy(Date)) %>%
+  arrange(Date)%>%
+  mutate(TempMax_degC=(Max_Temp-32)*(5/9),
+         TempMin_degC=(Min_Temp-32)*(5/9),
+         TempMean_degC=(TempMax_degC+TempMin_degC)/2)%>%
+  mutate(Precip_mm=ifelse(Precip_Total=="T",0,as.numeric(Precip_Total)*25.4),
+         Snow_mm=ifelse(Snowfall=="T",0,as.numeric(Snowfall)*25.4),
+         SnowDepth_mm=ifelse(Snow_on_Ground=="T",0,as.numeric(Snow_on_Ground)*25.4))%>%
+  dplyr::select(c("Date","Precip_mm","Snow_mm",
+                  "SnowDepth_mm","TempMax_degC",
+                  "TempMin_degC","TempMean_degC"))
+ str(MohonkDailyWeather2022_2023_metric) 
+
 
 #Keep relevant columns for weather data frame
 MohonkDailyWeatherFull<- MohonkDailyWeatherFull.upload %>%
   dplyr::select(c("Date","Precip_mm","Snow_mm",
                   "SnowDepth_mm","TempMax_degC",
-                  "TempMin_degC","TempMean_degC"))
+                  "TempMin_degC","TempMean_degC"))%>%bind_rows(.,MohonkDailyWeather2022_2023_metric)
 str(MohonkDailyWeatherFull.upload)
 
 # Old from before we had metric data -- can be deleted at some point
