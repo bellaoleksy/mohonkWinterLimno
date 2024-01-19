@@ -317,7 +317,7 @@ MohonkDailyWeatherFull<- MohonkDailyWeatherFull.upload %>%
   dplyr::select(c("Date","Precip_mm","Snow_mm",
                   "SnowDepth_mm","TempMax_degC",
                   "TempMin_degC","TempMean_degC"))%>%bind_rows(.,MohonkDailyWeather2022_2023_metric)
-str(MohonkDailyWeatherFull.upload)
+str(MohonkDailyWeatherFull)
 
 # Old from before we had metric data -- can be deleted at some point
 # MohonkDailyWeatherFull.upload$Date<-as.Date(as.character(MohonkDailyWeatherFull.upload$DATE))
