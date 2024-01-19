@@ -56,9 +56,13 @@ for(fileIndex in 1:length(Mesonet_files)){
 
 #Bind all the months together####
 MesonetData<-do.call(bind_rows, list_data)
-######STOPPED HERE#####
-#FIX COLUMN NAMES, CONVERT time_end to dateTime variable####
 
+#Rename some columns in mesonet data####
+names(MesonetData)
+
+MesonetData<-MesonetData%>%
+    setNames(gsub("\\^","",gsub("\\/","p",gsub("\\[|\\]","",sub(" ", "_", names(MesonetData))))))%>% #clean up the column headers, remove space, brackets and slashes
+  mutate(dateTime=ymd_hms(time_end)) #Format a dateTIme variable
 ##########################End of loading data####################
 
 #plot ice % cover####
@@ -82,6 +86,12 @@ ggplot(data=SensorData%>%pivot_longer(-1)%>%filter(DateTime>=as.POSIXct("2016-11
 
 #Graph the Percent ice cover
 ggplot(data=IceDataExtraction,aes(x=as.POSIXct(Date_format),y=IceCover_Percent))+geom_point()+
+  scale_x_datetime(limits=lims)
+
+#Graph the windspeed or other met data here####
+ggplot(data=MesonetData,aes(x=dateTime,y=temp_2m_max_degC))+geom_line()+
+  geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceIn_1_date)))+
+  geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceOut_1_date)))+
   scale_x_datetime(limits=lims)
 
 #Zoom in on 2017-2018 winter####
