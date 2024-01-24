@@ -248,7 +248,7 @@ ggplot(data=SensorData_derivedFill,aes(x=DateTime,y=temperatureDifferenceTop0mvs
   geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceOut_1_date)))+
   geom_hline(yintercept=-0.1,color="red")
 #*Graph % ice cover for those two winters####
-ggplot(data=SensorData_derived,aes(x=DateTime,y=IceCover_Percent))+geom_point()+
+ggplot(data=SensorData_derivedFill,aes(x=DateTime,y=IceCover_Percent))+geom_point()+
   geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceIn_1_date)))+
   geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceOut_1_date)))
 #*Graph some met data for those two winters####
@@ -297,10 +297,89 @@ daily_numeric<-SensorData_derivedFill%>%group_by(day_count)%>%
 #SUmmarize all date columns for the mean by day, sunset to sunset####
 daily_date<-SensorData_derivedFill%>%group_by(day_count)%>%
   summarise_if(is.POSIXct, mean, na.rm = TRUE)
+#Summarize the daily cv of stability and bf
+daily_cv<-SensorData_derivedFill%>%group_by(day_count)%>%summarize(stability_Jperm2_dailyCV=sd(stability_Jperm2,na.rm=TRUE)/mean(stability_Jperm2,na.rm=TRUE),
+                                                                   buoyancyfrequency_1_s2_dailyCV=sd(buoyancyfrequency_1_s2,na.rm=TRUE)/mean(buoyancyfrequency_1_s2,na.rm=TRUE))
+
 
 #Merge those together for a daily data frame####
-dailySensorData_derivedFill<-left_join(daily_date,daily_numeric,by="day_count")
+dailySensorData_derivedFill<-left_join(daily_date,daily_numeric,by="day_count")%>%
+                             left_join(.,daily_cv,by="day_count")%>% #add in the daily CV of stability
+                             dplyr::select(-stability_Jperm2_diff,-buoyancyfrequency_1_s2_diff) #remove the differencing becuase this is the average of the differencing
 
+#Calculate the daily difference of the stability and bf####
+dailySensorData_derivedFill<-dailySensorData_derivedFill%>%mutate(stability_Jperm2_diff=stability_Jperm2-lag(stability_Jperm2,default=NA),
+          buoyancyfrequency_1_s2_diff=buoyancyfrequency_1_s2-lag(buoyancyfrequency_1_s2,default=NA))
+
+#Filter out solid ice cover with 100% cover####
+stability_diff_icecoverBounds<-dailySensorData_derivedFill%>%filter(IceCover_Percent==100)%>%summarize(mean_stability_Jperm2_diff=mean(stability_Jperm2_diff,na.rm=TRUE),
+                                                                        sd_stability_Jperm2_diff=sd(stability_Jperm2_diff,na.rm=TRUE))%>%
+                                                              mutate(sd_stability_Jperm2_diff_3x=sd_stability_Jperm2_diff*3)
+
+#Look for the first one in each winter that is bigger than the 3x diff####
+dailySensorData_derivedFill<-dailySensorData_derivedFill%>%mutate(BruesewitzIceOn=ifelse(stability_Jperm2_diff>=(stability_diff_icecoverBounds$mean_stability_Jperm2_diff+stability_diff_icecoverBounds$sd_stability_Jperm2_diff_3x),"Big","Small"))
+
+#Look for inverse stratification based on Woolway: 
+  #where the surface temp < bottom temp - considered as first ice-free layer when ice is present
+  #specific density difference threshold between surface and bottom waters was exceeded (0.05 to 0.5 kg m-3)
+dailySensorData_derivedFill<-dailySensorData_derivedFill%>%mutate(temperatureDifference1mvs9m=Temp_1m<Temp_9m, #true if lake surface is colder than deep
+                                           waterDensityDiff_kgpm3=water.density(Temp_9m)-water.density(Temp_0m),
+                                           waterDensityDiff_kgpm3_threshold=ifelse(waterDensityDiff_kgpm3>0.05,TRUE,FALSE),
+                                           inverseStratification=ifelse(waterDensityDiff_kgpm3_threshold==TRUE&temperatureDifference1mvs9m==TRUE,"InvStrat","NoStrat"),
+                                           inverseStratification_numeric=ifelse(waterDensityDiff_kgpm3_threshold==TRUE&temperatureDifference1mvs9m==TRUE,1,NA))
+
+#Get out the Bruesewitz Ice On dates####
+BruesewitzIceIn<-dailySensorData_derivedFill%>%
+  filter(BruesewitzIceOn=="Big")%>%
+  mutate(year=year(DateTime))%>%
+  dplyr::select(DateTime,BruesewitzIceOn,year)%>%
+  filter(year<2018)%>%
+  filter(row_number()==1|row_number()==3)%>%
+  mutate(IceIn_1_date_Bruesewitz=date(DateTime))%>%
+  dplyr::select(year,IceIn_1_date_Bruesewitz)
+
+#Pierson method#####
+#The nex sens t-nodes have a temperature resolution of  ±0.075 °C temperature accuracy so we can use the lower 
+PiersonIceIn<-dailySensorData_derivedFill%>%mutate(limit0.1=ifelse(temperatureDifferenceTop0mvsBottom9m<(-0.1),"Low0.1","High0.1"),
+                                     limit0.4=ifelse(temperatureDifferenceTop0mvsBottom9m<(-0.4),"Low0.4","High0.4"))%>%
+  mutate(date=date(DateTime),year=year(DateTime),month=month(DateTime))%>%
+  filter(month==12)%>%
+  dplyr::select(date,year,limit0.1)%>%
+  filter(limit0.1=="Low0.1")%>%
+  group_by(year)%>%
+  filter(year==2016|year==2017)%>%print(n=Inf)%>%
+  filter(row_number()==1)%>%
+  rename(IceIn_1_date_Pierson=date)%>%
+  dplyr::select(year,IceIn_1_date_Pierson)
+
+#Pierson method for spring melt####
+PiersonIceOut<-dailySensorData_derivedFill%>%mutate(limit0.1=ifelse(temperatureDifferenceTop0mvsBottom9m<(-0.1),"Low0.1","High0.1"))%>%
+  mutate(date=date(DateTime),year=year(DateTime),month=month(DateTime))%>%
+  filter(month==2|month==3|month==4)%>%
+  dplyr::select(date,year,limit0.1)%>%
+  #print(n=Inf)%>%
+  filter(limit0.1=="High0.1")%>%
+  group_by(year)%>%
+  #print(n=Inf)%>%
+  filter(row_number()==1)%>%
+  rename(IceOut_1_date_Pierson=date)%>%
+  ungroup()%>%
+  dplyr::select(IceOut_1_date_Pierson)
+
+
+#Pull out only the high frequency years###
+IceOnIceOff_hfYears<-IceOnIceOff%>%
+  dplyr::select(IceIn_1_date,IceOut_1_date)%>% #keep the dates
+  mutate(year=year(IceIn_1_date-25))%>% #find the year, minus 25 to get the water year because there is a january ice on date 
+  filter(year==2016|year==2017) #pull the high frequency winters
+
+#Add the Bruesewitz to the data frame####
+IceOnIceOff_hfYears<-
+  left_join(IceOnIceOff_hfYears,BruesewitzIceIn,by="year")%>%
+  mutate(IceOut_1_date_Bruesewitz=NA)%>% #unable to ID from the Bruesewitz method as in neither winter are there were not first of two consecutive days with rates of change below the lower bound, indicating a shift to lower stability following ice-off.
+  left_join(.,PiersonIceIn,by="year")%>%
+  bind_cols(.,PiersonIceOut)
+  
 #Plot some daily values of schmidt stability####
 #*Add in the ice on/off phenology and ice cover percentage####
 ggplot(data=dailySensorData_derivedFill,aes(x=DateTime,y=stability_Jperm2))+geom_line()+
@@ -309,13 +388,70 @@ ggplot(data=dailySensorData_derivedFill,aes(x=DateTime,y=stability_Jperm2))+geom
   geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceOut_1_date)))+
   scale_y_continuous(limits=c(-0.5,10.5),breaks=c(0,2.5,5,7.5,10),sec.axis=sec_axis(~.*10,name="IceCover_percent",breaks=c(0,25,50,75,100)))
 
-#Plot some daily values of schmidt stability####
+#Plot some daily values of CV of schmidt stability a la Bruesewitz####
+#*Add in the ice on/off phenology and ice cover percentage####
+ggplot(data=dailySensorData_derivedFill,aes(x=DateTime,y=stability_Jperm2_dailyCV))+geom_line()+
+  geom_point(aes(y=IceCover_Percent/10))+
+  geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceIn_1_date)))+
+  geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceOut_1_date)))+
+  scale_y_continuous(limits=c(0,27),breaks=c(0,10,20,30),sec.axis=sec_axis(~.*10,name="IceCover_percent",breaks=c(0,25,50,75,100)))
+
+#Plot some daily values of delta schmidt stability a la Bruesewitz####
+#*Add in the ice on/off phenology and ice cover percentage####
+ggplot(data=dailySensorData_derivedFill,aes(x=DateTime,y=stability_Jperm2_diff))+geom_point()+
+  geom_point(aes(y=IceCover_Percent/10),color="black",shape=23,fill="light blue")+
+  geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceIn_1_date)))+
+  geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceOut_1_date)))+
+  geom_hline(yintercept=stability_diff_icecoverBounds$mean_stability_Jperm2_diff,color="red")+
+  geom_hline(yintercept=stability_diff_icecoverBounds$mean_stability_Jperm2_diff+stability_diff_icecoverBounds$sd_stability_Jperm2_diff_3x,color="red")+
+  geom_hline(yintercept=stability_diff_icecoverBounds$mean_stability_Jperm2_diff-stability_diff_icecoverBounds$sd_stability_Jperm2_diff_3x,color="red")+
+  scale_y_continuous(limits=c(-2,27),breaks=c(0,10,20,30),sec.axis=sec_axis(~.*10,name="IceCover_percent",breaks=c(0,25,50,75,100)))
+
+
+#Plot some daily values of buoyancy frequency####
 #*Add in the ice on/off phenology and ice cover percentage####
 ggplot(data=dailySensorData_derivedFill,aes(x=DateTime,y=buoyancyfrequency_1_s2*(60*60)))+geom_line()+
   geom_point(aes(y=IceCover_Percent/30))+
   geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceIn_1_date)))+
   geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceOut_1_date)))+
   scale_y_continuous(limits=c(-0.5,3.5),breaks=c(0,1,2,3),sec.axis=sec_axis(~.*30,name="IceCover_percent",breaks=c(0,25,50,75,100)))
+
+#Plot some daily values of CV of buoyancy freq. a la Bruesewitz####
+#*Add in the ice on/off phenology and ice cover percentage####
+ggplot(data=dailySensorData_derivedFill,aes(x=DateTime,y=buoyancyfrequency_1_s2_dailyCV))+geom_line()+
+  geom_point(aes(y=IceCover_Percent/100))+
+  geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceIn_1_date)))+
+  geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceOut_1_date)))+
+  scale_y_continuous(limits=c(0,3),breaks=c(0,1,2,3),sec.axis=sec_axis(~.*100,name="IceCover_percent",breaks=c(0,25,50,75,100)))
+
+#Plot some daily values of delta buoyancy frequency####
+#*Add in the ice on/off phenology and ice cover percentage####
+ggplot(data=dailySensorData_derivedFill,aes(x=DateTime,y=buoyancyfrequency_1_s2_diff))+geom_point()+
+  geom_point(aes(y=IceCover_Percent/100000),color="black",shape=23,fill="light blue")+
+  geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceIn_1_date)))+
+  geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceOut_1_date)))+
+  geom_hline(yintercept=stability_diff_icecoverBounds$mean_stability_Jperm2_diff,color="red")+
+  geom_hline(yintercept=stability_diff_icecoverBounds$mean_stability_Jperm2_diff+stability_diff_icecoverBounds$sd_stability_Jperm2_diff_3x,color="red")+
+  geom_hline(yintercept=stability_diff_icecoverBounds$mean_stability_Jperm2_diff-stability_diff_icecoverBounds$sd_stability_Jperm2_diff_3x,color="red")+
+  scale_y_continuous(limits=c(-0.0005,0.001),breaks=c(-0.0005,0,0.0005,0.001),sec.axis=sec_axis(~.*100000,name="IceCover_percent",breaks=c(0,25,50,75,100)))
+
+
+#Plot temperature graphs with different ice phenology####
+ggplot(data=SensorData_derivedFill%>%dplyr::select(DateTime:Temp_9m)%>%pivot_longer(-1),aes(x=DateTime,y=value,color=name))+geom_line()+
+  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceIn_1_date)))+
+  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceOut_1_date)))+
+  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceIn_1_date_Pierson)),color="red")+
+  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceOut_1_date_Pierson)),color="red")+
+  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceIn_1_date_Bruesewitz)),color="green")+
+  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=IceCover_Percent/10),color="black",shape=23,fill="light blue")+
+  geom_point(data=dailySensorData_derivedFill,aes(x=DateTime,y=inverseStratification_numeric*5),inherit.aes = FALSE)+ #Make sure to not inherit the aes from the main ggplot statement####
+  scale_y_continuous(limits=c(0,11),breaks=c(0,2.5,5,7.5,10),sec.axis=sec_axis(~.*10,name="IceCover_percent",breaks=c(0,25,50,75,100)))+
+  ylab(bquote(Water~Temp~(degree*C)))+
+  theme_bw()
+
+
+
+
 
 ####day/night daily###############################
 #Summarize all columns that are numeric for the mean by day, sunset to sunset####
@@ -335,3 +471,5 @@ ggplot(data=dailyDayOrNightSensorData_derivedFill,aes(x=DateTime,y=stability_Jpe
   geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceIn_1_date)))+
   geom_vline(data=IceOnIceOff,aes(xintercept=as.POSIXct(IceOut_1_date)))+
   scale_y_continuous(limits=c(-0.5,10.5),breaks=c(0,2.5,5,7.5,10),sec.axis=sec_axis(~.*10,name="IceCover_percent",breaks=c(0,25,50,75,100)))
+
+
