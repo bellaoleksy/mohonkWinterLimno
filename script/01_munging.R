@@ -1563,3 +1563,22 @@ MohonkDailyWeatherFull<-MohonkDailyWeatherFull %>%
     
   )
 
+
+#Clean up the workspace a bit 
+rm(AnnualBreakpoint.method2, AnnualBreakpoint.method3,
+   AnnualData_airTempPeriods, AnnualData_precipPeriods,
+   AnnualData_SecchiPeriods, AnnualData_volWtMeansPeriods)
+
+rm(DailyInterpol_winter,
+   DailyInterpol.airTemp,
+   DailyInterpol.precip,
+   DailyInterpol.secchi,
+   DailyInterpol.secchiPeriods,
+   DailyInterpol.volWtMeansPeriods)
+
+rm(list_DailyWeather,
+   lm,
+   lm.deltaSpringMix,
+   MohonkWeeklyProfilesMetric.derivedData,
+   MohonkWeeklyProfilesMetric.derivedData.fullYears,
+   s.slope)
