@@ -750,7 +750,8 @@ head(MohonkIce.upload)
 MohonkIce_vis <- MohonkIce.upload %>%
   mutate(IceCover_1 = as.numeric(difftime(ICEOUT_1,ICEIN_1,units="days")),
          IceCover_2 = as.numeric(difftime(ICEOUT_2,ICEIN_2,units="days")),
-         IceCover_3 = as.numeric(difftime(ICEOUT_3,ICEIN_3,units="days"))) %>%
+         IceCover_3 = as.numeric(difftime(ICEOUT_3,ICEIN_3,units="days")),
+         water_year = dataRetrieval::calcWaterYear(ICEIN_1)) %>%
   rowwise() %>%
   mutate(IceCover_sum = sum(c_across(IceCover_1:IceCover_3), na.rm = TRUE),
          IceCover_sum = case_when(IceCover_sum==0 ~ NA,
@@ -917,6 +918,23 @@ ggsave(
   units = "in",
   dpi = 600
 )
+
+
+### Ice cover percentage since 2012 where data coverage is highest
+
+IceCover_perc %>%
+  left_join(., MohonkIce_vis) %>%
+  filter(water_year>2011) %>%
+  ggplot(aes(x=Date, y=IceCover_Percent))+
+  geom_point()+
+  facet_wrap(~water_year, scales="free_x")+
+  geom_line(aes(x=ICEIN_1), color="blue") +
+  geom_line(aes(x=ICEIN_2), color="blue") +
+  geom_line(aes(x=ICEIN_3), color="blue") +
+  geom_line(aes(x=ICEOUT_1), color="red") +
+  geom_line(aes(x=ICEOUT_2), color="red") +
+  geom_line(aes(x=ICEOUT_3), color="red") 
+##Something isn't plotting quite right-- check later IAO
 
 # Fitting GAMs for iceOnDOY_fed -------------------------------------------
 
