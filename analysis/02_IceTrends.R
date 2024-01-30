@@ -702,8 +702,8 @@ ggplot() +
     size = 1
   ) +
   
-  scale_fill_grafify(palette = "blue_conti", name = "Ice duration\n(days)")+ #yellow_conti scheme
-  scale_color_grafify(palette = "blue_conti", name = "Ice duration\n(days)")+ #yellow_conti scheme
+  grafify::scale_fill_grafify(palette = "blue_conti", name = "Ice duration\n(days)")+ #yellow_conti scheme
+  grafify::scale_color_grafify(palette = "blue_conti", name = "Ice duration\n(days)")+ #yellow_conti scheme
   # scale_color_continuous(high = "cyan", low = "red",
   #                        name = "Ice duration\n(days)") +
   # scale_fill_continuous(high = "cyan", low = "red",
@@ -751,6 +751,11 @@ MohonkIce_vis <- MohonkIce.upload %>%
   mutate(IceCover_1 = as.numeric(difftime(ICEOUT_1,ICEIN_1,units="days")),
          IceCover_2 = as.numeric(difftime(ICEOUT_2,ICEIN_2,units="days")),
          IceCover_3 = as.numeric(difftime(ICEOUT_3,ICEIN_3,units="days"))) %>%
+  rowwise() %>%
+  mutate(IceCover_sum = sum(c_across(IceCover_1:IceCover_3), na.rm = TRUE),
+         IceCover_sum = case_when(IceCover_sum==0 ~ NA,
+                                  TRUE ~ IceCover_sum)) %>%
+  # mutate(IceCover_sum = sum(IceCover_1+IceCover_2+IceCover_3)) %>%
   # mutate(across(ICEIN_1:ICEOUT_3, hydro.day)) %>%
   mutate(ICEIN_1_month=month(ICEIN_1),
          ICEIN_1_day=day(ICEIN_1),
@@ -787,12 +792,12 @@ ggplot() +
       xend = Year,
       y = ICEIN_1_newdate,
       yend = ICEOUT_1_newdate,
-      col = IceCover_1
+      col = IceCover_sum
     )
   ) +
   geom_point(
     data = MohonkIce_vis,
-    aes(x = Year, y = ICEIN_1_newdate, fill = IceCover_1),
+    aes(x = Year, y = ICEIN_1_newdate, fill = IceCover_sum),
     shape = 21,
     color = "black",
     size = 0.75
@@ -818,7 +823,7 @@ ggplot() +
     data = MohonkIce_vis,
     aes(x = Year,
         y = ICEOUT_1_newdate,
-        fill = IceCover_1),
+        fill = IceCover_sum),
     shape = 21,
     color = "black",
     size = 0.75
@@ -831,12 +836,12 @@ ggplot() +
       xend = Year,
       y = ICEIN_2_newdate,
       yend = ICEOUT_2_newdate,
-      col = IceCover_2
+      col = IceCover_sum
     )
   ) +
   geom_point(
     data = MohonkIce_vis,
-    aes(x = Year, y = ICEIN_2_newdate, fill = IceCover_2),
+    aes(x = Year, y = ICEIN_2_newdate, fill = IceCover_sum),
     shape = 21,
     color = "black",
     size = 0.75
@@ -845,7 +850,7 @@ ggplot() +
     data = MohonkIce_vis,
     aes(x = Year,
         y = ICEOUT_2_newdate,
-        fill = IceCover_2),
+        fill = IceCover_sum),
     shape = 21,
     color = "black",
     size = 0.75
@@ -857,12 +862,12 @@ ggplot() +
       xend = Year,
       y = ICEIN_3_newdate,
       yend = ICEOUT_3_newdate,
-      col = IceCover_3
+      col = IceCover_sum
     )
   ) +
   geom_point(
     data = MohonkIce_vis,
-    aes(x = Year, y = ICEIN_3_newdate, fill = IceCover_3),
+    aes(x = Year, y = ICEIN_3_newdate, fill = IceCover_sum),
     shape = 21,
     color = "black",
     size = 0.75
@@ -871,7 +876,7 @@ ggplot() +
     data = MohonkIce_vis,
     aes(x = Year,
         y = ICEOUT_3_newdate,
-        fill = IceCover_3),
+        fill = IceCover_sum),
     shape = 21,
     color = "black",
     size = 0.75
