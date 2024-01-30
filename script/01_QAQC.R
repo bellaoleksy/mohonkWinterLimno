@@ -441,6 +441,13 @@ MohonkWeeklySecchi<-MohonkWeeklyProfilesMetric[,c("Date","Secchi_m")]
 #*Generate Secchi for output from 1985 to 2019####
 # MohonkWeeklySecchi_export<-MohonkWeeklySecchi%>%filter(Date>"1984-12-31")%>%drop_na(Secchi_m)
 
+## Ice cover % data
+IceCover_perc <- read.csv("data/MohonkIceDataExtraction.csv") %>%
+  mutate(Date = mdy(Date),
+         water_year = dataRetrieval::calcWaterYear(Date))
+
+
+
 ###Generate file for export to EDI####
 #Only 1985 to present
 #Only temperature columnms
