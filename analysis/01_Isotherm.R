@@ -4,6 +4,13 @@
 source('analysis/00_main.R')
 
 
+## IAO was running out of memory on my machine so this is the solution I tried
+## https://stackoverflow.com/questions/51295402/r-on-macos-error-vector-memory-exhausted-limit-reached
+# if(!require(usethis)){install.packages("usethis")}
+# library(usethis) 
+# usethis::edit_r_environ()
+
+gc()
 
 # Set theme ---------------------------------------------------------------
 
@@ -12,7 +19,7 @@ theme_MS <- function () {
   ggthemes::theme_base(base_size=8) %+replace% 
     theme(
       panel.background  = element_blank(),
-      plot.background = element_rect(fill="white", colour=NA, size=1.0),
+      plot.background = element_rect(fill="white", colour=NA, linewidth=1.0),
       plot.title=element_text(face="plain",hjust=0.5),
       plot.subtitle = element_text(color="dimgrey", hjust=0, size=8),
       panel.grid.major = element_blank(),
@@ -66,7 +73,35 @@ for(i.airTemp in 1:length(airTemp)){
 }
 
 #Join together datasets in list
-Isotherm_WaterYear_dates_IceIn <- reduce(icein_wateryear_dates, full_join, by = "WaterYear")
+#IAO -- I was having memory issues so I subdivided. Clunky, I know :( 
+slice1 <- icein_wateryear_dates[1:50]
+slice2 <- icein_wateryear_dates[51:100]
+slice3 <- icein_wateryear_dates[101:150]
+slice4 <- icein_wateryear_dates[151:200]
+slice5 <- icein_wateryear_dates[201:250]
+slice6 <- icein_wateryear_dates[251:300]
+slice7 <- icein_wateryear_dates[301:350]
+slice8 <- icein_wateryear_dates[351:400]
+slice9 <- icein_wateryear_dates[401:450]
+slice10 <- icein_wateryear_dates[451:500]
+slice11 <- icein_wateryear_dates[501:540]
+
+Isotherm_WaterYear_dates_IceIn <-  bind_rows(
+  reduce(slice1, full_join, by = "WaterYear"),
+  reduce(slice2, full_join, by = "WaterYear"),
+  reduce(slice3, full_join, by = "WaterYear"),
+  reduce(slice4, full_join, by = "WaterYear"),
+  reduce(slice5, full_join, by = "WaterYear"),
+  reduce(slice6, full_join, by = "WaterYear"),
+  reduce(slice7, full_join, by = "WaterYear"),
+  reduce(slice8, full_join, by = "WaterYear"),
+  reduce(slice9, full_join, by = "WaterYear"),
+  reduce(slice10, full_join, by = "WaterYear"),
+  reduce(slice11, full_join, by = "WaterYear")
+)
+
+
+# Isotherm_WaterYear_dates_IceIn <- reduce(icein_wateryear_dates, full_join, by = "WaterYear")
 Isotherm_WaterYear_dates_IceIn <- full_join(Isotherm_WaterYear_dates_IceIn, MohonkIce, by = c("WaterYear"="Year"))
 Isotherm_WaterYear_dates_IceIn <-
   Isotherm_WaterYear_dates_IceIn %>%
@@ -111,7 +146,37 @@ for(i.airTemp in 1:length(airTemp)){
 }
 
 #Join together datasets in list
-Isotherm_WaterYear_dates_IceOut <- reduce(iceout_wateryear_dates, full_join, by = "WaterYear")
+#IAO -- I was having memory issues so I subdivided. Clunky, I know :( 
+slice1 <- iceout_wateryear_dates[1:50]
+slice2 <- iceout_wateryear_dates[51:100]
+slice3 <- iceout_wateryear_dates[101:150]
+slice4 <- iceout_wateryear_dates[151:200]
+slice5 <- iceout_wateryear_dates[201:250]
+slice6 <- iceout_wateryear_dates[251:300]
+slice7 <- iceout_wateryear_dates[301:350]
+slice8 <- iceout_wateryear_dates[351:400]
+slice9 <- iceout_wateryear_dates[401:450]
+slice10 <- iceout_wateryear_dates[451:500]
+slice11 <- iceout_wateryear_dates[501:540]
+
+gc()
+Isotherm_WaterYear_dates_IceOut <-  bind_rows(
+  reduce(slice1, full_join, by = "WaterYear"),
+  reduce(slice2, full_join, by = "WaterYear"),
+  reduce(slice3, full_join, by = "WaterYear"),
+  reduce(slice4, full_join, by = "WaterYear"),
+  reduce(slice5, full_join, by = "WaterYear"),
+  reduce(slice6, full_join, by = "WaterYear"),
+  reduce(slice7, full_join, by = "WaterYear"),
+  reduce(slice8, full_join, by = "WaterYear"),
+  reduce(slice9, full_join, by = "WaterYear"),
+  reduce(slice10, full_join, by = "WaterYear"),
+  reduce(slice11, full_join, by = "WaterYear")
+)
+
+
+
+# Isotherm_WaterYear_dates_IceOut <- reduce(iceout_wateryear_dates, full_join, by = "WaterYear")
 Isotherm_WaterYear_dates_IceOut <- full_join(Isotherm_WaterYear_dates_IceOut, MohonkIce, by = c("WaterYear"="Year"))
 Isotherm_WaterYear_dates_IceOut <-
   Isotherm_WaterYear_dates_IceOut %>%
