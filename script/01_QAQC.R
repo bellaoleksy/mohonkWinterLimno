@@ -308,15 +308,18 @@ MohonkDailyWeather2022_2023_metric<-MohonkDailyWeather2022_2023%>%
          SnowDepth_mm=ifelse(Snow_on_Ground=="T",0,as.numeric(Snow_on_Ground)*25.4))%>%
   dplyr::select(c("Date","Precip_mm","Snow_mm",
                   "SnowDepth_mm","TempMax_degC",
-                  "TempMin_degC","TempMean_degC"))
- str(MohonkDailyWeather2022_2023_metric) 
+                  "TempMin_degC","TempMean_degC")) %>%
+  mutate(across(where(is.numeric), round, digits=1))
+
+str(MohonkDailyWeather2022_2023_metric) 
 
 
 #Keep relevant columns for weather data frame
 MohonkDailyWeatherFull<- MohonkDailyWeatherFull.upload %>%
   dplyr::select(c("Date","Precip_mm","Snow_mm",
                   "SnowDepth_mm","TempMax_degC",
-                  "TempMin_degC","TempMean_degC"))%>%bind_rows(.,MohonkDailyWeather2022_2023_metric)
+                  "TempMin_degC","TempMean_degC")) %>%
+  bind_rows(.,MohonkDailyWeather2022_2023_metric)
 str(MohonkDailyWeatherFull)
 
 # Old from before we had metric data -- can be deleted at some point
