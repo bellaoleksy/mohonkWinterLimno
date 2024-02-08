@@ -6,10 +6,16 @@
 #Libraries####
 if (!require(tidyverse)) {install.packages("tidyverse")}
 if (!require(zoo)) {install.packages("zoo")}
+if (!require(segmented)) {install.packages("segmented")}
+if (!require(strucchange)) {install.packages("strucchange")}
+if (!require(forecast)) {install.packages("forecast")}
 
 #Load libraries
 library(tidyverse)
 library(zoo) #for linearly interpolation
+library(segmented) #for segmented regression
+library(strucchange) #For breakpoints function
+library(forecast) #for auto.arima
 
 #Run functions####
 source("script/01_functions.R")
@@ -294,6 +300,13 @@ for(dateTime_j in 1:nrow(SensorData_derivedFill)){
 #Summarize all columns that are numeric for the mean by day, sunset to sunset####
 daily_numeric<-SensorData_derivedFill%>%group_by(day_count)%>%
   summarise_if(is.numeric, mean, na.rm = TRUE)
+#Get teh maximum for the air temperature####
+daily_airtempMax<-SensorData_derivedFill%>%group_by(day_count)%>%
+  summarise(temp_2m_max_degC_max=max(temp_2m_max_degC,na.rm = TRUE))
+#Get the daily sum of the average air temperature####
+daily_airtempSum<-SensorData_derivedFill%>%group_by(day_count)%>%
+  summarise(temp_2m_avg_degC_sum=sum(temp_2m_avg_degC,na.rm = TRUE))
+
 #SUmmarize all date columns for the mean by day, sunset to sunset####
 daily_date<-SensorData_derivedFill%>%group_by(day_count)%>%
   summarise_if(is.POSIXct, mean, na.rm = TRUE)
@@ -302,8 +315,12 @@ daily_cv<-SensorData_derivedFill%>%group_by(day_count)%>%summarize(stability_Jpe
                                                                    buoyancyfrequency_1_s2_dailyCV=sd(buoyancyfrequency_1_s2,na.rm=TRUE)/mean(buoyancyfrequency_1_s2,na.rm=TRUE))
 
 
+
+
 #Merge those together for a daily data frame####
 dailySensorData_derivedFill<-left_join(daily_date,daily_numeric,by="day_count")%>%
+                             left_join(.,daily_airtempMax,by="day_count")%>%
+                             left_join(.,daily_airtempSum,by="day_count")%>%
                              left_join(.,daily_cv,by="day_count")%>% #add in the daily CV of stability
                              dplyr::select(-stability_Jperm2_diff,-buoyancyfrequency_1_s2_diff) #remove the differencing becuase this is the average of the differencing
 
@@ -327,6 +344,8 @@ dailySensorData_derivedFill<-dailySensorData_derivedFill%>%mutate(temperatureDif
                                            waterDensityDiff_kgpm3_threshold=ifelse(waterDensityDiff_kgpm3>0.05,TRUE,FALSE),
                                            inverseStratification=ifelse(waterDensityDiff_kgpm3_threshold==TRUE&temperatureDifference1mvs9m==TRUE,"InvStrat","NoStrat"),
                                            inverseStratification_numeric=ifelse(waterDensityDiff_kgpm3_threshold==TRUE&temperatureDifference1mvs9m==TRUE,1,NA))
+
+
 
 #Get out the Bruesewitz Ice On dates####
 BruesewitzIceIn<-dailySensorData_derivedFill%>%
@@ -450,8 +469,104 @@ ggplot(data=SensorData_derivedFill%>%dplyr::select(DateTime:Temp_9m)%>%pivot_lon
   theme_bw()
 
 
+########################Look at meteorological predictors of ice on and off#############################################
+
+##Plot temperature graphs with different ice phenology####
+lims <- as.POSIXct(strptime(c("2017-12-01 19:00", "2017-12-30 20:00"), 
+                            format = "%Y-%m-%d %H:%M"))
+
+ggplot(data=dailySensorData_derivedFill,aes(x=DateTime,y=(temp_2m_avg_degC+lag(temp_2m_avg_degC,1)+lag(temp_2m_avg_degC,2))/3))+geom_point(size=2,color="purple")+
+  geom_hline(yintercept=-2.5,color="red")+
+  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceIn_1_date)))+
+  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceOut_1_date)))+
+  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceIn_1_date_Pierson)),color="red")+
+  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceOut_1_date_Pierson)),color="red")+
+  #geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=temp_2m_avg_degC))+
+  geom_line(data=SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=48*4,centre=TRUE)),aes(x=DateTime,y=ma_temp_avg_degC),color="blue")+
+  #geom_line(data=SensorData_derivedFill,aes(x=DateTime,y=solar_insolation_total_MJpm2*15),color="orange")+
+  #geom_line(data=SensorData_derivedFill,aes(x=DateTime,y=wind_speed_prop_avg_mps*20),color="grey")+
+  #geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=IceCover_Percent),color="black",shape=23,fill="light blue")+
+  scale_x_datetime(limits=lims)
+
+#Calculate teh air temperatute Moving average and see how that matches up with metrics of meteorology and inverse strat####
+#*2016####
+ggplot(data=SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2016-12-19 00:00:00 EST")&DateTime>=as.POSIXct("2016-12-01 00:00:00 EST")),aes(x=DateTime,y=ma_temp_avg_degC))+geom_line()+geom_hline(yintercept=-0.1,color="red")+
+  geom_line(aes(y=station_pressure_avg_mbar-1000),color="green")+
+  geom_line(aes(y=temperatureDifferenceTop0mvsBottom9m*10),color="blue")+
+  geom_line(aes(y=stability_Jperm2*5),color="red")+
+  geom_line(aes(y=wind_speed_prop_max_mps),color="grey")
+ggplot(data=SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2016-12-16 00:00:00 EST")&DateTime>=as.POSIXct("2016-12-01 00:00:00 EST")),aes(x=ma_temp_avg_degC,y=temperatureDifferenceTop0mvsBottom9m))+geom_line()+geom_hline(yintercept=-0.1,color="red")
+ggplot(data=SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2016-12-16 00:00:00 EST")&DateTime>=as.POSIXct("2016-12-01 00:00:00 EST")),aes(x=ma_temp_avg_degC,y=stability_Jperm2))+geom_line()+geom_hline(yintercept=-0.1,color="red")
+ggplot(data=SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2016-12-16 00:00:00 EST")&DateTime>=as.POSIXct("2016-12-01 00:00:00 EST")),aes(x=ma_temp_avg_degC,y=station_pressure_avg_mbar))+geom_line()
+SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2016-12-16 00:00:00 EST")&DateTime>=as.POSIXct("2016-12-01 00:00:00 EST"))%>%filter(temperatureDifferenceTop0mvsBottom9m<(-0.1))%>%dplyr::select(DateTime,temperatureDifferenceTop0mvsBottom9m,stability_Jperm2,ma_temp_avg_degC)
+#*2017####
+ggplot(data=SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2017-12-19 00:00:00 EST")&DateTime>=as.POSIXct("2017-12-01 00:00:00 EST")),aes(x=DateTime,y=ma_temp_avg_degC))+geom_line()+geom_hline(yintercept=-0.1,color="red")+
+  geom_line(aes(y=station_pressure_avg_mbar-1000),color="green")+
+  geom_line(aes(y=temperatureDifferenceTop0mvsBottom9m*10),color="blue")+
+  geom_line(aes(y=stability_Jperm2*5),color="red")+
+  geom_line(aes(y=wind_speed_prop_max_mps),color="grey")
+ggplot(data=SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2017-12-14 00:00:00 EST")&DateTime>=as.POSIXct("2017-12-01 00:00:00 EST")),aes(x=ma_temp_avg_degC,y=temperatureDifferenceTop0mvsBottom9m))+geom_line()+geom_hline(yintercept=-0.1,color="red")
+ggplot(data=SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2017-12-14 00:00:00 EST")&DateTime>=as.POSIXct("2017-12-01 00:00:00 EST")),aes(x=ma_temp_avg_degC,y=stability_Jperm2))+geom_line()+geom_hline(yintercept=-0.1,color="red")
+ggplot(data=SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2017-12-14 00:00:00 EST")&DateTime>=as.POSIXct("2017-12-01 00:00:00 EST")),aes(x=ma_temp_avg_degC,y=station_pressure_avg_mbar))+geom_line()
+SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2017-12-14 00:00:00 EST")&DateTime>=as.POSIXct("2017-12-01 00:00:00 EST"))%>%filter(temperatureDifferenceTop0mvsBottom9m<(-0.1))%>%dplyr::select(DateTime,temperatureDifferenceTop0mvsBottom9m,stability_Jperm2,ma_temp_avg_degC)
+
+#Segmented regressions####
+#*Subset for 2016####
+segmentedDF_2016<-SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2016-12-19 00:00:00 EST")&DateTime>=as.POSIXct("2016-12-01 00:00:00 EST"))%>%
+  mutate(row_name=row_number())
+#*Segmented regression for temperature difference####
+lm.tempDiff.2016<-lm(temperatureDifferenceTop0mvsBottom9m~row_name,data=segmentedDF_2016)
+segmented.mod.tempDiff.2016<-segmented(lm.tempDiff.2016,seg.Z= ~row_name,psi=c(1330,1400,1500,1600))
+summary(segmented.mod.tempDiff.2016)
+plot(temperatureDifferenceTop0mvsBottom9m~row_name,data=segmentedDF_2016, pch=16)
+plot(segmented.mod.tempDiff.2016, add=T)
+#Breakpoints analysis####
+breakpoints(ts(segmentedDF_2016$temperatureDifferenceTop0mvsBottom9m)~1)
+abline(v=c(725,1435))
+#Segmented regression for stability####
+lm.stability.2016<-lm(stability_Jperm2~row_name,data=segmentedDF_2016)
+segmented.mod.stability.2016<-segmented(lm.stability.2016,seg.Z= ~row_name,psi=c(1230,1400,1500,1600))
+summary(segmented.mod.stability.2016)
+plot(stability_Jperm2~row_name,data=segmentedDF_2016, pch=16)
+plot(segmented.mod.stability.2016, add=T)
+#Breakpoints analysis####
+breakpoints(ts(segmentedDF_2016$stability_Jperm2)~1)
+abline(v=c(725,1435))
+
+#ARIMA####
+auto.arima(segmentedDF_2016$temperatureDifferenceTop0mvsBottom9m)
+acf(segmentedDF_2016$temperatureDifferenceTop0mvsBottom9m)
+pacf(segmentedDF_2016$temperatureDifferenceTop0mvsBottom9m)
+fit<-Arima(segmentedDF_2016$temperatureDifferenceTop0mvsBottom9m,order=c(1,1,1))
+plot(fit$x)
+lines(fitted(fit),col="red")
 
 
+#*Subset for 2017####
+segmentedDF_2017<-SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2017-12-19 00:00:00 EST")&DateTime>=as.POSIXct("2017-12-01 00:00:00 EST"))%>%
+  mutate(row_name=row_number())
+#*Segmented regression for temperature difference####
+lm.tempDiff<-lm(temperatureDifferenceTop0mvsBottom9m~row_name,data=segmentedDF_2017)
+segmented.mod.tempDiff<-segmented(lm.tempDiff,seg.Z= ~row_name,psi=c(1230,1400))
+summary(segmented.mod.tempDiff)
+plot(temperatureDifferenceTop0mvsBottom9m~row_name,data=segmentedDF_2017, pch=16)
+plot(segmented.mod.tempDiff, add=T)
+#Breakpoints analysis####
+breakpoints(ts(segmentedDF_2017$temperatureDifferenceTop0mvsBottom9m)~1)
+abline(v=c(470,1079,1338))
+#Segmented regression for stability####
+lm.stability<-lm(stability_Jperm2~row_name,data=segmentedDF_2017)
+segmented.mod.stability<-segmented(lm.stability,seg.Z= ~row_name,psi=c(1230,1400))
+summary(segmented.mod.stability)
+plot(stability_Jperm2~row_name,data=segmentedDF_2017, pch=16)
+plot(segmented.mod.stability, add=T)
+
+#One breakpoint####
+#Break point for temperature model: Line 1192:  2017-12-13 14:45:00####
+#Break point for stability model: Line 1215: 2017-12-13 20:30:00####
+#Two breakpoints####
+#Break points for temperature model: 1314 and 1367: 2017-12-14 21:00:00 and 2017-12-15 10:30:00####
+#Break points for stability model: 1301 and 1402: 2017-12-14 18:00:00 and 2017-12-15 19:15:00####
 
 ####day/night daily###############################
 #Summarize all columns that are numeric for the mean by day, sunset to sunset####
