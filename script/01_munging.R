@@ -491,6 +491,7 @@ for (k in 2:length(AnnualData$Year)) {
   EndOpenWater_doy <-
     AnnualData$IceInDayofYear[AnnualData$Year == year.tmp]
   
+  
   #plot(stability.tmp~dayofyear.tmp,main=paste("Year=",year.tmp,sep=""),xlim=c(0,365),ylim=c(0,610))
   #Blue line is 10
   #abline(h=Stability.cutoff,col="blue")
@@ -529,16 +530,13 @@ for (k in 2:length(AnnualData$Year)) {
     stability.tmp.openwater <-
       stability.tmp[dayofyear.tmp > StartOpenWater_doy &
                       dayofyear.tmp < EndOpenWater_doy]
-    if (EndOpenWater_doy > 365) {
+    if (!is.na(EndOpenWater_doy) && EndOpenWater_doy > 365) {
+      # Replaced the line above because error message:
+      # "Error in if (EndOpenWater_doy > 365) {: missing value where TRUE/FALSE needed"
       MaxDay <- max(dayofyear.tmp.openwater) + 1
-      dayofyear.tmp.openwater <-
-        c(dayofyear.tmp.openwater,
-          seq(MaxDay, EndOpenWater_doy, by = 1))
-      stability.tmp.openwater <-
-        c(stability.tmp.openwater,
-          rep(stability.tmp.openwater[max(which(!is.na(stability.tmp.openwater)))], length(
-            seq(MaxDay, EndOpenWater_doy, by = 1)
-          )))
+      dayofyear.tmp.openwater <- c(dayofyear.tmp.openwater, seq(MaxDay, EndOpenWater_doy, by = 1))
+      stability.tmp.openwater <- c(stability.tmp.openwater, rep(stability.tmp.openwater[max(which(!is.na(stability.tmp.openwater)))], length(seq(MaxDay, EndOpenWater_doy, by = 1))))
+      
     }
     
     #Calculate the area under the curve for those days in the stratified period and open water period
