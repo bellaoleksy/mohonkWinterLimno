@@ -50,7 +50,7 @@ temp_IceIn_forfunction <-
   mutate(MonthNumber = month(Date), #create month column using lubridate
          Month = month(MonthNumber, label=TRUE),
          WaterYear_date = hydro.day(Date)) %>% #create column with month names using factor to create labels for different levels 
-  select(WaterYear, Month, Date, WaterYear_date, TempMax_degC, TempMin_degC, TempMean_degC)
+  select(WaterYear, Month, Date, WaterYear_date, TempMax_degC, TempMin_degC, TempMean_degC) 
 
 #Define variables to use in isotherm function
 airTemp <- data.frame(TempMax_degC = temp_IceIn_forfunction$TempMax_degC, TempMin_degC = temp_IceIn_forfunction$TempMin_degC, TempMean_degC = temp_IceIn_forfunction$TempMean_degC)
@@ -108,7 +108,9 @@ Isotherm_WaterYear_dates_IceIn <-
   select(WaterYear, IceInDate, IceInDayofYear, IceInDayofYear_fed, isotherm_TempMax_degC_1_days_0_degC_WaterYear_date:isotherm_TempMean_degC_30_days_5_degC_WaterYear_date)
 
 
-
+save(Isotherm_WaterYear_dates_IceIn, file = "data/isotherm_dataframes.RData")
+# To load the data again
+# load("data/isotherm_dataframes.RData")
 
 #Calculate Isotherms for Ice Out ------------------------------------------
 
@@ -147,19 +149,27 @@ for(i.airTemp in 1:length(airTemp)){
 
 #Join together datasets in list
 #IAO -- I was having memory issues so I subdivided. Clunky, I know :( 
-slice1 <- iceout_wateryear_dates[1:50]
-slice2 <- iceout_wateryear_dates[51:100]
-slice3 <- iceout_wateryear_dates[101:150]
-slice4 <- iceout_wateryear_dates[151:200]
-slice5 <- iceout_wateryear_dates[201:250]
-slice6 <- iceout_wateryear_dates[251:300]
-slice7 <- iceout_wateryear_dates[301:350]
-slice8 <- iceout_wateryear_dates[351:400]
-slice9 <- iceout_wateryear_dates[401:450]
-slice10 <- iceout_wateryear_dates[451:500]
-slice11 <- iceout_wateryear_dates[501:540]
+slice1 <- iceout_wateryear_dates[1:10]
+slice2 <- iceout_wateryear_dates[11:20]
+slice3 <- iceout_wateryear_dates[21:30]
+slice4 <- iceout_wateryear_dates[31:40]
+slice5 <- iceout_wateryear_dates[41:50]
+slice6 <- iceout_wateryear_dates[51:60]
+slice7 <- iceout_wateryear_dates[61:70]
+slice8 <- iceout_wateryear_dates[71:80]
+slice9 <- iceout_wateryear_dates[81:90]
+slice10 <- iceout_wateryear_dates[91:100]
+slice11 <- iceout_wateryear_dates[111:120]
+slice12 <- iceout_wateryear_dates[121:130]
+slice13 <- iceout_wateryear_dates[131:140]
+slice14 <- iceout_wateryear_dates[141:150]
+slice15 <- iceout_wateryear_dates[151:160]
+slice16 <- iceout_wateryear_dates[161:170]
+slice17 <- iceout_wateryear_dates[171:180]
+slice18 <- iceout_wateryear_dates[181:190]
 
-gc()
+
+
 Isotherm_WaterYear_dates_IceOut <-  bind_rows(
   reduce(slice1, full_join, by = "WaterYear"),
   reduce(slice2, full_join, by = "WaterYear"),
@@ -171,10 +181,30 @@ Isotherm_WaterYear_dates_IceOut <-  bind_rows(
   reduce(slice8, full_join, by = "WaterYear"),
   reduce(slice9, full_join, by = "WaterYear"),
   reduce(slice10, full_join, by = "WaterYear"),
-  reduce(slice11, full_join, by = "WaterYear")
+  reduce(slice11, full_join, by = "WaterYear"),
+  reduce(slice12, full_join, by = "WaterYear"),
+  reduce(slice13, full_join, by = "WaterYear"),
+  reduce(slice14, full_join, by = "WaterYear"),
+  reduce(slice15, full_join, by = "WaterYear"),
+  reduce(slice16, full_join, by = "WaterYear"),
+  reduce(slice17, full_join, by = "WaterYear"),
+  reduce(slice18, full_join, by = "WaterYear"),
 )
 
 
+
+slices <- list()
+
+for (i in 1:54) {
+  start_index <- (i - 1) * 10 + 1
+  end_index <- i * 10
+  slice <- iceout_wateryear_dates[start_index:end_index]
+  slices[[paste0("slice", i)]] <- slice
+}
+
+Isotherm_WaterYear_dates_IceOut <- bind_rows(lapply(slices, function(slice) {
+  reduce(slice, full_join, by = "WaterYear")
+}))
 
 # Isotherm_WaterYear_dates_IceOut <- reduce(iceout_wateryear_dates, full_join, by = "WaterYear")
 Isotherm_WaterYear_dates_IceOut <- full_join(Isotherm_WaterYear_dates_IceOut, MohonkIce, by = c("WaterYear"="Year"))
@@ -199,8 +229,6 @@ rm(temp_IceIn_forfunction,
 
 
 # Run Isotherm Ice In regressions -----------------------------------------
-
-
 
 #Isotherm Ice In
 #*Create isotherm summary dataframe
