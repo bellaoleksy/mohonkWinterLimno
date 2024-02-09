@@ -953,7 +953,7 @@ ggsave(
 # Fitting GAMs for iceOnDOY_fed -------------------------------------------
 
 hist(MohonkIceWeather$IceInDayofYear_fed)
-
+IceInVars
 
 ### IceInDayofYear_fed~nDaysMeanBelowZero_OctNovDec
 modIceOn1 <- gam(IceInDayofYear_fed ~  s(nDaysMeanBelowZero_OctNovDec),
@@ -1103,12 +1103,6 @@ draw(modIceOn6,
      resid_col="navyblue")
 
 
-modIceOn7 <- gam(IceInDayofYear_fed ~  s(isotherm_TempMax_degC_17_days_0_degC_WaterYear_date) + s(cumMeanDailyT_OctNov),
-                 family=Gamma(link="log"),
-                 data = MohonkIceWeather,
-                 # correlation = corCAR1(form = ~ Year),
-                 method = "REML")
-summary(modIceOn7)
 
 #How to compare the fits of multiple GAMs models? 
 #Would be worth digging into more but found this as a solution:
@@ -1144,9 +1138,9 @@ modIceOn5$aic
 modIceOn6$aic
 
 #Dev explained
-summary(modIceOn4)$dev.expl
-summary(modIceOn5)$dev.expl
-summary(modIceOn6)$dev.expl
+summary(modIceOn4)$dev.expl #CumNov, CumDec, NAONov
+summary(modIceOn5)$dev.expl #Fall isotherm
+summary(modIceOn6)$dev.expl #Fall Isotherm, CumNov
 
 
 
@@ -1287,6 +1281,7 @@ Row1a
 
 #Distribution of y
 hist(MohonkIceWeather$IceOutDayofYear)
+IceOutVars
 
 ### I added Family Gamma here for how errors should respond
 modIceOut0 <- gam(IceOutDayofYear ~ s(Year),
@@ -1332,7 +1327,7 @@ m1.dsig <- signifD(IceOffPred$fit,
                    m1.dci[[Term]]$lower)
 
 ylim <- with(IceOffPred, range(upper, lower, fit))
-ylab <- 'Ice on DOY (water year)'
+ylab <- 'Ice off DOY (water year)'
 
 plot(fit ~ Year, data = IceOffPred, type = "n", ylab = ylab, ylim = ylim)
 lines(fit ~ Year, data = IceOffPred)
@@ -1340,7 +1335,7 @@ lines(upper ~ Year, data = IceOffPred, lty = "dashed")
 lines(lower ~ Year, data = IceOffPred, lty = "dashed")
 lines(unlist(m1.dsig$incr) ~ Year, data = IceOffPred, col = "blue", lwd = 3)
 lines(unlist(m1.dsig$decr) ~ Year, data = IceOffPred, col = "red", lwd = 3)
-#No significant change in IceOut DOY, which we already knew from the sens slopes 
+#Now with some additional data we do a modest negative trends in Ice-off
 
 #But another way to visualize it is there would be a significant period of change if the error bar around
 #the first derivative didn't overlap the horizontal black line.
@@ -1504,7 +1499,6 @@ gam.check(modIceOut9)
 
 #Just for good measure, same as above but without IceInDOY_fed
 modIceOut10 <- gam(IceOutDayofYear ~   s(cumMeanDailyT_Feb) + s(isotherm_TempMean_degC_29_days_4_degC_WaterYear_date) + s(cumSnow_FebMarApr),
-                   # family=Gamma(link="log"),
                    data = MohonkIceWeather,
                    # correlation = corCAR1(form = ~ Year),
                    method = "REML")
@@ -1527,10 +1521,10 @@ modIceOut11 <- gam(IceOutDayofYear ~   s(isotherm_TempMean_degC_29_days_4_degC_W
 summary(modIceOut11)
 
 
-draw(modIceOut10, residuals = TRUE)
+draw(modIceOut11, residuals = TRUE)
 #Partial plots of estimated smooth functions with partial residuals
 
-gam.check(modIceOut10)
+gam.check(modIceOut11)
 #Suggests that default k values are fine
 
 
@@ -1565,6 +1559,9 @@ modIceOut8_summary$dev.expl
 
 compareML(modIceOut9, modIceOut7) #ModIceOut9 preferred
 compareML(modIceOut9, modIceOut10) #ModIceOut9 has lower AIC. How does dev % compare?
+compareML(modIceOut7, modIceOut10) #ModIceOut7 has lower AIC.
+
+
 
 modIceOut9_summary<- summary.gam(modIceOut9)
 modIceOut10_summary<- summary.gam(modIceOut10)
@@ -1626,14 +1623,12 @@ modIceOut8$aic
 modIceOut9$aic
 
 #Dev explained
-summary(modIceOut7)$dev.expl
-summary(modIceOut8)$dev.expl
-summary(modIceOut9)$dev.expl
+summary(modIceOut7)$dev.expl #CumTempFeb, CumTempMar, CumSnowFebApr, IceInDOY
+summary(modIceOut8)$dev.expl #CumTempFebMar, CumSnowFebApr, IceInDOY
+summary(modIceOut9)$dev.expl #CumTempFeb, Isotherm, CumSnowFebApr, IceInDOY
+
 
 modIceOut9_summary<-summary(modIceOut9)
-modIceOut9_summary
-
-
 #Final variables for paper--
 modIceOut9_summary
 
@@ -2149,6 +2144,7 @@ IceDuration_GlobalT<-
   labs(x="Global Temperature Anomaly (°C)",
        y="Ice duration (days)")+
   scale_y_continuous(breaks = seq(30, 150, by = 30) )+
+  scale_x_continuous(breaks = seq(-0.2, 1.0, by = 0.4) )+
   coord_cartesian(ylim = c(30, 150), expand = TRUE) +
   theme(plot.margin=unit(c(0.5,0,0.5,0.5), "lines"))+
         # legend.justification = c(1, 1),
@@ -2291,7 +2287,7 @@ ggsave("figures/MS/Figure4.GamPredictions_IceDuration.png", width=7.2, height=3,
 
 
 
-# Table S1.  Sens slope climate trends ------------------------------------
+# Table S3.  Sens slope climate trends ------------------------------------
 options(scipen = 100, digits = 5)
 
 
@@ -2325,7 +2321,7 @@ Climate.SensSlopeSummary_hux <-
   set_all_borders(TRUE) 
 
 theme_plain(Climate.SensSlopeSummary_hux)
-quick_docx(Climate.SensSlopeSummary_hux, file = 'figures/TableS1.SensSlopesClimateVariables.docx')
+quick_docx(Climate.SensSlopeSummary_hux, file = 'figures/MS/TableS3.SensSlopesClimateVariables.docx')
 
 
 
