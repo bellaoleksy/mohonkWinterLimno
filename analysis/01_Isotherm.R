@@ -73,32 +73,21 @@ for(i.airTemp in 1:length(airTemp)){
 }
 
 #Join together datasets in list
-#IAO -- I was having memory issues so I subdivided. Clunky, I know :( 
-slice1 <- icein_wateryear_dates[1:50]
-slice2 <- icein_wateryear_dates[51:100]
-slice3 <- icein_wateryear_dates[101:150]
-slice4 <- icein_wateryear_dates[151:200]
-slice5 <- icein_wateryear_dates[201:250]
-slice6 <- icein_wateryear_dates[251:300]
-slice7 <- icein_wateryear_dates[301:350]
-slice8 <- icein_wateryear_dates[351:400]
-slice9 <- icein_wateryear_dates[401:450]
-slice10 <- icein_wateryear_dates[451:500]
-slice11 <- icein_wateryear_dates[501:540]
+#IAO -- I was having memory issues so I had to do a little magic to subdivide things only to bind them together, do the full join, and THEN run the reduce function.
+#No idea why this worked but the original suddenly didn't. Maybe a chance with purrr?
+slices <- list()
 
-Isotherm_WaterYear_dates_IceIn <-  bind_rows(
-  reduce(slice1, full_join, by = "WaterYear"),
-  reduce(slice2, full_join, by = "WaterYear"),
-  reduce(slice3, full_join, by = "WaterYear"),
-  reduce(slice4, full_join, by = "WaterYear"),
-  reduce(slice5, full_join, by = "WaterYear"),
-  reduce(slice6, full_join, by = "WaterYear"),
-  reduce(slice7, full_join, by = "WaterYear"),
-  reduce(slice8, full_join, by = "WaterYear"),
-  reduce(slice9, full_join, by = "WaterYear"),
-  reduce(slice10, full_join, by = "WaterYear"),
-  reduce(slice11, full_join, by = "WaterYear")
-)
+for (i in 1:54) {
+  start_index <- (i - 1) * 10 + 1
+  end_index <- i * 10
+  slice <- icein_wateryear_dates[start_index:end_index]
+  slices[[paste0("slice", i)]] <- slice
+}
+
+Isotherm_WaterYear_dates_IceIn <- bind_rows(lapply(slices, function(slice) {
+  reduce(slice, full_join, by = "WaterYear")
+}))
+
 
 
 # Isotherm_WaterYear_dates_IceIn <- reduce(icein_wateryear_dates, full_join, by = "WaterYear")
@@ -108,9 +97,6 @@ Isotherm_WaterYear_dates_IceIn <-
   select(WaterYear, IceInDate, IceInDayofYear, IceInDayofYear_fed, isotherm_TempMax_degC_1_days_0_degC_WaterYear_date:isotherm_TempMean_degC_30_days_5_degC_WaterYear_date)
 
 
-save(Isotherm_WaterYear_dates_IceIn, file = "data/isotherm_dataframes.RData")
-# To load the data again
-# load("data/isotherm_dataframes.RData")
 
 #Calculate Isotherms for Ice Out ------------------------------------------
 
@@ -148,51 +134,8 @@ for(i.airTemp in 1:length(airTemp)){
 }
 
 #Join together datasets in list
-#IAO -- I was having memory issues so I subdivided. Clunky, I know :( 
-slice1 <- iceout_wateryear_dates[1:10]
-slice2 <- iceout_wateryear_dates[11:20]
-slice3 <- iceout_wateryear_dates[21:30]
-slice4 <- iceout_wateryear_dates[31:40]
-slice5 <- iceout_wateryear_dates[41:50]
-slice6 <- iceout_wateryear_dates[51:60]
-slice7 <- iceout_wateryear_dates[61:70]
-slice8 <- iceout_wateryear_dates[71:80]
-slice9 <- iceout_wateryear_dates[81:90]
-slice10 <- iceout_wateryear_dates[91:100]
-slice11 <- iceout_wateryear_dates[111:120]
-slice12 <- iceout_wateryear_dates[121:130]
-slice13 <- iceout_wateryear_dates[131:140]
-slice14 <- iceout_wateryear_dates[141:150]
-slice15 <- iceout_wateryear_dates[151:160]
-slice16 <- iceout_wateryear_dates[161:170]
-slice17 <- iceout_wateryear_dates[171:180]
-slice18 <- iceout_wateryear_dates[181:190]
-
-
-
-Isotherm_WaterYear_dates_IceOut <-  bind_rows(
-  reduce(slice1, full_join, by = "WaterYear"),
-  reduce(slice2, full_join, by = "WaterYear"),
-  reduce(slice3, full_join, by = "WaterYear"),
-  reduce(slice4, full_join, by = "WaterYear"),
-  reduce(slice5, full_join, by = "WaterYear"),
-  reduce(slice6, full_join, by = "WaterYear"),
-  reduce(slice7, full_join, by = "WaterYear"),
-  reduce(slice8, full_join, by = "WaterYear"),
-  reduce(slice9, full_join, by = "WaterYear"),
-  reduce(slice10, full_join, by = "WaterYear"),
-  reduce(slice11, full_join, by = "WaterYear"),
-  reduce(slice12, full_join, by = "WaterYear"),
-  reduce(slice13, full_join, by = "WaterYear"),
-  reduce(slice14, full_join, by = "WaterYear"),
-  reduce(slice15, full_join, by = "WaterYear"),
-  reduce(slice16, full_join, by = "WaterYear"),
-  reduce(slice17, full_join, by = "WaterYear"),
-  reduce(slice18, full_join, by = "WaterYear"),
-)
-
-
-
+#IAO -- I was having memory issues so I had to do a little magic to subdivide things only to bind them together, do the full join, and THEN run the reduce function.
+#No idea why this worked but the original suddenly didn't. Maybe a chance with purrr?
 slices <- list()
 
 for (i in 1:54) {
@@ -371,6 +314,9 @@ ggplot(data = Isotherm_WaterYear_dates_IceOut, aes(x = IceOutDayofYear_fed, y = 
 
 as.Date(160-91, origin="2014-01-02")
 
+save(Isotherm_WaterYear_dates_IceIn, Isotherm_WaterYear_dates_IceOut , file = "data/isotherm_dataframes.RData")
+# To load the data again
+# load("data/isotherm_dataframes.RData")
 
 
 #Remove dataframes, lists, and values that are no longer necessary
