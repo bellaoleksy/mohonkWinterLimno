@@ -88,6 +88,10 @@ Isotherm_WaterYear_dates_IceIn <- bind_rows(lapply(slices, function(slice) {
   reduce(slice, full_join, by = "WaterYear")
 }))
 
+#Something weird happens here, this might be a workaround to combine rows by group with differing NAs in each row
+Isotherm_WaterYear_dates_IceIn <- Isotherm_WaterYear_dates_IceIn %>%
+  group_by(WaterYear) %>% 
+  summarise_all(~first(na.omit(.)))
 
 
 # Isotherm_WaterYear_dates_IceIn <- reduce(icein_wateryear_dates, full_join, by = "WaterYear")
@@ -95,7 +99,6 @@ Isotherm_WaterYear_dates_IceIn <- full_join(Isotherm_WaterYear_dates_IceIn, Moho
 Isotherm_WaterYear_dates_IceIn <-
   Isotherm_WaterYear_dates_IceIn %>%
   select(WaterYear, IceInDate, IceInDayofYear, IceInDayofYear_fed, isotherm_TempMax_degC_1_days_0_degC_WaterYear_date:isotherm_TempMean_degC_30_days_5_degC_WaterYear_date)
-
 
 
 #Calculate Isotherms for Ice Out ------------------------------------------
@@ -149,11 +152,18 @@ Isotherm_WaterYear_dates_IceOut <- bind_rows(lapply(slices, function(slice) {
   reduce(slice, full_join, by = "WaterYear")
 }))
 
+#Something weird happens here, this might be a workaround to combine rows by group with differing NAs in each row
+Isotherm_WaterYear_dates_IceOut <- Isotherm_WaterYear_dates_IceOut %>%
+  group_by(WaterYear) %>% 
+  summarise_all(~first(na.omit(.)))
+
+
 # Isotherm_WaterYear_dates_IceOut <- reduce(iceout_wateryear_dates, full_join, by = "WaterYear")
 Isotherm_WaterYear_dates_IceOut <- full_join(Isotherm_WaterYear_dates_IceOut, MohonkIce, by = c("WaterYear"="Year"))
 Isotherm_WaterYear_dates_IceOut <-
   Isotherm_WaterYear_dates_IceOut %>%
-  select(WaterYear, IceOutDate, IceOutDayofYear, IceOutDayofYear_fed, isotherm_TempMax_degC_1_days_0_degC_WaterYear_date:isotherm_TempMean_degC_30_days_5_degC_WaterYear_date)
+  select(WaterYear, IceOutDate, IceOutDayofYear, IceOutDayofYear_fed, isotherm_TempMax_degC_1_days_0_degC_WaterYear_date:isotherm_TempMean_degC_30_days_5_degC_WaterYear_date)%>%
+  distinct(., .keep_all=TRUE)
 
 #Remove datasets, lists, and values that are no longer necessary
 rm(temp_IceIn_forfunction,
