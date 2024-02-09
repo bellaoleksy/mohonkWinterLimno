@@ -126,7 +126,8 @@ panelLetter.normal <- data.frame(
 MohonkIceWeather <- MohonkIceWeather %>%
   left_join(., Isotherm_WaterYear_dates_IceIn %>%
               select(WaterYear,isotherm_TempMax_degC_17_days_0_degC_WaterYear_date),
-            by = c("Year"="WaterYear")) %>%
+            by = c("Year"="WaterYear"),
+            relationship ="one-to-one") %>%
   left_join(., Isotherm_WaterYear_dates_IceOut %>%
               select(WaterYear,isotherm_TempMean_degC_29_days_4_degC_WaterYear_date),
             by = c("Year"="WaterYear")) 
@@ -342,10 +343,9 @@ as.Date(min(MohonkIceWeather$IceInDayofYear_fed, na.rm=TRUE)+274, origin="2014-0
 as.Date(max(MohonkIceWeather$IceInDayofYear_fed, na.rm=TRUE)-92, origin="2014-01-02")
 #February 8
 
-
 #Median ice-on
 as.Date(median(MohonkIceWeather$IceInDayofYear_fed, na.rm=TRUE)-92, origin="2014-01-02")
-#February 8
+#Dec 27
 
 
 
@@ -554,7 +554,6 @@ lines(unlist(m1.dsig$decr) ~ WaterYear, data = iceOffIsothermPred, col = "red", 
 #The date is getting earlier,  with an accelerating trend 1973 to 2012 or so. 
 
 plot.Deriv(m1.d)
-#but first derivative plot shows that it is not accelerating at least
 
 #Plot 'DOY avg. temp 29 days after 4 isotherm is crossed' vs. water-year pretty
 ggplot(iceOffIsothermPred,aes(x=WaterYear,y=fit))+
@@ -662,87 +661,89 @@ MohonkIce.Predicted.test <- MohonkIce.Predicted %>%
 
 
 
-jpeg(filename = 'figures/MS/Fig1.IcePhenology_withDates.jpg',
-    width = 3.14,
-    height = 2.5,
-    res = 600,
-    units = 'in')
+#Original plot-- script works but now we want to explicitly show the years with intermittant ice cover
 
-ggplot() +
-  geom_segment(
-    data = MohonkIce.Predicted.test,
-    aes(
-      x = Year,
-      xend = Year,
-      y = IceInDate_newdate,
-      yend = IceOutDate_newdate,
-      col = LengthOfIceCover_days
-    )
-  ) +
-  # col="grey")+
-  geom_point(
-    data = MohonkIce.Predicted.test,
-    aes(x = Year, y = IceInDate_newdate, fill = LengthOfIceCover_days),
-    shape = 21,
-    color = "black",
-    size = 1
-  ) +
-  geom_smooth(
-    data = MohonkIce.Predicted.test,
-    aes(x = Year, y = IceInDayofYear_yhat_newdate),
-    color = "black",
-    lty = 1,
-    size= 0.5
-  ) +
-  geom_point(
-    data = MohonkIce.Predicted.test,
-    aes(x = Year,
-        y = IceOutDate_newdate,
-        fill = LengthOfIceCover_days),
-    shape = 21,
-    color = "black",
-    size = 1
-  ) +
-  
-  grafify::scale_fill_grafify(palette = "blue_conti", name = "Ice duration\n(days)")+ #yellow_conti scheme
-  grafify::scale_color_grafify(palette = "blue_conti", name = "Ice duration\n(days)")+ #yellow_conti scheme
-  # scale_color_continuous(high = "cyan", low = "red",
-  #                        name = "Ice duration\n(days)") +
-  # scale_fill_continuous(high = "cyan", low = "red",
-  #                       name = "Ice duration\n(days)") +
-  scale_x_continuous(limit = c(1932, 2022),
-                     breaks = seq(1940, 2020, by = 20)) +
-  scale_y_date(date_breaks = "45 days", date_minor_breaks = "15 days",
-               date_labels = "%d-%b")+
-  theme_MS() +
-  theme(
-    # panel.grid.major.y = element_line(color="grey90", size=0.5),
-    # panel.grid.major.x = element_line(color="grey90", size=0.5),
-    # panel.grid.minor.y = element_line(color="grey90", linetype="dashed", size=0.5),
-    #GET RID OF THESE-- a pesky LOL reviewer wanted these
-    axis.line = element_line(colour = "black"),
-    panel.border = element_rect(
-      fill = NA,
-      colour = "black",
-      size = 1
-    ),
-    plot.margin=unit(c(1,0,0,0), "lines"),
-    axis.text.x = element_text(color = "black"),
-    axis.text.y = element_text(color = "black", angle=90, hjust=0.5),
-    axis.ticks = element_line(color = "black")
-  ) +
-  xlab("Year") +
-  ylab("Ice phenology date")
-
-dev.off()
-
-ggsave(
-  "figures/MS/Fig1.IcePhenology_withDates_inches.jpg",
-  width = 3.14,
-  height = 2.5,
-  units = "in",
-  dpi = 600
-)
+# jpeg(filename = 'figures/MS/Fig1.IcePhenology_withDates.jpg',
+#     width = 3.14,
+#     height = 2.5,
+#     res = 600,
+#     units = 'in')
+# 
+# ggplot() +
+#   geom_segment(
+#     data = MohonkIce.Predicted.test,
+#     aes(
+#       x = Year,
+#       xend = Year,
+#       y = IceInDate_newdate,
+#       yend = IceOutDate_newdate,
+#       col = LengthOfIceCover_days
+#     )
+#   ) +
+#   # col="grey")+
+#   geom_point(
+#     data = MohonkIce.Predicted.test,
+#     aes(x = Year, y = IceInDate_newdate, fill = LengthOfIceCover_days),
+#     shape = 21,
+#     color = "black",
+#     size = 1
+#   ) +
+#   geom_smooth(
+#     data = MohonkIce.Predicted.test,
+#     aes(x = Year, y = IceInDayofYear_yhat_newdate),
+#     color = "black",
+#     lty = 1,
+#     size= 0.5
+#   ) +
+#   geom_point(
+#     data = MohonkIce.Predicted.test,
+#     aes(x = Year,
+#         y = IceOutDate_newdate,
+#         fill = LengthOfIceCover_days),
+#     shape = 21,
+#     color = "black",
+#     size = 1
+#   ) +
+#   
+#   grafify::scale_fill_grafify(palette = "blue_conti", name = "Ice duration\n(days)")+ #yellow_conti scheme
+#   grafify::scale_color_grafify(palette = "blue_conti", name = "Ice duration\n(days)")+ #yellow_conti scheme
+#   # scale_color_continuous(high = "cyan", low = "red",
+#   #                        name = "Ice duration\n(days)") +
+#   # scale_fill_continuous(high = "cyan", low = "red",
+#   #                       name = "Ice duration\n(days)") +
+#   scale_x_continuous(limit = c(1932, 2022),
+#                      breaks = seq(1940, 2020, by = 20)) +
+#   scale_y_date(date_breaks = "45 days", date_minor_breaks = "15 days",
+#                date_labels = "%d-%b")+
+#   theme_MS() +
+#   theme(
+#     # panel.grid.major.y = element_line(color="grey90", size=0.5),
+#     # panel.grid.major.x = element_line(color="grey90", size=0.5),
+#     # panel.grid.minor.y = element_line(color="grey90", linetype="dashed", size=0.5),
+#     #GET RID OF THESE-- a pesky LOL reviewer wanted these
+#     axis.line = element_line(colour = "black"),
+#     panel.border = element_rect(
+#       fill = NA,
+#       colour = "black",
+#       size = 1
+#     ),
+#     plot.margin=unit(c(1,0,0,0), "lines"),
+#     axis.text.x = element_text(color = "black"),
+#     axis.text.y = element_text(color = "black", angle=90, hjust=0.5),
+#     axis.ticks = element_line(color = "black")
+#   ) +
+#   xlab("Year") +
+#   ylab("Ice phenology date")
+# 
+# dev.off()
+# 
+# ggsave(
+#   "figures/MS/Fig1.IcePhenology_withDates_inches.jpg",
+#   width = 3.14,
+#   height = 2.5,
+#   units = "in",
+#   dpi = 600
+# )
 
 
 
@@ -923,6 +924,10 @@ ggsave(
 
 
 ### Ice cover percentage since 2012 where data coverage is highest
+
+test <- IceCover_perc %>%
+  left_join(., MohonkIce_vis) %>%
+  filter(water_year>2011)
 
 IceCover_perc %>%
   left_join(., MohonkIce_vis) %>%
