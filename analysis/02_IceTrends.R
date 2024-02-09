@@ -925,13 +925,11 @@ ggsave(
 
 ### Ice cover percentage since 2012 where data coverage is highest
 
-test <- IceCover_perc %>%
-  left_join(., MohonkIce_vis) %>%
-  filter(water_year>2011)
+
 
 IceCover_perc %>%
-  left_join(., MohonkIce_vis) %>%
-  filter(water_year>2011) %>%
+  left_join(., MohonkIce_vis, by=c("water_year")) %>%
+  # filter(water_year>2011) %>%
   ggplot(aes(x=Date, y=IceCover_Percent))+
   geom_point()+
   facet_wrap(~water_year, scales="free_x")+
@@ -940,8 +938,17 @@ IceCover_perc %>%
   geom_line(aes(x=ICEIN_3), color="blue") +
   geom_line(aes(x=ICEOUT_1), color="red") +
   geom_line(aes(x=ICEOUT_2), color="red") +
-  geom_line(aes(x=ICEOUT_3), color="red") 
-##Something isn't plotting quite right-- check later IAO
+  geom_line(aes(x=ICEOUT_3), color="red") +
+  scale_x_date(date_labels = "%m/%d",
+               breaks = "6 weeks")
+ggsave(
+  "figures/MS/FigX.PercIceCover.jpg",
+  width = 10,
+  height = 6,
+  units = "in",
+  dpi = 600
+)
+
 
 # Fitting GAMs for iceOnDOY_fed -------------------------------------------
 
