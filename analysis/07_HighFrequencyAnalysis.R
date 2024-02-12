@@ -9,6 +9,8 @@ if (!require(zoo)) {install.packages("zoo")}
 if (!require(segmented)) {install.packages("segmented")}
 if (!require(strucchange)) {install.packages("strucchange")}
 if (!require(forecast)) {install.packages("forecast")}
+if (!require(patchwork)) {install.packages("patchwork")}
+if (!require(ggpubr)) {install.packages("ggpubr")}
 
 #Load libraries
 library(tidyverse)
@@ -16,6 +18,8 @@ library(zoo) #for linearly interpolation
 library(segmented) #for segmented regression
 library(strucchange) #For breakpoints function
 library(forecast) #for auto.arima
+library(patchwork) #for multipanel plots
+library(ggpubr) #for extracting the legend
 
 #Run functions####
 source("script/01_functions.R")
@@ -467,6 +471,88 @@ ggplot(data=SensorData_derivedFill%>%dplyr::select(DateTime:Temp_9m)%>%pivot_lon
   scale_y_continuous(limits=c(0,11),breaks=c(0,2.5,5,7.5,10),sec.axis=sec_axis(~.*10,name="IceCover_percent",breaks=c(0,25,50,75,100)))+
   ylab(bquote(Water~Temp~(degree*C)))+
   theme_bw()
+
+
+#MS FIGURE: panel 1 for Winter 2016#####
+#*provides a function for a ramped color by calling colFun(10)####
+colFun<-colorRampPalette(c("light blue", "dark blue"))
+
+#*Pull data for only Winter2016####
+SensorData_derivedFill_2016<-SensorData_derivedFill%>%filter(DateTime>=as.POSIXct("2016-11-24 19:00:00 EST")&DateTime<=as.POSIXct("2017-04-19 20:00:00 EDT"))
+#*Set limits for the graph
+lims_2016 <- as.POSIXct(strptime(c("2016-11-24 19:00", "2017-04-19 20:00"), 
+                            format = "%Y-%m-%d %H:%M"))
+
+#*Plot W2016####
+gg.hf2016<-ggplot(data=SensorData_derivedFill_2016%>%dplyr::select(DateTime:Temp_9m)%>%pivot_longer(-1),aes(x=DateTime,y=value,color=name))+geom_line()+
+  scale_x_datetime(limits=lims_2016)+
+  scale_color_manual(values=colFun(10))+
+  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceIn_1_date)),size=1.0)+
+  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceOut_1_date)),size=1.0)+
+  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceIn_1_date_Pierson)),color="darkgrey",linetype=2,size=0.7)+
+  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceOut_1_date_Pierson)),color="darkgrey",linetype=2,size=0.7)+
+  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=IceCover_Percent/15),color="black",shape=21,fill=alpha("white",alpha=0.5),size=1)+
+  scale_y_continuous(limits=c(-0.1,8.2),expand = c(0, 0),breaks=c(0,2,4,6),sec.axis=sec_axis(~.*15,name="IceCover (%)",breaks=c(0,25,50,75,100)))+
+  ylab(bquote(Water~Temp.~(degree*C)))+
+  xlab("Date")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+
+#*Pull data for only Winter2017####
+SensorData_derivedFill_2017<-SensorData_derivedFill%>%filter(DateTime>=as.POSIXct("2017-11-24 19:00:00 EST")&DateTime<=as.POSIXct("2018-04-19 20:00:00 EDT"))
+#*Set limits for the graph
+lims_2017 <- as.POSIXct(strptime(c("2017-11-24 19:00", "2018-04-19 20:00"), 
+                            format = "%Y-%m-%d %H:%M"))
+#Name the labels####
+legend_labels<-c("0m","1m","2m","3m","4m","5m","6m","7m","8m","9m")
+
+#*Plot W2017####
+gg.hf2017<-ggplot(data=SensorData_derivedFill_2017%>%dplyr::select(DateTime:Temp_9m)%>%pivot_longer(-1),aes(x=DateTime,y=value,color=name))+geom_line()+
+  scale_x_datetime(limits=lims_2017)+
+  scale_color_manual(values=colFun(10),labels=legend_labels)+
+  labs(color=bquote("Water\ntemperature\ndepth"))+
+  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceIn_1_date)),size=1.0)+
+  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceOut_1_date)),size=1.0)+
+  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceIn_1_date_Pierson)),color="darkgrey",linetype=2,size=0.7)+
+  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceOut_1_date_Pierson)),color="darkgrey",linetype=2,size=0.7)+
+  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=IceCover_Percent/15),color="black",shape=21,fill=alpha("white",alpha=0.5),size=1)+
+  scale_y_continuous(limits=c(-0.1,8.2),expand = c(0, 0),breaks=c(0,2,4,6),sec.axis=sec_axis(~.*15,name="IceCover (%)",breaks=c(0,25,50,75,100)))+
+  ylab(bquote(Water~Temp.~(degree*C)))+
+  xlab("Date")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  guides(color = guide_legend(override.aes = list(linewidth=3)))
+
+#Work on the legend alone####
+leg<-get_legend(gg.hf2017) #extract the legend using ggpubr
+legend<-as_ggplot(leg)
+
+#Stitch teh panels together####
+panel.size<-10
+List<-list(gg.hf2016+
+             geom_text(data=data.frame(),aes(x=lims_2016[1],y=8,label="(a) 2016"),hjust=0.25,vjust='inward',inherit.aes = FALSE)+
+             geom_text(data=data.frame(),aes(x=lims_2016[2],y=8,label="2017"),hjust=0.53,vjust='inward',inherit.aes = FALSE)+
+             theme(axis.text.x=element_blank(),
+                   axis.ticks.x=element_blank(),
+                   legend.position = "none")+
+             xlab(""),
+           gg.hf2017+
+             geom_text(data=data.frame(),aes(x=lims_2017[1],y=8,label="(b) 2017"),hjust=0.25,vjust='inward',inherit.aes = FALSE)+
+             geom_text(data=data.frame(),aes(x=lims_2017[2],y=8,label="2018"),hjust=0.53,vjust='inward',inherit.aes = FALSE)+
+             theme(legend.position = "none")
+)
+
+#Plot them using patchwork####
+(gg.hf2columns<-wrap_plots(List,ncol = 1,nrow = 2)&theme(plot.margin = unit(c(3,3,3,3),"pt")))
+
+#Put the two columsn with the legend####
+List2<-list(gg.hf2columns,legend)
+
+(gg.hf2columnsLegend<-wrap_plots(List2,ncol = 2,nrow = 1,widths=c(0.8,0.2))&theme(plot.margin = unit(c(3,3,3,3),"pt")))
+
+#Could do a 2x1 with width 6, height = 4
+ggsave(paste("figures/MohonkWinterLimno-FigureX-HighFrequencyUnderwater.jpg",sep=""), plot=gg.hf2columnsLegend, width=6, height=4,units="in", dpi=300)
 
 
 ########################Look at meteorological predictors of ice on and off#############################################
