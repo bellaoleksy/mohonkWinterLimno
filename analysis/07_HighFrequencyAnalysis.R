@@ -492,7 +492,7 @@ gg.hf2016<-ggplot(data=SensorData_derivedFill_2016%>%dplyr::select(DateTime:Temp
   geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceIn_1_date_Pierson)),color="darkgrey",linetype=2,size=0.7)+
   geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceOut_1_date_Pierson)),color="darkgrey",linetype=2,size=0.7)+
   geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=IceCover_Percent/15),color="black",shape=21,fill=alpha("white",alpha=0.5),size=1)+
-  scale_y_continuous(limits=c(-0.1,8.2),expand = c(0, 0),breaks=c(0,2,4,6),sec.axis=sec_axis(~.*15,name="IceCover (%)",breaks=c(0,25,50,75,100)))+
+  scale_y_continuous(limits=c(-0.1,8.2),expand = c(0, 0),breaks=c(0,2,4,6,8),sec.axis=sec_axis(~.*15,name="IceCover (%)",breaks=c(0,25,50,75,100)))+
   ylab(bquote(Water~Temp.~(degree*C)))+
   xlab("Date")+
   theme_bw()+
@@ -517,7 +517,7 @@ gg.hf2017<-ggplot(data=SensorData_derivedFill_2017%>%dplyr::select(DateTime:Temp
   geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceIn_1_date_Pierson)),color="darkgrey",linetype=2,size=0.7)+
   geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceOut_1_date_Pierson)),color="darkgrey",linetype=2,size=0.7)+
   geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=IceCover_Percent/15),color="black",shape=21,fill=alpha("white",alpha=0.5),size=1)+
-  scale_y_continuous(limits=c(-0.1,8.2),expand = c(0, 0),breaks=c(0,2,4,6),sec.axis=sec_axis(~.*15,name="IceCover (%)",breaks=c(0,25,50,75,100)))+
+  scale_y_continuous(limits=c(-0.1,8.2),expand = c(0, 0),breaks=c(0,2,4,6,8),sec.axis=sec_axis(~.*15,name="IceCover (%)",breaks=c(0,25,50,75,100)))+
   ylab(bquote(Water~Temp.~(degree*C)))+
   xlab("Date")+
   theme_bw()+
@@ -531,28 +531,268 @@ legend<-as_ggplot(leg)
 #Stitch teh panels together####
 panel.size<-10
 List<-list(gg.hf2016+
-             geom_text(data=data.frame(),aes(x=lims_2016[1],y=8,label="(a) 2016"),hjust=0.25,vjust='inward',inherit.aes = FALSE)+
-             geom_text(data=data.frame(),aes(x=lims_2016[2],y=8,label="2017"),hjust=0.53,vjust='inward',inherit.aes = FALSE)+
+             #geom_text(data=data.frame(),aes(x=lims_2016[1],y=8,label="(a) 2016"),hjust=0.25,vjust='inward',inherit.aes = FALSE)+
+             #geom_text(data=data.frame(),aes(x=lims_2016[2],y=8,label="2017"),hjust=0.53,vjust='inward',inherit.aes = FALSE)+
+             coord_cartesian(ylim=c(-0.1,8.2),clip="off")+
+             annotate("text",x=lims_2016[1],y=8.2,label="(a) 2016-2017",hjust=0.2,vjust=-0.9)+
              theme(axis.text.x=element_blank(),
                    axis.ticks.x=element_blank(),
-                   legend.position = "none")+
+                   legend.position = "none",
+                   plot.margin=margin(2, 1, 1, 1, 'lines')
+                   )+
              xlab(""),
            gg.hf2017+
-             geom_text(data=data.frame(),aes(x=lims_2017[1],y=8,label="(b) 2017"),hjust=0.25,vjust='inward',inherit.aes = FALSE)+
-             geom_text(data=data.frame(),aes(x=lims_2017[2],y=8,label="2018"),hjust=0.53,vjust='inward',inherit.aes = FALSE)+
-             theme(legend.position = "none")
+             #geom_text(data=data.frame(),aes(x=lims_2017[1],y=8,label="(b) 2017"),hjust=0.25,vjust='inward',inherit.aes = FALSE)+
+             #geom_text(data=data.frame(),aes(x=lims_2017[2],y=8,label="2018"),hjust=0.53,vjust='inward',inherit.aes = FALSE)+
+             coord_cartesian(ylim=c(-0.1,8.2),clip="off")+
+             annotate("text",x=lims_2017[1],y=8.2,label="(b) 2017-2018",hjust=0.2,vjust=-0.9)+
+             theme(legend.position = "none",
+                   plot.margin=margin(2, 1, 1, 1, 'lines')
+                   )
 )
 
+
 #Plot them using patchwork####
-(gg.hf2columns<-wrap_plots(List,ncol = 1,nrow = 2)&theme(plot.margin = unit(c(3,3,3,3),"pt")))
+(gg.hf2columns<-wrap_plots(List,ncol = 1,nrow = 2)&theme(plot.margin = unit(c(10,3,3,3),"pt")))
 
 #Put the two columsn with the legend####
 List2<-list(gg.hf2columns,legend)
 
-(gg.hf2columnsLegend<-wrap_plots(List2,ncol = 2,nrow = 1,widths=c(0.8,0.2))&theme(plot.margin = unit(c(3,3,3,3),"pt")))
+(gg.hf2columnsLegend<-wrap_plots(List2,ncol = 2,nrow = 1,widths=c(0.8,0.2))&theme(plot.margin = unit(c(10,3,3,3),"pt")))
 
 #Could do a 2x1 with width 6, height = 4
 ggsave(paste("figures/MohonkWinterLimno-FigureX-HighFrequencyUnderwater.jpg",sep=""), plot=gg.hf2columnsLegend, width=6, height=4,units="in", dpi=300)
+
+###################################################
+#Segmented regressions of stability and temperature difference####
+#*Subset for 2016####
+segmentedDF_2016<-SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2016-12-19 00:00:00 EST")&DateTime>=as.POSIXct("2016-12-01 00:00:00 EST"))%>%
+  mutate(row_name=row_number())
+#*Segmented regression for temperature difference####
+lm.tempDiff.2016<-lm(temperatureDifferenceTop0mvsBottom9m~row_name,data=segmentedDF_2016)
+
+#segmented.mod.tempDiff.2016<-segmented(lm.tempDiff.2016,seg.Z= ~row_name,psi=c(1100,1300))
+#Store results from segmented regressions with up to 7 breakpoints#
+segmented2016_results_tempDiff<-tibble(breakpoints=rep(NA,7), r.squared=rep(NA,7),sigma=rep(NA,7),bp=rep(NA,7),date_bp=rep(NA,7),optimal=rep(NA,7))
+
+#Go through 1 to 7 breakpoints, find the optimal segmented regression for each####
+#Extract the number of breakpoints, r.squared, sigma, breakpoint that precedes the steepest slope, and the dateTime of the breakpoint####
+for(seg.index in 1:7){
+segmented.mod.tempDiff.2016<-segmented(lm.tempDiff.2016,seg.Z= ~row_name,psi=NA,control=seg.control(display=FALSE,K=seg.index,quant=TRUE))
+segmented2016_results_tempDiff$breakpoints[seg.index]<-seg.index
+segmented2016_results_tempDiff$r.squared[seg.index]<-summary(segmented.mod.tempDiff.2016)$adj.r.squared
+segmented2016_results_tempDiff$sigma[seg.index]<-summary(segmented.mod.tempDiff.2016)$sigma
+
+#find the breakpoint row_numb preceding the steepest slope (abs)####
+bp<-round(summary(segmented.mod.tempDiff.2016)$psi[which.min(segmented::slope(segmented.mod.tempDiff.2016)$row_name[,1])-1 ,"Est."],0)
+segmented2016_results_tempDiff$bp[seg.index]<-bp
+#Find the date of the breakpoint####
+segmented2016_results_tempDiff$date_bp[seg.index]<-as.character(segmentedDF_2016[bp,"DateTime"]%>%pull())
+
+#Store the first one as the optimal model, if not check the sigma. If sigma goes down, store that as the optimal model####
+if(seg.index==1){
+  segmented.OptimalMod.tempDiff.2016<-segmented.mod.tempDiff.2016
+  segmented2016_results_tempDiff$optimal[seg.index]<-TRUE
+  }else if(segmented2016_results_tempDiff$sigma[seg.index]<segmented2016_results_tempDiff$sigma[seg.index-1]){
+  segmented.OptimalMod.tempDiff.2016<-segmented.mod.tempDiff.2016
+  segmented2016_results_tempDiff$optimal<-NA
+  segmented2016_results_tempDiff$optimal[seg.index]<-TRUE
+  }else{}
+
+} #End of for loop
+
+#Look at the optimal model####
+summary(segmented.OptimalMod.tempDiff.2016)
+#Gets the fits for the broken line
+#broken.line(segmented.mod.tempDiff.2016)$fit
+#Plot the optimal model
+plot(temperatureDifferenceTop0mvsBottom9m~row_name,data=segmentedDF_2016, pch=16)
+plot(segmented.OptimalMod.tempDiff.2016, add=T)
+abline(v=round(summary(segmented.OptimalMod.tempDiff.2016)$psi[which.min(segmented::slope(segmented.OptimalMod.tempDiff.2016)$row_name[,1])-1 ,"Est."],0))
+
+#*Segmented regression for stability####
+lm.stability.2016<-lm(stability_Jperm2~row_name,data=segmentedDF_2016)
+
+#segmented.mod.tempDiff.2016<-segmented(lm.tempDiff.2016,seg.Z= ~row_name,psi=c(1100,1300))
+#Store results from segmented regressions with up to 7 breakpoints#
+segmented2016_results_stability<-tibble(breakpoints=rep(NA,7), r.squared=rep(NA,7),sigma=rep(NA,7),bp=rep(NA,7),date_bp=rep(NA,7),optimal=rep(NA,7))
+
+#Go through 1 to 7 breakpoints, find the optimal segmented regression for each####
+#Extract the number of breakpoints, r.squared, sigma, breakpoint that precedes the steepest slope, and the dateTime of the breakpoint####
+for(seg.index in 1:7){
+  segmented.mod.stability.2016<-segmented(lm.stability.2016,seg.Z= ~row_name,psi=NA,control=seg.control(display=FALSE,K=seg.index,quant=TRUE))
+  segmented2016_results_stability$breakpoints[seg.index]<-seg.index
+  segmented2016_results_stability$r.squared[seg.index]<-summary(segmented.mod.stability.2016)$adj.r.squared
+  segmented2016_results_stability$sigma[seg.index]<-summary(segmented.mod.stability.2016)$sigma
+  
+  #find the breakpoint row_numb preceding the steepest slope (abs)####
+  bp<-round(summary(segmented.mod.stability.2016)$psi[which.max(segmented::slope(segmented.mod.stability.2016)$row_name[,1])-1 ,"Est."],0)
+  segmented2016_results_stability$bp[seg.index]<-bp
+  #Find the date of the breakpoint####
+  segmented2016_results_stability$date_bp[seg.index]<-as.character(segmentedDF_2016[bp,"DateTime"]%>%pull())
+  
+  #Store the first one as the optimal model, if not check the sigma. If sigma goes down, store that as the optimal model####
+  if(seg.index==1){
+    segmented.OptimalMod.stability.2016<-segmented.mod.stability.2016
+    segmented2016_results_stability$optimal[seg.index]<-TRUE
+  }else if(segmented2016_results_stability$sigma[seg.index]<segmented2016_results_stability$sigma[seg.index-1]){
+    segmented.OptimalMod.stability.2016<-segmented.mod.stability.2016 
+    segmented2016_results_stability$optimal<-NA
+    segmented2016_results_stability$optimal[seg.index]<-TRUE
+  }else{}
+  
+} #End of for loop
+
+#Look at the optimal model####
+summary(segmented.OptimalMod.stability.2016)
+#Gets the fits for the broken line
+#broken.line(segmented.mod.tempDiff.2016)$fit
+#Plot the optimal model
+plot(stability_Jperm2~row_name,data=segmentedDF_2016, pch=16)
+plot(segmented.OptimalMod.stability.2016, add=T)
+abline(v=round(summary(segmented.OptimalMod.stability.2016)$psi[which.max(segmented::slope(segmented.OptimalMod.stability.2016)$row_name[,1])-1 ,"Est."],0))
+
+
+###################################################
+#Segmented regressions of stability and temperature difference####
+#*Subset for 2017####
+segmentedDF_2017<-SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2017-12-19 00:00:00 EST")&DateTime>=as.POSIXct("2017-12-01 00:00:00 EST"))%>%
+  mutate(row_name=row_number())
+#*Segmented regression for temperature difference####
+lm.tempDiff.2017<-lm(temperatureDifferenceTop0mvsBottom9m~row_name,data=segmentedDF_2017)
+
+#segmented.mod.tempDiff.2017<-segmented(lm.tempDiff.2017,seg.Z= ~row_name,psi=c(1100,1300))
+#Store results from segmented regressions with up to 7 breakpoints#
+segmented2017_results_tempDiff<-tibble(breakpoints=rep(NA,7), r.squared=rep(NA,7),sigma=rep(NA,7),bp=rep(NA,7),date_bp=rep(NA,7),optimal=rep(NA,7))
+
+#Go through 1 to 7 breakpoints, find the optimal segmented regression for each####
+#Extract the number of breakpoints, r.squared, sigma, breakpoint that precedes the steepest slope, and the dateTime of the breakpoint####
+for(seg.index in 1:7){
+  segmented.mod.tempDiff.2017<-segmented(lm.tempDiff.2017,seg.Z= ~row_name,psi=NA,control=seg.control(display=FALSE,K=seg.index,quant=TRUE))
+  segmented2017_results_tempDiff$breakpoints[seg.index]<-seg.index
+  segmented2017_results_tempDiff$r.squared[seg.index]<-summary(segmented.mod.tempDiff.2017)$adj.r.squared
+  segmented2017_results_tempDiff$sigma[seg.index]<-summary(segmented.mod.tempDiff.2017)$sigma
+  
+  #find the breakpoint row_numb preceding the steepest slope (abs)####
+  bp<-round(summary(segmented.mod.tempDiff.2017)$psi[which.min(segmented::slope(segmented.mod.tempDiff.2017)$row_name[,1])-1 ,"Est."],0)
+  segmented2017_results_tempDiff$bp[seg.index]<-bp
+  #Find the date of the breakpoint####
+  segmented2017_results_tempDiff$date_bp[seg.index]<-as.character(segmentedDF_2017[bp,"DateTime"]%>%pull())
+  
+  #Store the first one as the optimal model, if not check the sigma. If sigma goes down, store that as the optimal model####
+  if(seg.index==1){
+    segmented.OptimalMod.tempDiff.2017<-segmented.mod.tempDiff.2017
+    segmented2017_results_tempDiff$optimal[seg.index]<-TRUE
+  }else if(segmented2017_results_tempDiff$sigma[seg.index]<segmented2017_results_tempDiff$sigma[seg.index-1]){
+    segmented.OptimalMod.tempDiff.2017<-segmented.mod.tempDiff.2017
+    segmented2017_results_tempDiff$optimal<-NA
+    segmented2017_results_tempDiff$optimal[seg.index]<-TRUE
+  }else{}
+  
+} #End of for loop
+
+#Look at the optimal model####
+summary(segmented.OptimalMod.tempDiff.2017)
+#Gets the fits for the broken line
+#broken.line(segmented.mod.tempDiff.2017)$fit
+#Plot the optimal model
+plot(temperatureDifferenceTop0mvsBottom9m~row_name,data=segmentedDF_2017, pch=16)
+plot(segmented.OptimalMod.tempDiff.2017, add=T)
+abline(v=round(summary(segmented.OptimalMod.tempDiff.2017)$psi[which.min(segmented::slope(segmented.OptimalMod.tempDiff.2017)$row_name[,1])-1 ,"Est."],0))
+
+#*Segmented regression for stability####
+lm.stability.2017<-lm(stability_Jperm2~row_name,data=segmentedDF_2017)
+
+#segmented.mod.tempDiff.2017<-segmented(lm.tempDiff.2017,seg.Z= ~row_name,psi=c(1100,1300))
+#Store results from segmented regressions with up to 7 breakpoints#
+segmented2017_results_stability<-tibble(breakpoints=rep(NA,7), r.squared=rep(NA,7),sigma=rep(NA,7),bp=rep(NA,7),date_bp=rep(NA,7),optimal=rep(NA,7))
+
+#Go through 1 to 7 breakpoints, find the optimal segmented regression for each####
+#Extract the number of breakpoints, r.squared, sigma, breakpoint that precedes the steepest slope, and the dateTime of the breakpoint####
+for(seg.index in 1:7){
+  segmented.mod.stability.2017<-segmented(lm.stability.2017,seg.Z= ~row_name,psi=NA,control=seg.control(display=FALSE,K=seg.index,quant=TRUE))
+  segmented2017_results_stability$breakpoints[seg.index]<-seg.index
+  segmented2017_results_stability$r.squared[seg.index]<-summary(segmented.mod.stability.2017)$adj.r.squared
+  segmented2017_results_stability$sigma[seg.index]<-summary(segmented.mod.stability.2017)$sigma
+  
+  #find the breakpoint row_numb preceding the steepest slope (abs)####
+  bp<-round(summary(segmented.mod.stability.2017)$psi[which.max(segmented::slope(segmented.mod.stability.2017)$row_name[,1])-1 ,"Est."],0)
+  segmented2017_results_stability$bp[seg.index]<-bp
+  #Find the date of the breakpoint####
+  segmented2017_results_stability$date_bp[seg.index]<-as.character(segmentedDF_2017[bp,"DateTime"]%>%pull())
+  
+  #Store the first one as the optimal model, if not check the sigma. If sigma goes down, store that as the optimal model####
+  if(seg.index==1){
+    segmented.OptimalMod.stability.2017<-segmented.mod.stability.2017
+    segmented2017_results_stability$optimal[seg.index]<-TRUE
+  }else if(segmented2017_results_stability$sigma[seg.index]<segmented2017_results_stability$sigma[seg.index-1]){
+    segmented.OptimalMod.stability.2017<-segmented.mod.stability.2017
+    segmented2017_results_stability$optimal<-NA
+    segmented2017_results_stability$optimal[seg.index]<-TRUE
+  }else{}
+  
+} #End of for loop
+
+#Look at the optimal model####
+summary(segmented.OptimalMod.stability.2017)
+#Gets the fits for the broken line
+#broken.line(segmented.mod.tempDiff.2017)$fit
+#Plot the optimal model
+plot(stability_Jperm2~row_name,data=segmentedDF_2017, pch=16)
+plot(segmented.OptimalMod.stability.2017, add=T)
+abline(v=round(summary(segmented.OptimalMod.stability.2017)$psi[which.max(segmented::slope(segmented.OptimalMod.stability.2017)$row_name[,1])-1 ,"Est."],0))
+
+##############PLOT ICE ON WITH FITS#########################
+###STOPPED HERE - 
+###put them together in 4 panel plot####
+
+#global formatting
+size_points<-2
+fill_points<-alpha("light blue",0.6)
+size_regression<-1.0
+color_regression<-"darkgrey"
+color_bp<-"black"
+
+#*Draw in 2016 tempDiff####
+ggplot(data=segmentedDF_2016%>%mutate(segmentedFit=broken.line(segmented.mod.tempDiff.2016)$fit),aes(x=DateTime,y=temperatureDifferenceTop0mvsBottom9m))+
+  geom_point(shape=21,color="black",fill=fill_points,size=size_points)+
+  geom_line(aes(y=segmentedFit),color=color_regression,size=size_regression)+
+  geom_vline(data=segmented2016_results_tempDiff%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
+  ylab(bquote(Temp.~Diff.~(degree*C)))+
+  xlab("Date")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+#*Draw in 2016 stability####
+ggplot(data=segmentedDF_2016%>%mutate(segmentedFit=broken.line(segmented.mod.stability.2016)$fit),aes(x=DateTime,y=stability_Jperm2))+
+  geom_point(shape=21,color="black",fill=fill_points,size=size_points)+
+  geom_line(aes(y=segmentedFit),color=color_regression,size=size_regression)+
+  geom_vline(data=segmented2016_results_stability%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
+  ylab(bquote(Schmidt~stability~(J~m^-2)))+
+  xlab("Date")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+#*Draw in 2017 tempDiff####
+ggplot(data=segmentedDF_2017%>%mutate(segmentedFit=broken.line(segmented.mod.tempDiff.2017)$fit),aes(x=DateTime,y=temperatureDifferenceTop0mvsBottom9m))+
+  geom_point(shape=21,color="black",fill=fill_points,size=size_points)+
+  geom_line(aes(y=segmentedFit),color=color_regression,size=size_regression)+
+  geom_vline(data=segmented2017_results_tempDiff%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
+  ylab(bquote(Temp.~Diff.~(degree*C)))+
+  xlab("Date")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+#*Draw in 2017 stability####
+ggplot(data=segmentedDF_2017%>%mutate(segmentedFit=broken.line(segmented.mod.stability.2017)$fit),aes(x=DateTime,y=stability_Jperm2))+
+  geom_point(shape=21,color="black",fill=fill_points,size=size_points)+
+  geom_line(aes(y=segmentedFit),color=color_regression,size=size_regression)+
+  geom_vline(data=segmented2017_results_stability%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
+  ylab(bquote(Schmidt~stability~(J~m^-2)))+
+  xlab("Date")+
+  theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
 
 
 ########################Look at meteorological predictors of ice on and off#############################################
@@ -574,7 +814,7 @@ ggplot(data=dailySensorData_derivedFill,aes(x=DateTime,y=(temp_2m_avg_degC+lag(t
   #geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=IceCover_Percent),color="black",shape=23,fill="light blue")+
   scale_x_datetime(limits=lims)
 
-#Calculate teh air temperatute Moving average and see how that matches up with metrics of meteorology and inverse strat####
+#Calculate the air temperatute Moving average and see how that matches up with metrics of meteorology and inverse strat####
 #*2016####
 ggplot(data=SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2016-12-19 00:00:00 EST")&DateTime>=as.POSIXct("2016-12-01 00:00:00 EST")),aes(x=DateTime,y=ma_temp_avg_degC))+geom_line()+geom_hline(yintercept=-0.1,color="red")+
   geom_line(aes(y=station_pressure_avg_mbar-1000),color="green")+
@@ -596,63 +836,7 @@ ggplot(data=SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2
 ggplot(data=SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2017-12-14 00:00:00 EST")&DateTime>=as.POSIXct("2017-12-01 00:00:00 EST")),aes(x=ma_temp_avg_degC,y=station_pressure_avg_mbar))+geom_line()
 SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2017-12-14 00:00:00 EST")&DateTime>=as.POSIXct("2017-12-01 00:00:00 EST"))%>%filter(temperatureDifferenceTop0mvsBottom9m<(-0.1))%>%dplyr::select(DateTime,temperatureDifferenceTop0mvsBottom9m,stability_Jperm2,ma_temp_avg_degC)
 
-#Segmented regressions####
-#*Subset for 2016####
-segmentedDF_2016<-SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2016-12-19 00:00:00 EST")&DateTime>=as.POSIXct("2016-12-01 00:00:00 EST"))%>%
-  mutate(row_name=row_number())
-#*Segmented regression for temperature difference####
-lm.tempDiff.2016<-lm(temperatureDifferenceTop0mvsBottom9m~row_name,data=segmentedDF_2016)
-segmented.mod.tempDiff.2016<-segmented(lm.tempDiff.2016,seg.Z= ~row_name,psi=c(1330,1400,1500,1600))
-summary(segmented.mod.tempDiff.2016)
-plot(temperatureDifferenceTop0mvsBottom9m~row_name,data=segmentedDF_2016, pch=16)
-plot(segmented.mod.tempDiff.2016, add=T)
-#Breakpoints analysis####
-breakpoints(ts(segmentedDF_2016$temperatureDifferenceTop0mvsBottom9m)~1)
-abline(v=c(725,1435))
-#Segmented regression for stability####
-lm.stability.2016<-lm(stability_Jperm2~row_name,data=segmentedDF_2016)
-segmented.mod.stability.2016<-segmented(lm.stability.2016,seg.Z= ~row_name,psi=c(1230,1400,1500,1600))
-summary(segmented.mod.stability.2016)
-plot(stability_Jperm2~row_name,data=segmentedDF_2016, pch=16)
-plot(segmented.mod.stability.2016, add=T)
-#Breakpoints analysis####
-breakpoints(ts(segmentedDF_2016$stability_Jperm2)~1)
-abline(v=c(725,1435))
 
-#ARIMA####
-auto.arima(segmentedDF_2016$temperatureDifferenceTop0mvsBottom9m)
-acf(segmentedDF_2016$temperatureDifferenceTop0mvsBottom9m)
-pacf(segmentedDF_2016$temperatureDifferenceTop0mvsBottom9m)
-fit<-Arima(segmentedDF_2016$temperatureDifferenceTop0mvsBottom9m,order=c(1,1,1))
-plot(fit$x)
-lines(fitted(fit),col="red")
-
-
-#*Subset for 2017####
-segmentedDF_2017<-SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2017-12-19 00:00:00 EST")&DateTime>=as.POSIXct("2017-12-01 00:00:00 EST"))%>%
-  mutate(row_name=row_number())
-#*Segmented regression for temperature difference####
-lm.tempDiff<-lm(temperatureDifferenceTop0mvsBottom9m~row_name,data=segmentedDF_2017)
-segmented.mod.tempDiff<-segmented(lm.tempDiff,seg.Z= ~row_name,psi=c(1230,1400))
-summary(segmented.mod.tempDiff)
-plot(temperatureDifferenceTop0mvsBottom9m~row_name,data=segmentedDF_2017, pch=16)
-plot(segmented.mod.tempDiff, add=T)
-#Breakpoints analysis####
-breakpoints(ts(segmentedDF_2017$temperatureDifferenceTop0mvsBottom9m)~1)
-abline(v=c(470,1079,1338))
-#Segmented regression for stability####
-lm.stability<-lm(stability_Jperm2~row_name,data=segmentedDF_2017)
-segmented.mod.stability<-segmented(lm.stability,seg.Z= ~row_name,psi=c(1230,1400))
-summary(segmented.mod.stability)
-plot(stability_Jperm2~row_name,data=segmentedDF_2017, pch=16)
-plot(segmented.mod.stability, add=T)
-
-#One breakpoint####
-#Break point for temperature model: Line 1192:  2017-12-13 14:45:00####
-#Break point for stability model: Line 1215: 2017-12-13 20:30:00####
-#Two breakpoints####
-#Break points for temperature model: 1314 and 1367: 2017-12-14 21:00:00 and 2017-12-15 10:30:00####
-#Break points for stability model: 1301 and 1402: 2017-12-14 18:00:00 and 2017-12-15 19:15:00####
 
 ####day/night daily###############################
 #Summarize all columns that are numeric for the mean by day, sunset to sunset####
