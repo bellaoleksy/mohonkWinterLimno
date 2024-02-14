@@ -747,51 +747,111 @@ abline(v=round(summary(segmented.OptimalMod.stability.2017)$psi[which.max(segmen
 ###put them together in 4 panel plot####
 
 #global formatting
-size_points<-2
+size_points<-1
 fill_points<-alpha("light blue",0.6)
-size_regression<-1.0
+size_regression<-0.6
 color_regression<-"darkgrey"
 color_bp<-"black"
+tempDiff.limits<-c(-2.5,0.5)
+tempDiff.breaks<-c(-2,-1,0)
+stability.limits<-c(-0.1,6.5)
+stability.breaks<-c(0,2,4,6)
+date.breaks2016<-as.POSIXct(strptime(c("2016-12-01 00:00","2016-12-09 00:00","2016-12-18 00:00"),format = "%Y-%m-%d %H:%M"))
+date.breaks2017<-as.POSIXct(strptime(c("2017-12-01 00:00","2017-12-09 00:00","2017-12-18 00:00"),format = "%Y-%m-%d %H:%M"))
+date.labels<-c("01 Dec","09 Dec", "18 Dec")
 
 #*Draw in 2016 tempDiff####
-ggplot(data=segmentedDF_2016%>%mutate(segmentedFit=broken.line(segmented.mod.tempDiff.2016)$fit),aes(x=DateTime,y=temperatureDifferenceTop0mvsBottom9m))+
+gg.2016temp<-ggplot(data=segmentedDF_2016%>%mutate(segmentedFit=broken.line(segmented.mod.tempDiff.2016)$fit),aes(x=DateTime,y=temperatureDifferenceTop0mvsBottom9m))+
+  geom_rect(aes(xmin=as.POSIXct(strptime(c("2016-12-16 00:00"),format = "%Y-%m-%d %H:%M")), #Add a box for the ice in day
+                xmax=as.POSIXct(strptime(c("2016-12-16 23:59"),format = "%Y-%m-%d %H:%M")), 
+                ymin=-Inf, 
+                ymax=Inf),
+            fill=alpha("grey",0.2))+
   geom_point(shape=21,color="black",fill=fill_points,size=size_points)+
   geom_line(aes(y=segmentedFit),color=color_regression,size=size_regression)+
   geom_vline(data=segmented2016_results_tempDiff%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
+  scale_y_continuous(limits=tempDiff.limits,breaks=tempDiff.breaks)+
+  scale_x_datetime(breaks=date.breaks2016,label=date.labels)+
   ylab(bquote(Temp.~Diff.~(degree*C)))+
   xlab("Date")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 #*Draw in 2016 stability####
-ggplot(data=segmentedDF_2016%>%mutate(segmentedFit=broken.line(segmented.mod.stability.2016)$fit),aes(x=DateTime,y=stability_Jperm2))+
+gg.2016stability<-ggplot(data=segmentedDF_2016%>%mutate(segmentedFit=broken.line(segmented.mod.stability.2016)$fit),aes(x=DateTime,y=stability_Jperm2))+
+  geom_rect(aes(xmin=as.POSIXct(strptime(c("2016-12-16 00:00"),format = "%Y-%m-%d %H:%M")), #Add a box for the ice in day
+                xmax=as.POSIXct(strptime(c("2016-12-16 23:59"),format = "%Y-%m-%d %H:%M")), 
+                ymin=-Inf, 
+                ymax=Inf),
+            fill=alpha("grey",0.2))+
   geom_point(shape=21,color="black",fill=fill_points,size=size_points)+
   geom_line(aes(y=segmentedFit),color=color_regression,size=size_regression)+
   geom_vline(data=segmented2016_results_stability%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
+  scale_y_continuous(limits=stability.limits,breaks=stability.breaks)+
+  scale_x_datetime(breaks=date.breaks2016,label=date.labels)+
   ylab(bquote(Schmidt~stability~(J~m^-2)))+
   xlab("Date")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 #*Draw in 2017 tempDiff####
-ggplot(data=segmentedDF_2017%>%mutate(segmentedFit=broken.line(segmented.mod.tempDiff.2017)$fit),aes(x=DateTime,y=temperatureDifferenceTop0mvsBottom9m))+
+gg.2017temp<-ggplot(data=segmentedDF_2017%>%mutate(segmentedFit=broken.line(segmented.mod.tempDiff.2017)$fit),aes(x=DateTime,y=temperatureDifferenceTop0mvsBottom9m))+
   geom_point(shape=21,color="black",fill=fill_points,size=size_points)+
   geom_line(aes(y=segmentedFit),color=color_regression,size=size_regression)+
   geom_vline(data=segmented2017_results_tempDiff%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
+  scale_y_continuous(limits=tempDiff.limits,breaks=tempDiff.breaks)+
+  scale_x_datetime(breaks=date.breaks2017,label=date.labels)+
   ylab(bquote(Temp.~Diff.~(degree*C)))+
   xlab("Date")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 #*Draw in 2017 stability####
-ggplot(data=segmentedDF_2017%>%mutate(segmentedFit=broken.line(segmented.mod.stability.2017)$fit),aes(x=DateTime,y=stability_Jperm2))+
+gg.2017stability<-ggplot(data=segmentedDF_2017%>%mutate(segmentedFit=broken.line(segmented.mod.stability.2017)$fit),aes(x=DateTime,y=stability_Jperm2))+
   geom_point(shape=21,color="black",fill=fill_points,size=size_points)+
   geom_line(aes(y=segmentedFit),color=color_regression,size=size_regression)+
   geom_vline(data=segmented2017_results_stability%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
+  scale_y_continuous(limits=stability.limits,breaks=stability.breaks)+ #Set the breaks and limits to match the other plot
+  scale_x_datetime(breaks=date.breaks2017,label=date.labels)+ #set the x-axis date breaks and labels
   ylab(bquote(Schmidt~stability~(J~m^-2)))+
   xlab("Date")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
+List<-list(gg.2016temp+
+             xlab("")+
+             theme(axis.text.x=element_blank(),
+                   #axis.ticks.x=element_blank()
+                   )+
+             annotate("text",x=as.POSIXct(strptime(c("2016-12-19 00:00"),format = "%Y-%m-%d %H:%M")),y=0.34,label="(a)",hjust=0.5,vjust=0.1)+
+             annotate("text",x=as.POSIXct(strptime(c("2016-12-01 00:00"),format = "%Y-%m-%d %H:%M")),y=-2.5,label="2016",hjust=0.1,vjust=0.1),
+           gg.2017temp+
+             xlab("")+
+             ylab("")+
+             theme(axis.text.x=element_blank(),
+                   #axis.ticks.x=element_blank(),
+                   axis.text.y=element_blank(),
+                   #axis.ticks.y=element_blank()
+                   )+
+             annotate("text",x=as.POSIXct(strptime(c("2017-12-19 00:00"),format = "%Y-%m-%d %H:%M")),y=0.34,label="(b)",hjust=0.5,vjust=0.1)+
+             annotate("text",x=as.POSIXct(strptime(c("2017-12-01 00:00"),format = "%Y-%m-%d %H:%M")),y=-2.5,label="2017",hjust=0.1,vjust=0.1),
+           gg.2016stability+
+             annotate("text",x=as.POSIXct(strptime(c("2016-12-19 00:00"),format = "%Y-%m-%d %H:%M")),y=6.3,label="(c)",hjust=0.5,vjust=0.2)+
+             annotate("text",x=as.POSIXct(strptime(c("2016-12-01 00:00"),format = "%Y-%m-%d %H:%M")),y=6.2,label="2016",hjust=0.1,vjust=0.1),
+           gg.2017stability+
+             ylab("")+
+             theme(axis.text.y=element_blank(),
+                   #axis.ticks.y=element_blank()
+             )+
+             annotate("text",x=as.POSIXct(strptime(c("2017-12-19 00:00"),format = "%Y-%m-%d %H:%M")),y=6.3,label="(d)",hjust=0.5,vjust=0.2)+
+             annotate("text",x=as.POSIXct(strptime(c("2017-12-01 00:00"),format = "%Y-%m-%d %H:%M")),y=6.2,label="2017",hjust=0.1,vjust=0.1)
+           )
+
+#Put the plots on a 2x2 matrix####
+(gg.hficeon<-wrap_plots(List,ncol=2,nrow=2)&theme(plot.margin = unit(c(3,3,3,3),"pt")))
+
+#Could do a 2x1 with width 6, height = 4
+ggsave(paste("figures/MohonkWinterLimno-FigureX-HighFrequencyIceOnSegmented.jpg",sep=""), plot=gg.hficeon, width=6, height=4,units="in", dpi=300)
 
 
 
