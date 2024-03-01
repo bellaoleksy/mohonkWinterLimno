@@ -754,65 +754,84 @@ color_regression<-"darkgrey"
 color_bp<-"black"
 tempDiff.limits<-c(-2.5,0.5)
 tempDiff.breaks<-c(-2,-1,0)
-stability.limits<-c(-0.1,6.5)
+stability.limits<-c(-0.1,9.75)
 stability.breaks<-c(0,2,4,6)
-date.breaks2016<-as.POSIXct(strptime(c("2016-12-01 00:00","2016-12-09 00:00","2016-12-18 00:00"),format = "%Y-%m-%d %H:%M"))
-date.breaks2017<-as.POSIXct(strptime(c("2017-12-01 00:00","2017-12-09 00:00","2017-12-18 00:00"),format = "%Y-%m-%d %H:%M"))
-date.labels<-c("01 Dec","09 Dec", "18 Dec")
+date.breaks2016<-as.POSIXct(strptime(c("2016-12-01 00:00","2016-12-08 00:00","2016-12-15 00:00"),format = "%Y-%m-%d %H:%M"))
+date.breaks2016_lots<-seq.POSIXt(from=as.POSIXct(strptime(c("2016-12-01 00:00"),format = "%Y-%m-%d %H:%M")),to=as.POSIXct(strptime(c("2016-12-31 00:00"),format = "%Y-%m-%d %H:%M")),by="1 days")
+date.breaks2017<-as.POSIXct(strptime(c("2017-12-01 00:00","2017-12-08 00:00","2017-12-15 00:00","2017-12-22 00:00","2017-12-29 00:00"),format = "%Y-%m-%d %H:%M"))
+date.breaks2017_lots<-seq.POSIXt(from=as.POSIXct(strptime(c("2017-12-01 00:00"),format = "%Y-%m-%d %H:%M")),to=as.POSIXct(strptime(c("2017-12-31 00:00"),format = "%Y-%m-%d %H:%M")),by="1 days")
+date.labels<-c("01 Dec","08 Dec", "15 Dec", "22 Dec","29 Dec")
+date.labels_lots<-c("01 Dec",rep("",6),"08 Dec", rep("",6),"15 Dec",rep("",6) ,"22 Dec",rep("",6),"29 Dec","","")
+
+############################STOPPED HERE#####################
+#Draw in major and minor tickmarks as separate################
+#https://cran.r-project.org/web/packages/ggprism/vignettes/axes.html#:~:text=Adding%20minor%20ticks%20to%20graphs,do%20not%20have%20minor%20breaks.
+#Fix location of panel labels?
+
 
 #*Draw in 2016 tempDiff####
-gg.2016temp<-ggplot(data=segmentedDF_2016%>%mutate(segmentedFit=broken.line(segmented.mod.tempDiff.2016)$fit),aes(x=DateTime,y=temperatureDifferenceTop0mvsBottom9m))+
+gg.2016temp<-ggplot()+
   geom_rect(aes(xmin=as.POSIXct(strptime(c("2016-12-16 00:00"),format = "%Y-%m-%d %H:%M")), #Add a box for the ice in day
                 xmax=as.POSIXct(strptime(c("2016-12-16 23:59"),format = "%Y-%m-%d %H:%M")), 
                 ymin=-Inf, 
                 ymax=Inf),
             fill=alpha("grey",0.2))+
-  geom_point(shape=21,color="black",fill=fill_points,size=size_points)+
-  geom_line(aes(y=segmentedFit),color=color_regression,size=size_regression)+
+  geom_point(data=SensorData_derivedFill, aes(x=DateTime,y=temperatureDifferenceTop0mvsBottom9m),shape=21,color="black",fill=fill_points,size=size_points)+
+  geom_line(data=segmentedDF_2016%>%mutate(segmentedFit=broken.line(segmented.mod.tempDiff.2016)$fit),aes(x=DateTime,y=segmentedFit),color=color_regression,size=size_regression)+
   geom_vline(data=segmented2016_results_tempDiff%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
   scale_y_continuous(limits=tempDiff.limits,breaks=tempDiff.breaks)+
-  scale_x_datetime(breaks=date.breaks2016,label=date.labels)+
+  scale_x_datetime(breaks=date.breaks2016_lots,label=date.labels_lots,limits=lims_2016)+
   ylab(bquote(Temp.~Diff.~(degree*C)))+
   xlab("Date")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 #*Draw in 2016 stability####
-gg.2016stability<-ggplot(data=segmentedDF_2016%>%mutate(segmentedFit=broken.line(segmented.mod.stability.2016)$fit),aes(x=DateTime,y=stability_Jperm2))+
+gg.2016stability<-ggplot()+
   geom_rect(aes(xmin=as.POSIXct(strptime(c("2016-12-16 00:00"),format = "%Y-%m-%d %H:%M")), #Add a box for the ice in day
                 xmax=as.POSIXct(strptime(c("2016-12-16 23:59"),format = "%Y-%m-%d %H:%M")), 
                 ymin=-Inf, 
                 ymax=Inf),
             fill=alpha("grey",0.2))+
-  geom_point(shape=21,color="black",fill=fill_points,size=size_points)+
-  geom_line(aes(y=segmentedFit),color=color_regression,size=size_regression)+
+  geom_point(data=SensorData_derivedFill, aes(x=DateTime,y=stability_Jperm2),shape=21,color="black",fill=fill_points,size=size_points)+
+  geom_line(data=segmentedDF_2016%>%mutate(segmentedFit=broken.line(segmented.mod.stability.2016)$fit),aes(x=DateTime,y=segmentedFit),color=color_regression,size=size_regression)+
   geom_vline(data=segmented2016_results_stability%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
   scale_y_continuous(limits=stability.limits,breaks=stability.breaks)+
-  scale_x_datetime(breaks=date.breaks2016,label=date.labels)+
+  scale_x_datetime(breaks=date.breaks2016_lots,label=date.labels_lots,limits=lims_2016)+
   ylab(bquote(Schmidt~stability~(J~m^-2)))+
   xlab("Date")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 #*Draw in 2017 tempDiff####
-gg.2017temp<-ggplot(data=segmentedDF_2017%>%mutate(segmentedFit=broken.line(segmented.mod.tempDiff.2017)$fit),aes(x=DateTime,y=temperatureDifferenceTop0mvsBottom9m))+
-  geom_point(shape=21,color="black",fill=fill_points,size=size_points)+
-  geom_line(aes(y=segmentedFit),color=color_regression,size=size_regression)+
+gg.2017temp<-ggplot()+
+  geom_rect(aes(xmin=as.POSIXct(strptime(c("2017-12-27 00:00"),format = "%Y-%m-%d %H:%M")), #Add a box for the ice in day
+                xmax=as.POSIXct(strptime(c("2017-12-27 23:59"),format = "%Y-%m-%d %H:%M")), 
+                ymin=-Inf, 
+                ymax=Inf),
+            fill=alpha("grey",0.2))+
+  geom_point(data=SensorData_derivedFill, aes(x=DateTime,y=temperatureDifferenceTop0mvsBottom9m),shape=21,color="black",fill=fill_points,size=size_points)+
+  geom_line(data=segmentedDF_2017%>%mutate(segmentedFit=broken.line(segmented.mod.tempDiff.2017)$fit),aes(x=DateTime,y=segmentedFit),color=color_regression,size=size_regression)+
   geom_vline(data=segmented2017_results_tempDiff%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
   scale_y_continuous(limits=tempDiff.limits,breaks=tempDiff.breaks)+
-  scale_x_datetime(breaks=date.breaks2017,label=date.labels)+
+  scale_x_datetime(breaks=date.breaks2017_lots,label=date.labels_lots,limits=lims_2017)+
   ylab(bquote(Temp.~Diff.~(degree*C)))+
   xlab("Date")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
 
 #*Draw in 2017 stability####
-gg.2017stability<-ggplot(data=segmentedDF_2017%>%mutate(segmentedFit=broken.line(segmented.mod.stability.2017)$fit),aes(x=DateTime,y=stability_Jperm2))+
-  geom_point(shape=21,color="black",fill=fill_points,size=size_points)+
-  geom_line(aes(y=segmentedFit),color=color_regression,size=size_regression)+
+gg.2017stability<-ggplot()+
+  geom_rect(aes(xmin=as.POSIXct(strptime(c("2017-12-16 00:00"),format = "%Y-%m-%d %H:%M")), #Add a box for the ice in day
+                xmax=as.POSIXct(strptime(c("2017-12-16 23:59"),format = "%Y-%m-%d %H:%M")), 
+                ymin=-Inf, 
+                ymax=Inf),
+            fill=alpha("grey",0.2))+
+  geom_point(data=SensorData_derivedFill, aes(x=DateTime,y=stability_Jperm2),shape=21,color="black",fill=fill_points,size=size_points)+
+  geom_line(data=segmentedDF_2017%>%mutate(segmentedFit=broken.line(segmented.mod.stability.2017)$fit),aes(x=DateTime,y=segmentedFit),color=color_regression,size=size_regression)+
   geom_vline(data=segmented2017_results_stability%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
-  scale_y_continuous(limits=stability.limits,breaks=stability.breaks)+ #Set the breaks and limits to match the other plot
-  scale_x_datetime(breaks=date.breaks2017,label=date.labels)+ #set the x-axis date breaks and labels
+  scale_y_continuous(limits=stability.limits,breaks=stability.breaks)+
+  scale_x_datetime(breaks=date.breaks2017_lots,label=date.labels_lots,limits=lims_2017)+
   ylab(bquote(Schmidt~stability~(J~m^-2)))+
   xlab("Date")+
   theme_bw()+
@@ -895,6 +914,64 @@ ggplot(data=SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2
 ggplot(data=SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2017-12-14 00:00:00 EST")&DateTime>=as.POSIXct("2017-12-01 00:00:00 EST")),aes(x=ma_temp_avg_degC,y=stability_Jperm2))+geom_line()+geom_hline(yintercept=-0.1,color="red")
 ggplot(data=SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2017-12-14 00:00:00 EST")&DateTime>=as.POSIXct("2017-12-01 00:00:00 EST")),aes(x=ma_temp_avg_degC,y=station_pressure_avg_mbar))+geom_line()
 SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=TRUE))%>%filter(DateTime<=as.POSIXct("2017-12-14 00:00:00 EST")&DateTime>=as.POSIXct("2017-12-01 00:00:00 EST"))%>%filter(temperatureDifferenceTop0mvsBottom9m<(-0.1))%>%dplyr::select(DateTime,temperatureDifferenceTop0mvsBottom9m,stability_Jperm2,ma_temp_avg_degC)
+
+#Create Z-scores for the met data and response variables####
+#Response variables: "stability_Jperm2","buoyancyfrequency_1_s2","temperatureDifferenceTop0mvsBottom9m"
+#Met predictor variables: temp_2m_avg_degC, relative_humidity_avg_percent, precip_local_mm, wind_speed_prop_avg_mps, solar_insolation_avg_Wpm2, station_pressure_avg_mbar
+
+#Convert relevant columns to long data####
+SensorData_derivedFill_long<-SensorData_derivedFill%>%dplyr::select(DateTime,
+                                       stability_Jperm2,
+                                       buoyancyfrequency_1_s2,
+                                       temperatureDifferenceTop0mvsBottom9m,
+                                       temp_2m_avg_degC, relative_humidity_avg_percent, precip_local_mm, wind_speed_prop_avg_mps, solar_insolation_avg_Wpm2, station_pressure_avg_mbar)%>%
+                                       group_by(DateTime)%>%
+                                       pivot_longer(-DateTime, 
+                                                    names_to = "variable",                                                         
+                                                    values_to = "value")
+
+# convert to narrow format tidy, calculate means, sds, and zScores
+SensorData_derivedFill_long_zscore <- SensorData_derivedFill_long %>% 
+                                      group_by(variable) %>% 
+                                      summarise(avg = mean(value,na.rm=TRUE), sd = sd(value,na.rm=TRUE)) %>%
+                                      full_join(SensorData_derivedFill_long,.) %>% 
+                                      mutate(.,zScore = (value - avg) / sd)
+
+##*Graph the response and predictor variables as z-scores####
+ggplot(data=SensorData_derivedFill_long_zscore%>%filter(variable=="stability_Jperm2"|variable=="buoyancyfrequency_1_s2"|variable=="temperatureDifferenceTop0mvsBottom9m"),aes(x=DateTime,y=zScore,color=variable))+geom_line()+scale_y_continuous(limits=c(-2,3))
+#*Graph the predictor variables####
+ggplot(data=SensorData_derivedFill_long_zscore%>%filter(!(variable=="stability_Jperm2"|variable=="buoyancyfrequency_1_s2"|variable=="temperatureDifferenceTop0mvsBottom9m")),aes(x=DateTime,y=zScore,color=variable))+
+  geom_point()+
+  scale_y_continuous(limits=c(-2,3))
+
+# Graph some of the response variables for 2016####
+lims_2016 <- as.POSIXct(strptime(c("2016-12-01 19:00", "2016-12-30 20:00"), 
+                            format = "%Y-%m-%d %H:%M"))
+
+#*Graph the predictor variables####
+ggplot(data=SensorData_derivedFill_long_zscore,aes(x=DateTime,y=zScore,color=variable))+
+  geom_point()+
+  scale_y_continuous(limits=c(-2,3))+
+  facet_wrap(~variable)+
+  geom_smooth(method="loess",color="black")+
+  scale_x_datetime(limits=lims_2016)+
+  geom_vline(data=segmented2016_results_stability%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)
+
+
+# Graph some of the response variables for 2016####
+lims_2017 <- as.POSIXct(strptime(c("2017-12-01 19:00", "2017-12-30 20:00"), 
+                            format = "%Y-%m-%d %H:%M"))
+
+
+#*Graph the predictor variables####
+ggplot(data=SensorData_derivedFill_long_zscore,aes(x=DateTime,y=zScore,color=variable))+
+  geom_point()+
+  scale_y_continuous(limits=c(-2,3))+
+  facet_wrap(~variable)+
+  geom_smooth(method="loess",color="black")+
+  #geom_line(aes(y=forecast::ma(zScore, order=24*4*10, centre=TRUE)),color="black") +
+  scale_x_datetime(limits=lims_2017)+
+  geom_vline(data=segmented2017_results_stability%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)
 
 
 
