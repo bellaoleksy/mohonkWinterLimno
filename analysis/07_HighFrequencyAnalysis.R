@@ -898,7 +898,7 @@ gg.2016airTemp<-ggplot()+
               ymax=Inf),
           fill=alpha("grey",1))+
   geom_vline(data=segmented2016_results_stability%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
-  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=temp_2m_avg_degC),shape=21,fill="wheat",color="black")+
+  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=temp_2m_avg_degC),shape=21,fill=alpha("wheat",0.5),color=alpha("wheat",0.5),size=0.8)+
   geom_line(data=SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=FALSE)),aes(x=DateTime,y=ma_temp_avg_degC))+ #Calculate a 3 day moving average
   scale_x_datetime(breaks=date.breaks2016_lots,label=date.labels_lots,limits=limsIceOn_2016)+
   scale_y_continuous(limits=airTemp.limits,breaks=airTemp.breaks)+
@@ -911,13 +911,13 @@ gg.2016airTemp<-ggplot()+
 #Temperature in 2017 with ice phenology####
 gg.2017airTemp<-ggplot()+
   geom_hline(yintercept=0)+
-  geom_rect(aes(xmin=as.POSIXct(strptime(c("2017-12-16 00:00"),format = "%Y-%m-%d %H:%M")), #Add a box for the ice in day
-                xmax=as.POSIXct(strptime(c("2017-12-16 23:59"),format = "%Y-%m-%d %H:%M")), 
+  geom_rect(aes(xmin=as.POSIXct(strptime(c("2017-12-27 00:00"),format = "%Y-%m-%d %H:%M")), #Add a box for the ice in day
+                xmax=as.POSIXct(strptime(c("2017-12-27 23:59"),format = "%Y-%m-%d %H:%M")), 
                 ymin=-Inf, 
                 ymax=Inf),
             fill=alpha("grey",1))+
   geom_vline(data=segmented2017_results_stability%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
-  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=temp_2m_avg_degC),shape=21,fill="wheat",color="black")+
+  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=temp_2m_avg_degC),shape=21,fill=alpha("wheat",0.5),color=alpha("wheat",0.5),size=0.8)+
   geom_line(data=SensorData_derivedFill%>%mutate(ma_temp_avg_degC=forecast::ma(temp_2m_avg_degC,order=96*3,centre=FALSE)),aes(x=DateTime,y=ma_temp_avg_degC))+ #Calculate a 3 day moving average
   scale_x_datetime(breaks=date.breaks2017_lots,label=date.labels_lots,limits=limsIceOn_2017)+
   scale_y_continuous(limits=airTemp.limits,breaks=airTemp.breaks)+
@@ -936,7 +936,7 @@ gg.2016windSpeed<-ggplot()+
                 ymax=Inf),
             fill=alpha("grey",1))+
   geom_vline(data=segmented2016_results_stability%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
-  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=wind_speed_sonic_avg_mps),shape=21,fill="thistle",color="black")+
+  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=wind_speed_sonic_avg_mps),shape=21,fill=alpha("thistle",0.5),color=alpha("thistle",0.5),size=0.8)+
   geom_line(data=SensorData_derivedFill%>%mutate(ma_wind_speed_sonic_avg_mps=forecast::ma(wind_speed_sonic_avg_mps,order=96*3,centre=FALSE)),aes(x=DateTime,y=ma_wind_speed_sonic_avg_mps))+ #Calculate a 3 day moving average
   scale_x_datetime(breaks=date.breaks2016_lots,label=date.labels_lots,limits=limsIceOn_2016)+
   scale_y_continuous(limits=windSpeed.limits,breaks=windSpeed.breaks)+
@@ -955,7 +955,7 @@ gg.2017windSpeed<-ggplot()+
                 ymax=Inf),
             fill=alpha("grey",1))+
   geom_vline(data=segmented2017_results_stability%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
-  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=wind_speed_sonic_avg_mps),shape=21,fill="thistle",color="black")+
+  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=wind_speed_sonic_avg_mps),shape=21,fill=alpha("thistle",0.5),color=alpha("thistle",0.5),size=0.8)+
   geom_line(data=SensorData_derivedFill%>%mutate(ma_wind_speed_sonic_avg_mps=forecast::ma(wind_speed_sonic_avg_mps,order=96*3,centre=FALSE)),aes(x=DateTime,y=ma_wind_speed_sonic_avg_mps))+ #Calculate a 3 day moving average
   scale_x_datetime(breaks=date.breaks2017_lots,label=date.labels_lots,limits=limsIceOn_2017)+
   scale_y_continuous(limits=windSpeed.limits,breaks=windSpeed.breaks)+
@@ -974,7 +974,7 @@ gg.2016pressure<-ggplot()+
                 ymax=Inf),
             fill=alpha("grey",1))+
   geom_vline(data=segmented2016_results_stability%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
-  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=station_pressure_avg_mbar),shape=21,fill="thistle",color="black")+
+  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=station_pressure_avg_mbar),shape=21,fill=alpha("light blue",0.5),color=alpha("light blue",0.5),size=0.8)+
   geom_line(data=SensorData_derivedFill%>%mutate(ma_station_pressure_avg_mbar=forecast::ma(station_pressure_avg_mbar,order=96*3,centre=FALSE)),aes(x=DateTime,y=ma_station_pressure_avg_mbar))+ #Calculate a 3 day moving average
   scale_x_datetime(breaks=date.breaks2016_lots,label=date.labels_lots,limits=limsIceOn_2016)+
   scale_y_continuous(limits=pressure.limits,breaks=pressure.breaks)+
@@ -985,7 +985,7 @@ gg.2016pressure<-ggplot()+
         axis.ticks.x = element_line(color = c("black",rep("light grey",6))))
 
 #Barometric pressure in 2017 with ice phenology####
-gg.2017windSpeed<-ggplot()+
+gg.2017pressure<-ggplot()+
   geom_hline(yintercept=0)+
   geom_rect(aes(xmin=as.POSIXct(strptime(c("2017-12-27 00:00"),format = "%Y-%m-%d %H:%M")), #Add a box for the ice in day
                 xmax=as.POSIXct(strptime(c("2017-12-27 23:59"),format = "%Y-%m-%d %H:%M")), 
@@ -993,7 +993,7 @@ gg.2017windSpeed<-ggplot()+
                 ymax=Inf),
             fill=alpha("grey",1))+
   geom_vline(data=segmented2017_results_stability%>%filter(optimal==TRUE),aes(xintercept=ymd_hms(date_bp)),color=color_bp)+
-  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=station_pressure_avg_mbar),shape=21,fill="thistle",color="black")+
+  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=station_pressure_avg_mbar),shape=21,fill=alpha("light blue",0.5),color=alpha("light blue",0.5),size=0.8)+
   geom_line(data=SensorData_derivedFill%>%mutate(ma_station_pressure_avg_mbar=forecast::ma(station_pressure_avg_mbar,order=96*3,centre=FALSE)),aes(x=DateTime,y=ma_station_pressure_avg_mbar))+ #Calculate a 3 day moving average
   scale_x_datetime(breaks=date.breaks2017_lots,label=date.labels_lots,limits=limsIceOn_2017)+
   scale_y_continuous(limits=pressure.limits,breaks=pressure.breaks)+
@@ -1002,6 +1002,63 @@ gg.2017windSpeed<-ggplot()+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         axis.ticks.x = element_line(color = c("black",rep("light grey",6))))
+
+#Combine the files in the list####
+List_meteo<-list(gg.2016airTemp+
+             xlab("")+
+             theme(axis.text.x=element_blank(),
+                   #axis.ticks.x=element_blank()
+             )+
+             annotate("text",x=as.POSIXct(strptime(c("2016-12-30 00:00"),format = "%Y-%m-%d %H:%M")),y=11.0,label="(a)",hjust=0.5,vjust=0.1)+
+             annotate("text",x=as.POSIXct(strptime(c("2016-12-01 00:00"),format = "%Y-%m-%d %H:%M")),y=11.0,label="2016",hjust=0.1,vjust=0.1),
+           gg.2017airTemp+
+             xlab("")+
+             ylab("")+
+             theme(axis.text.x=element_blank(),
+                   #axis.ticks.x=element_blank(),
+                   axis.text.y=element_blank(),
+                   #axis.ticks.y=element_blank()
+             )+
+             annotate("text",x=as.POSIXct(strptime(c("2017-12-30 00:00"),format = "%Y-%m-%d %H:%M")),y=11.00,label="(b)",hjust=0.5,vjust=0.1)+
+             annotate("text",x=as.POSIXct(strptime(c("2017-12-01 00:00"),format = "%Y-%m-%d %H:%M")),y=11.0,label="2017",hjust=0.1,vjust=0.1),
+           gg.2016windSpeed+
+             xlab("")+
+             theme(axis.text.x=element_blank(),
+                   #axis.ticks.x=element_blank()
+             )+
+             annotate("text",x=as.POSIXct(strptime(c("2016-12-30 00:00"),format = "%Y-%m-%d %H:%M")),y=4.0,label="(c)",hjust=0.5,vjust=0.1)+
+             annotate("text",x=as.POSIXct(strptime(c("2016-12-01 00:00"),format = "%Y-%m-%d %H:%M")),y=4.0,label="2016",hjust=0.1,vjust=0.1),
+           gg.2017windSpeed+
+             xlab("")+
+             ylab("")+
+             theme(axis.text.x=element_blank(),
+                   #axis.ticks.x=element_blank(),
+                   axis.text.y=element_blank(),
+                   #axis.ticks.y=element_blank()
+             )+
+             annotate("text",x=as.POSIXct(strptime(c("2017-12-30 00:00"),format = "%Y-%m-%d %H:%M")),y=4.0,label="(d)",hjust=0.5,vjust=0.1)+
+             annotate("text",x=as.POSIXct(strptime(c("2017-12-01 00:00"),format = "%Y-%m-%d %H:%M")),y=4.0,label="2017",hjust=0.1,vjust=0.1),
+           gg.2016pressure+
+             annotate("text",x=as.POSIXct(strptime(c("2016-12-30 00:00"),format = "%Y-%m-%d %H:%M")),y=1018,label="(e)",hjust=0.5,vjust=0.2)+
+             annotate("text",x=as.POSIXct(strptime(c("2016-12-01 00:00"),format = "%Y-%m-%d %H:%M")),y=1018,label="2016",hjust=0.1,vjust=0.1),
+           gg.2017pressure+
+             ylab("")+
+             theme(axis.text.y=element_blank(),
+                   #axis.ticks.y=element_blank()
+             )+
+             annotate("text",x=as.POSIXct(strptime(c("2017-12-30 00:00"),format = "%Y-%m-%d %H:%M")),y=1018,label="(f)",hjust=0.5,vjust=0.2)+
+             annotate("text",x=as.POSIXct(strptime(c("2017-12-01 00:00"),format = "%Y-%m-%d %H:%M")),y=1018,label="2017",hjust=0.1,vjust=0.1)
+)
+
+#Put the plots on a 2x2 matrix####
+(gg.hfmeteo<-wrap_plots(List_meteo,ncol=2,nrow=3)&theme(plot.margin = unit(c(3,3,3,3),"pt")))
+
+#Could do a 2x1 with width 6, height = 4
+ggsave(paste("figures/MohonkWinterLimno-FigureX-HighFrequencyMeteorology.jpg",sep=""), plot=gg.hfmeteo, width=6, height=6,units="in", dpi=300)
+
+
+
+
 
 ##################STOPPED HERE##############################
 #STICH THESE 6 MET DATA FIGURES TOGETHER IN A 2 COLUMN, 3 ROW PLOT USING THE CODE ABOVE
