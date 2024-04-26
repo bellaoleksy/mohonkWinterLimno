@@ -215,35 +215,68 @@ head(IsothermSummary_IceIn)
 #~~~Exploring the relationships with highest r squared values####
 head(IsothermSummary_IceIn)
 
-ggplot(data = Isotherm_WaterYear_dates_IceIn, aes(x = IceInDayofYear_fed, y = isotherm_TempMax_degC_17_days_0_degC_WaterYear_date)) +
+ggplot(
+  data = Isotherm_WaterYear_dates_IceIn,
+  aes(x = IceInDayofYear_fed, y = isotherm_TempMax_degC_17_days_0_degC_WaterYear_date)
+) +
   geom_point() +
-  labs(x = "Ice In Observed Date",
-       y = "Ice In Predicted Date",
-       title = "Observed vs Predicted Ice In Dates",
-       subtitle = "Using Isotherm Formula: TempMax in degC, 17 day window, 0 degC threshold") +
-  scale_x_continuous(breaks = c(60, 80, 100, 120), labels = c("Nov 29", "Dec 19", "Jan 8", "Jan 28")) +
-  scale_y_continuous(breaks = c(60, 80, 100, 120), labels = c("Nov 29", "Dec 19", "Jan 8", "Jan 28")) +
-  geom_abline(intercept=0, slope=1)
+  labs(
+    x = "Ice In Observed Date",
+    y = "Ice In Predicted Date",
+    title = "Observed vs Predicted Ice In Dates",
+    subtitle = "Using Isotherm Formula: TempMax in degC, 17 day window, 0 degC threshold"
+  ) +
+  scale_x_continuous(
+    breaks = c(60, 80, 100, 120),
+    labels = c("Nov 29", "Dec 19", "Jan 8", "Jan 28")
+  ) +
+  scale_y_continuous(
+    breaks = c(60, 80, 100, 120),
+    labels = c("Nov 29", "Dec 19", "Jan 8", "Jan 28")
+  ) +
+  geom_abline(intercept = 0, slope = 1)
 
-ggplot(data = Isotherm_WaterYear_dates_IceIn, aes(x = IceInDayofYear_fed, y = isotherm_TempMax_degC_18_days_0_degC_WaterYear_date)) +
-  geom_point() + 
-  labs(x = "Ice In Observed Date",
-       y = "Ice In Predicted Date",
-       title = "Observed vs Predicted Ice In Dates",
-       subtitle = "Using Isotherm Formula: TempMax in degC, 18 day window, 0 degC threshold") +
-  scale_x_continuous(breaks = c(60, 80, 100, 120), labels = c("Nov 29", "Dec 19", "Jan 8", "Jan 28")) + 
-  scale_y_continuous(breaks = c(60, 80, 100, 120), labels = c("Nov 29", "Dec 19", "Jan 8", "Jan 28"))  +
-  geom_abline(intercept=0, slope=1)
-
-ggplot(data = Isotherm_WaterYear_dates_IceIn, aes(x = IceInDayofYear_fed, y = isotherm_TempMax_degC_30_days_0_degC_WaterYear_date)) +
+ggplot(
+  data = Isotherm_WaterYear_dates_IceIn,
+  aes(x = IceInDayofYear_fed, y = isotherm_TempMax_degC_18_days_0_degC_WaterYear_date)
+) +
   geom_point() +
-  labs(x = "Ice In Observed Date",
-       y = "Ice In Predicted Date",
-       title = "Observed vs Predicted Ice In Dates",
-       subtitle = "Using Isotherm Formula: TempMax in degC, 30 day window, 0 degC threshold") +
-  scale_x_continuous(breaks = c(60, 80, 100, 120), labels = c("Nov 29", "Dec 19", "Jan 8", "Jan 28")) + 
-  scale_y_continuous(breaks = c(60, 80, 100, 120), labels = c("Nov 29", "Dec 19", "Jan 8", "Jan 28"))  +
-  geom_abline(intercept=0, slope=1)
+  labs(
+    x = "Ice In Observed Date",
+    y = "Ice In Predicted Date",
+    title = "Observed vs Predicted Ice In Dates",
+    subtitle = "Using Isotherm Formula: TempMax in degC, 18 day window, 0 degC threshold"
+  ) +
+  scale_x_continuous(
+    breaks = c(60, 80, 100, 120),
+    labels = c("Nov 29", "Dec 19", "Jan 8", "Jan 28")
+  ) +
+  scale_y_continuous(
+    breaks = c(60, 80, 100, 120),
+    labels = c("Nov 29", "Dec 19", "Jan 8", "Jan 28")
+  )  +
+  geom_abline(intercept = 0, slope = 1)
+
+ggplot(
+  data = Isotherm_WaterYear_dates_IceIn,
+  aes(x = IceInDayofYear_fed, y = isotherm_TempMax_degC_30_days_0_degC_WaterYear_date)
+) +
+  geom_point() +
+  labs(
+    x = "Ice In Observed Date",
+    y = "Ice In Predicted Date",
+    title = "Observed vs Predicted Ice In Dates",
+    subtitle = "Using Isotherm Formula: TempMax in degC, 30 day window, 0 degC threshold"
+  ) +
+  scale_x_continuous(
+    breaks = c(60, 80, 100, 120),
+    labels = c("Nov 29", "Dec 19", "Jan 8", "Jan 28")
+  ) +
+  scale_y_continuous(
+    breaks = c(60, 80, 100, 120),
+    labels = c("Nov 29", "Dec 19", "Jan 8", "Jan 28")
+  )  +
+  geom_abline(intercept = 0, slope = 1)
 
 
 
@@ -281,35 +314,68 @@ head(IsothermSummary_IceOut)
 IsothermSummary_IceOut[1:10,]
 
 
-ggplot(data = Isotherm_WaterYear_dates_IceOut, aes(x = IceOutDayofYear_fed, y = isotherm_TempMean_degC_29_days_4_degC_WaterYear_date)) +
+ggplot(
+  data = Isotherm_WaterYear_dates_IceOut,
+  aes(x = IceOutDayofYear_fed, y = isotherm_TempMean_degC_29_days_4_degC_WaterYear_date)
+) +
   geom_point() +
-  labs(x = "Ice Out Observed Date",
-       y = "Ice Out Predicted Date",
-       title = "Observed vs Predicted Ice Out Dates",
-       subtitle = "Using Isotherm Formula: TempAvg in degC, 29 day window, 4 degC threshold") +
-  scale_x_continuous(breaks = c(160, 180, 200, 220), labels = c("Mar 9", "Mar 29", "Apr 18", "May 8")) + 
-  scale_y_continuous(breaks = c(160, 180, 200, 220), labels = c("Mar 9", "Mar 29", "Apr 18", "May 8"))  +
-  geom_abline(intercept=0, slope=1)
+  labs(
+    x = "Ice Out Observed Date",
+    y = "Ice Out Predicted Date",
+    title = "Observed vs Predicted Ice Out Dates",
+    subtitle = "Using Isotherm Formula: TempAvg in degC, 29 day window, 4 degC threshold"
+  ) +
+  scale_x_continuous(
+    breaks = c(160, 180, 200, 220),
+    labels = c("Mar 9", "Mar 29", "Apr 18", "May 8")
+  ) +
+  scale_y_continuous(
+    breaks = c(160, 180, 200, 220),
+    labels = c("Mar 9", "Mar 29", "Apr 18", "May 8")
+  )  +
+  geom_abline(intercept = 0, slope = 1)
 
-ggplot(data = Isotherm_WaterYear_dates_IceOut, aes(x = IceOutDayofYear_fed, y = isotherm_TempMean_degC_30_days_3_degC_WaterYear_date)) +
+ggplot(
+  data = Isotherm_WaterYear_dates_IceOut,
+  aes(x = IceOutDayofYear_fed, y = isotherm_TempMean_degC_30_days_3_degC_WaterYear_date)
+) +
   geom_point() +
-  labs(x = "Ice Out Observed Date",
-       y = "Ice Out Predicted Date",
-       title = "Observed vs Predicted Ice Out Dates",
-       subtitle = "Using Isotherm Formula: TempAvg in degC, 30 day window, 3 degC threshold") +
-  scale_x_continuous(breaks = c(160, 180, 200, 220), labels = c("Mar 9", "Mar 29", "Apr 18", "May 8")) + 
-  scale_y_continuous(breaks = c(160, 180, 200, 220), labels = c("Mar 9", "Mar 29", "Apr 18", "May 8"))  +
-  geom_abline(intercept=0, slope=1)
+  labs(
+    x = "Ice Out Observed Date",
+    y = "Ice Out Predicted Date",
+    title = "Observed vs Predicted Ice Out Dates",
+    subtitle = "Using Isotherm Formula: TempAvg in degC, 30 day window, 3 degC threshold"
+  ) +
+  scale_x_continuous(
+    breaks = c(160, 180, 200, 220),
+    labels = c("Mar 9", "Mar 29", "Apr 18", "May 8")
+  ) +
+  scale_y_continuous(
+    breaks = c(160, 180, 200, 220),
+    labels = c("Mar 9", "Mar 29", "Apr 18", "May 8")
+  )  +
+  geom_abline(intercept = 0, slope = 1)
 
-ggplot(data = Isotherm_WaterYear_dates_IceOut, aes(x = IceOutDayofYear_fed, y = isotherm_TempMean_degC_28_days_4_degC_WaterYear_date)) +
+ggplot(
+  data = Isotherm_WaterYear_dates_IceOut,
+  aes(x = IceOutDayofYear_fed, y = isotherm_TempMean_degC_28_days_4_degC_WaterYear_date)
+) +
   geom_point() +
-  labs(x = "Ice Out Observed Date",
-       y = "Ice Out Predicted Date",
-       title = "Observed vs Predicted Ice Out Dates",
-       subtitle = "Using Isotherm Formula: TempAvg in degC, 28 day window, 4 degC threshold") +
-  scale_x_continuous(breaks = c(160, 180, 200, 220), labels = c("Mar 9", "Mar 29", "Apr 18", "May 8")) + 
-  scale_y_continuous(breaks = c(160, 180, 200, 220), labels = c("Mar 9", "Mar 29", "Apr 18", "May 8"))  +
-  geom_abline(intercept=0, slope=1)
+  labs(
+    x = "Ice Out Observed Date",
+    y = "Ice Out Predicted Date",
+    title = "Observed vs Predicted Ice Out Dates",
+    subtitle = "Using Isotherm Formula: TempAvg in degC, 28 day window, 4 degC threshold"
+  ) +
+  scale_x_continuous(
+    breaks = c(160, 180, 200, 220),
+    labels = c("Mar 9", "Mar 29", "Apr 18", "May 8")
+  ) +
+  scale_y_continuous(
+    breaks = c(160, 180, 200, 220),
+    labels = c("Mar 9", "Mar 29", "Apr 18", "May 8")
+  )  +
+  geom_abline(intercept = 0, slope = 1)
 
 
 ggplot(data = Isotherm_WaterYear_dates_IceOut, aes(x = IceOutDayofYear_fed, y = isotherm_TempMin_degC_25_days_0_degC_WaterYear_date)) +
