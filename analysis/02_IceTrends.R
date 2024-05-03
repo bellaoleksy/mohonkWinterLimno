@@ -135,7 +135,8 @@ MohonkIceWeather <- MohonkIceWeather %>%
 # Correlations of winter predictor variables -------------------------------------------
 ## Here I am looking at the massive list of potential predictors of ice-in or ice-out and seeing which ones are highly correlated (>0.7)
 
-res2 <- rcorr(as.matrix(MohonkIceWeather[,7:ncol(MohonkIceWeather)]))
+res2 <- rcorr(as.matrix(MohonkIceWeather[,7:ncol(MohonkIceWeather)]),
+              type="spearman")
 res2
 
 
@@ -151,7 +152,8 @@ MohonkIceWeather_correlations_trim <- MohonkIceWeather_correlations %>%
 head(MohonkIceWeather_correlations_trim)
 
 #Look for potentially spurious correlations
-res3 <- rcorr(as.matrix(MohonkIceWeather[,3:ncol(MohonkIceWeather)]))
+res3 <- rcorr(as.matrix(MohonkIceWeather[,3:ncol(MohonkIceWeather)]),
+              type="spearman")
 # res3 <- rcorr(as.matrix(MohonkIceWeather[,3:ncol(MohonkIceWeather)]))
 MohonkIceWeather_trim_correlations<-flattenCorrMatrix(res3$r, res3$P)
 MohonkIceWeather_trim_correlations<-MohonkIceWeather_trim_correlations%>%
@@ -219,7 +221,7 @@ MohonkIce_top10 %>%
   ggplot(aes(x=cor_abs,y=fct_reorder(column, cor_abs, .desc = FALSE), fill=cor_abs))+
   geom_bar(stat="identity", width=0.75, color="black")+
   scale_fill_gradient2(low = "white", mid="darkolivegreen2", high = "darkseagreen4", midpoint=0.5, na.value = NA) +
-  geom_text(aes(label=round(cor_abs,1)),color="black",size=3,position=position_stack(vjust=0.5)) +
+  geom_text(aes(label=round(cor_abs,2)),color="black",size=3,position=position_stack(vjust=0.5)) +
   labs(y="Pairs",
        x="Correlation coefficient")+
   scale_x_continuous(limits = c(0, 1, breaks = seq(0, 1, by = 0.25)))+
