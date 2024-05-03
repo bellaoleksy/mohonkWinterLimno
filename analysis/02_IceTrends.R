@@ -38,8 +38,8 @@ if(!require(nlme)){install.packages("nlme")}
 if(!require(gratia)){install.packages("gratia")} 
 if(!require(itsadug)){install.packages("itsadug")} 
 if(!require(visreg)){install.packages("visreg")} 
-if(!require(visreg)){install.packages("huxtable")} 
-if(!require(visreg)){install.packages("grafify")} 
+if(!require(huxtable)){install.packages("huxtable")} 
+if(!require(grafify)){install.packages("grafify")} 
 
 
 library(huxtable) #Pretty tables
@@ -784,7 +784,10 @@ MohonkIce_vis <- MohonkIce.upload %>%
          ICEOUT_3_month=month(ICEOUT_3),
          ICEOUT_3_day=day(ICEOUT_3),
          ICEOUT_3_newdate=case_when(ICEOUT_3_month %in% c("10","11","12") ~ ymd(paste("2014", ICEOUT_3_month, ICEOUT_3_day, sep = "-")),
-                                    ICEOUT_3_month %in% c("1","2","3","4") ~ ymd(paste("2015", ICEOUT_3_month, ICEOUT_3_day, sep = "-"))))
+                                    ICEOUT_3_month %in% c("1","2","3","4") ~ ymd(paste("2015", ICEOUT_3_month, ICEOUT_3_day, sep = "-")))) %>%
+  group_by(Year) %>%
+  mutate(duration_complete = case_when(is.na(IceCover_1)  ~ "no",
+                                 TRUE ~ "yes"))
 
 str(MohonkIce_vis)
 
@@ -801,8 +804,8 @@ ggplot() +
   ) +
   geom_point(
     data = MohonkIce_vis,
-    aes(x = Year, y = ICEIN_1_newdate, fill = IceCover_sum),
-    shape = 21,
+    aes(x = Year, y = ICEIN_1_newdate, fill = IceCover_sum,
+        shape = duration_complete),
     color = "black",
     size = 0.75
   ) +
@@ -813,22 +816,12 @@ ggplot() +
     lty = 1,
     size= 0.5
   ) +
-  #Alternatively... nearly identical to geom_smooth above
-  # geom_smooth(
-  #   data = MohonkIce_vis,
-  #   aes(x = Year, y = ICEIN_1_newdate),
-  #   method="lm",
-  #   color = "black",
-  #   lty = 1,
-  #   size= 0.5,
-  #   se=FALSE
-  # ) +
   geom_point(
     data = MohonkIce_vis,
     aes(x = Year,
         y = ICEOUT_1_newdate,
-        fill = IceCover_sum),
-    shape = 21,
+        fill = IceCover_sum,
+        shape = duration_complete),
     color = "black",
     size = 0.75
   ) +
@@ -845,8 +838,8 @@ ggplot() +
   ) +
   geom_point(
     data = MohonkIce_vis,
-    aes(x = Year, y = ICEIN_2_newdate, fill = IceCover_sum),
-    shape = 21,
+    aes(x = Year, y = ICEIN_2_newdate, fill = IceCover_sum,
+        shape = duration_complete),
     color = "black",
     size = 0.75
   ) +
@@ -854,8 +847,8 @@ ggplot() +
     data = MohonkIce_vis,
     aes(x = Year,
         y = ICEOUT_2_newdate,
-        fill = IceCover_sum),
-    shape = 21,
+        fill = IceCover_sum,
+        shape = duration_complete),
     color = "black",
     size = 0.75
   ) +
@@ -871,8 +864,9 @@ ggplot() +
   ) +
   geom_point(
     data = MohonkIce_vis,
-    aes(x = Year, y = ICEIN_3_newdate, fill = IceCover_sum),
-    shape = 21,
+    aes(x = Year, y = ICEIN_3_newdate,
+        fill = IceCover_sum,
+        shape = duration_complete),
     color = "black",
     size = 0.75
   ) +
@@ -880,8 +874,8 @@ ggplot() +
     data = MohonkIce_vis,
     aes(x = Year,
         y = ICEOUT_3_newdate,
-        fill = IceCover_sum),
-    shape = 21,
+        fill = IceCover_sum,
+        shape = duration_complete),
     color = "black",
     size = 0.75
   ) +
@@ -891,6 +885,7 @@ ggplot() +
                          name = "Ice duration\n(days)") +
   scale_fill_continuous(high = "#1A85FF", low = "#FFC20A",
                         name = "Ice duration\n(days)") +
+  scale_shape_manual(values=c(25,21))+
   scale_x_continuous(limit = c(1932, 2023),
                      breaks = seq(1940, 2020, by = 20)) +
   scale_y_date(date_breaks = "28 days", date_minor_breaks = "14 days",
@@ -913,7 +908,8 @@ ggplot() +
     axis.ticks = element_line(color = "black")
   ) +
   xlab("Year") +
-  ylab("Date of ice formation or clearance")
+  ylab("Date of ice formation or clearance")+
+  guides(shape=FALSE)
 ggsave(
   "figures/MS/Fig1.IcePhenology_withDates_intermittant.jpg",
   width = 5,
@@ -2324,6 +2320,11 @@ theme_plain(Climate.SensSlopeSummary_hux)
 quick_docx(Climate.SensSlopeSummary_hux, file = 'figures/MS/TableS3.SensSlopesClimateVariables.docx')
 
 
+
+#Check a few
+MohonkIceWeather %>%
+  ggplot(aes(x=Year, y=nDaysMeanBelowZero_Oct))+
+  geom_point()
 
 
 # ~~ FIGURE S2.  MEAN Monthly temp.  trends  -----------------------------------
