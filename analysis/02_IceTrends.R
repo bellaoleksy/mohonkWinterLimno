@@ -5,7 +5,7 @@
 # source('analysis/00_main.R')
 source('analysis/01_Isotherm.R') #this script already sources 00_main.R
 #or load this .RData to save time
-load("data/isotherm_dataframes.RData")
+# load("data/isotherm_dataframes.RData")
 
 
 #Load libraries 
@@ -40,7 +40,8 @@ if(!require(itsadug)){install.packages("itsadug")}
 if(!require(visreg)){install.packages("visreg")} 
 if(!require(huxtable)){install.packages("huxtable")} 
 if(!require(grafify)){install.packages("grafify")} 
-
+if(!require(ggdark)){install.packages("ggdark")} 
+if(!require(ggh4x)){install.packages("ggh4x")} 
 
 library(huxtable) #Pretty tables
 library(magrittr)
@@ -72,6 +73,8 @@ library(itsadug)
 library(visreg)
 library(huxtable)
 library(grafify)
+library(ggdark)
+library(ggh4x)
 
 
 # Set theme ---------------------------------------------------------------
