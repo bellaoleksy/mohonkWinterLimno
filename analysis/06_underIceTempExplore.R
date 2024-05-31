@@ -35,10 +35,13 @@ DailyInterpol_winterstart_long <- DailyInterpol_winterstart %>%
   pivot_longer(-c(Date, year, dayofyear, weekofyear))
 
 DailyInterpol_winterstart_long %>%
+  filter(!name %in% c("thermoclineDepth_m_thresh0.1","thermoclineDepth_m_maxdiff")) %>%
   ggplot(aes(x=year, y=value))+
   geom_point()+
   geom_smooth(method="lm", se=TRUE)+
-  facet_wrap(~name, scales="free_y")
+  facet_wrap(~name, scales="free_y")+
+  ggdark::dark_theme_bw(base_size=10)
+
 
 #wtf is happening in 2018
 
@@ -394,4 +397,5 @@ max(testing$NinetyFifth.stability_Jperm2,na.rm=T)
   theme_MS()+
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        axis.line = element_line(colour = "black"))
+        axis.line = element_line(colour = "black"))+
+  ggdark::dark_theme_bw(base_size=16)
