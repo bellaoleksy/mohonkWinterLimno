@@ -329,3 +329,69 @@ UnderIce.WOY.SensSlopeSummary<-
   mutate(P_value_new=paste(Sens_pval,Significance,sep="")) %>%
   filter(Significance=="*")
 ## The only dates that emerge are in late Feb and April 
+
+
+#Can we recreate the stratification plot from the original Mohonk paper 
+#but instead graph ice cover by DOY and look at avg. of ice over (1=yes, 0=no) over time?
+test <- left_join(DailyInterpol %>%
+                    mutate(water_year = dataRetrieval::calcWaterYear(Date)),
+                  MohonkIce %>%
+                    mutate(water_year = dataRetrieval::calcWaterYear(IceInDate)), by="water_year") %>%
+  mutate(doy_fed=hydro.day(Date)) %>%
+  group_by(water_year) %>%
+  mutate(ice_cover_binomial = case_when(doy_fed >= IceInDayofYear_fed &
+                                        doy_fed <= IceOutDayofYear_fed ~ 1,
+                                        TRUE ~ 0))
+
+test %>%
+  group_by(doy_fed) %>%
+  dplyr::summarize(median=median(ice_cover_binomial)) %>%
+  ggplot(aes(x=doy_fed, y=median))+
+  geom_point()
+# Composite thermocline depth and stability figure vs. day of year summarizing over all years
+tmp.composite<-aggregate(test$stability_Jperm2,
+                         by=list(test$doy_fed),
+                         FUN=quantile,na.rm=T)
+
+tmp2.composite<-aggregate(test$stability_Jperm2,
+                          by = list(test$doy_fed),
+                          FUN = function(x) quantile(x, probs = c(0.05,0.95),na.rm=T))
+
+Stability.composite<-data.frame(doy_fed=tmp.composite$Group.1,
+                                Min.stability_Jperm2=tmp.composite[["x"]][,1],
+                                Fifth.stability_Jperm2=tmp2.composite[["x"]][,1],
+                                TwentyFifth.stability_Jperm2=tmp.composite[["x"]][,2],
+                                Median.stability_Jperm2=tmp.composite[["x"]][,3],
+                                SeventyFifth.stability_Jperm2=tmp.composite[["x"]][,4],
+                                NinetyFifth.stability_Jperm2=tmp2.composite[["x"]][,2],
+                                Max.stability_Jperm2=tmp.composite[["x"]][,5])  
+
+# min doy_fed for ice on and max doy_fed for ice off
+min(test$IceInDayofYear_fed, na.rm=TRUE)
+max(test$IceOutDayofYear_fed, na.rm=TRUE)
+median(test$IceInDayofYear_fed, na.rm=TRUE)
+median(test$IceOutDayofYear_fed, na.rm=TRUE)
+lo<-60; hi<-202
+testing <- Stability.composite %>%
+  filter(doy_fed > 60 & doy_fed < 202) 
+max(testing$NinetyFifth.stability_Jperm2,na.rm=T)
+# gg.stability.composite<-
+  ggplot()+
+  geom_line(data=Stability.composite%>%
+              slice(lo:hi),aes(y=Median.stability_Jperm2,x=doy_fed),col="white")+
+  scale_y_continuous(limits=c(0,max(testing$NinetyFifth.stability_Jperm2,na.rm=T)),breaks=c(0,40,80))+
+  # scale_x_continuous(limits=c(0,365))+
+  geom_vline(xintercept=c(93,184),lty=2,col="darkgrey")+
+  geom_ribbon(data=Stability.composite%>%slice(lo:hi),aes(x=doy_fed,ymin=Fifth.stability_Jperm2,ymax=NinetyFifth.stability_Jperm2),fill="lightskyblue1")+
+  geom_ribbon(data=Stability.composite%>%slice(lo:hi),aes(x=doy_fed,ymin=TwentyFifth.stability_Jperm2,ymax=SeventyFifth.stability_Jperm2),fill="deepskyblue3")+
+  geom_line(data=Stability.composite%>%slice(lo:hi),aes(x=doy_fed,y=SeventyFifth.stability_Jperm2),lwd=0.4,col="blue")+
+  geom_line(data=Stability.composite%>%slice(lo:hi),aes(x=doy_fed,y=TwentyFifth.stability_Jperm2),lwd=0.4,col="blue")+
+  geom_line(data=Stability.composite%>%slice(lo:hi),aes(x=doy_fed,y=Fifth.stability_Jperm2),lwd=0.4,col="blue")+
+  geom_line(data=Stability.composite%>%slice(lo:hi),aes(x=doy_fed,y=NinetyFifth.stability_Jperm2),lwd=0.4,col="blue")+
+  geom_line(data=Stability.composite%>%slice(lo:hi),aes(x=doy_fed,y=Median.stability_Jperm2),lwd=0.7,col="black")+
+  ylab(expression(Schmidt~stability~(J~m^-2)~" "))+
+  xlab(expression(Days~since~Oct~"1"))+
+  theme_MS()+
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(colour = "black"))
