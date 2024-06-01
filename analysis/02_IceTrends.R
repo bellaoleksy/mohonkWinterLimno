@@ -2444,6 +2444,18 @@ ggsave("figures/MS/Figure4.GamPredictions_IceDuration.png", width=7.2, height=3,
 
 
 
+#ASLO Dark theme
+composite_noLegend<-(IceDuration_GlobalT+IceDuration_DecNAO+IceDuration_NovNAO) &
+  ggdark::dark_theme_bw(base_size=9)
+composite_noLegend
+ggsave(
+  "figures/ASLO/FigX.IceDurationPredictors.jpg",
+  width = 7.2,
+  height = 3,
+  units = "in",
+  dpi = 600
+)
+
 
 
 
