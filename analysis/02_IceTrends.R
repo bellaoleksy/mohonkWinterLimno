@@ -2,7 +2,7 @@
 
 
 #Run the main script to bring in all data and functions####
-# source('analysis/00_main.R')
+source('analysis/00_main.R')
 source('analysis/01_Isotherm.R') #this script already sources 00_main.R
 #or load this .RData to save time
 # load("data/isotherm_dataframes.RData")
@@ -924,13 +924,143 @@ ggsave(
 )
 
 
+##Black background for ASLO talk
+ggplot() +
+  geom_segment(
+    data = MohonkIce_vis,
+    aes(
+      x = Year,
+      xend = Year,
+      y = ICEIN_1_newdate,
+      yend = ICEOUT_1_newdate,
+      col = IceCover_sum
+    )
+  ) +
+  geom_point(
+    data = MohonkIce_vis,
+    aes(x = Year, y = ICEIN_1_newdate, fill = IceCover_sum,
+        shape = duration_complete),
+    color = "white",
+    size = 3
+  ) +
+  geom_smooth(
+    data = MohonkIce.Predicted.test,
+    aes(x = Year, y = IceInDayofYear_yhat_newdate),
+    color = "white",
+    lty = 1,
+    size= 1
+  ) +
+  geom_point(
+    data = MohonkIce_vis,
+    aes(x = Year,
+        y = ICEOUT_1_newdate,
+        fill = IceCover_sum,
+        shape = duration_complete),
+    color = "white",
+    size = 3
+  ) +
+  #Add in the intermittant years
+  geom_segment(
+    data = MohonkIce_vis,
+    aes(
+      x = Year,
+      xend = Year,
+      y = ICEIN_2_newdate,
+      yend = ICEOUT_2_newdate,
+      col = IceCover_sum
+    )
+  ) +
+  geom_point(
+    data = MohonkIce_vis,
+    aes(x = Year, y = ICEIN_2_newdate, fill = IceCover_sum,
+        shape = duration_complete),
+    color = "white",
+    size = 3
+  ) +
+  geom_point(
+    data = MohonkIce_vis,
+    aes(x = Year,
+        y = ICEOUT_2_newdate,
+        fill = IceCover_sum,
+        shape = duration_complete),
+    color = "white",
+    size = 3
+  ) +
+  geom_segment(
+    data = MohonkIce_vis,
+    aes(
+      x = Year,
+      xend = Year,
+      y = ICEIN_3_newdate,
+      yend = ICEOUT_3_newdate,
+      col = IceCover_sum
+    )
+  ) +
+  geom_point(
+    data = MohonkIce_vis,
+    aes(x = Year, y = ICEIN_3_newdate,
+        fill = IceCover_sum,
+        shape = duration_complete),
+    color = "white",
+    size = 3
+  ) +
+  geom_point(
+    data = MohonkIce_vis,
+    aes(x = Year,
+        y = ICEOUT_3_newdate,
+        fill = IceCover_sum,
+        shape = duration_complete),
+    color = "white",
+    size = 3
+  ) +
+  # scale_fill_grafify(palette = "blue_conti", name = "Ice duration\n(days)", reverse=TRUE)+ #yellow_conti scheme
+  # scale_color_grafify(palette = "blue_conti", name = "Ice duration\n(days)", reverse=TRUE)+ #yellow_conti scheme
+  scale_color_continuous(high = "#1A85FF", low = "#FFC20A",
+                         name = "Ice duration\n(days)") +
+  scale_fill_continuous(high = "#1A85FF", low = "#FFC20A",
+                        name = "Ice duration\n(days)") +
+  scale_shape_manual(values=c(25,21))+
+  scale_x_continuous(limit = c(1932, 2023),
+                     breaks = seq(1940, 2020, by = 20)) +
+  scale_y_date(date_breaks = "28 days", date_minor_breaks = "14 days",
+               date_labels = "%d-%b")+
+  theme_MS() +
+  theme(
+    # panel.grid.major.y = element_line(color="grey90", size=0.5),
+    # panel.grid.major.x = element_line(color="grey90", size=0.5),
+    # panel.grid.minor.y = element_line(color="grey90", linetype="dashed", size=0.5),
+    #GET RID OF THESE-- a pesky LOL reviewer wanted these
+    axis.line = element_line(colour = "black"),
+    panel.border = element_rect(
+      fill = NA,
+      colour = "white",
+      size = 1
+    ),
+    plot.margin=unit(c(1,0,0,0), "lines"),
+    axis.text.x = element_text(color = "white"),
+    axis.text.y = element_text(color = "white", angle=90, hjust=0.5),
+    axis.ticks = element_line(color = "white")
+  ) +
+  xlab("Year") +
+  ylab("Date of ice formation or clearance")+
+  guides(shape=FALSE)+
+  ggdark::dark_theme_bw(base_size=10)
+ggsave(
+  "figures/ASLO/Fig1.IcePhenology_withDates_intermittant_ASLO.jpg",
+  width = 8,
+  height = 4,
+  units = "in",
+  dpi = 600
+)
+
+
 ### Ice cover percentage since 2012 where data coverage is highest
 
 
 
 IceCover_perc %>%
   left_join(., MohonkIce_vis, by=c("water_year")) %>%
-  # filter(water_year>2011) %>%
+  filter(water_year>2011) %>%
   ggplot(aes(x=Date, y=IceCover_Percent))+
   geom_point()+
   facet_wrap(~water_year, scales="free_x")+
@@ -1245,7 +1375,7 @@ IceOn_CumuNov<-ggplot(pred_Nov, aes(x = cumMeanDailyT_Nov, y = fitted_Nov)) +
                  y=IceInDayofYear_fed),
              shape=21,fill=rgb(96,98,99,max=255,alpha=150),size=1)+
   labs(x="Nov. cumulative\nmean daily temp. (°C)",
-       y="Ice on (days since Oct 1)")+
+       y="Ice-on date")+
   # scale_y_continuous(breaks = seq(50, 130, by = 20) )+
   # coord_cartesian(ylim = c(50, 130), expand = TRUE) +
   scale_y_continuous(breaks=labels_IceOnDayofYear_fed,labels=c("22-Nov","12-Dec","01-Jan","21-Jan","10-Feb"),limits=c(50,130))+
@@ -1275,8 +1405,17 @@ Row1a
 # 
 # ggsave("figures/Figure2.GamPredictions_IceOn.jpg", plot=Row1a, width=180, height=120,units="mm", dpi=300)
 
-
-
+## For ASLO
+Row1a <- (IceOn_isotherm / IceOn_CumuNov) & 
+  ggdark::dark_theme_bw(base_size=10)
+Row1a
+ggsave(
+  "figures/ASLO/Fig3.IceOnPredictors.jpg",
+  width = 3,
+  height = 4,
+  units = "in",
+  dpi = 600
+)
 
 # Fitting GAMs for IceOutDayofYear -------------------------------------------
 
@@ -1592,8 +1731,20 @@ appraise(modIceOut9)
 visreg::visreg(modIceOut9, "isotherm_TempMean_degC_29_days_4_degC_WaterYear_date", "cumSnow_FebMarApr", gg=TRUE, ylab="Ice out DOY")
 #Not entirely sure what the values on top mean, and it looks like not all the values are plotted?
 
+
+jpeg(filename = 'figures/ASLO/FigX.IntxnIsothermSpringSnow.jpg',
+     width = 5, height = 5, units = 'in', res = 600)
+# graphics.off()
+par(bg = "black")
 mgcv::vis.gam(modIceOut9, view=c("cumSnow_FebMarApr","isotherm_TempMean_degC_29_days_4_degC_WaterYear_date"),
-              plot.type="contour", color="cm", type="response")
+              plot.type="contour", color="cm", type="response",
+              xlab="Cumulative snowfall Feb-Mar (cm)",
+              col.lab="white",
+              col.axis="white",
+              ylab="Spring isotherm (days since Oct 1)") 
+axis(1,  col = "white", col.axis = "white")
+axis(2,  col = "white", col.axis = "white")
+dev.off()
 
 vis.gam(modIceOut9, view=c("cumSnow_FebMarApr","isotherm_TempMean_degC_29_days_4_degC_WaterYear_date"),
         theta= 24, type="response",
@@ -1729,7 +1880,7 @@ pred_isotherm <- pred_isotherm %>%
          fitted_isotherm = fitted)
 
 
-breaks_IsoAvg_fed<-c(170,190,210) #these are julian day
+breaks_IsoAvg_fed<-c(170,190,210) 
 as.Date(170-91, origin="2014-01-02")
 as.Date(190-91, origin="2014-01-02")
 as.Date(210-91, origin="2014-01-02")
@@ -1880,12 +2031,22 @@ IceOut_IceIn<-ggplot(pred_IceIn, aes(x = IceInDayofYear_fed, y = fitted_IceIn)) 
 # ~~FIGURE 2b  Ice Off Predictors --------------------------------------
 
 
-Row2a<-(IceOut_isotherm+IceOut_FebT)/(IceOut_FebMarAprSnow+IceOut_IceIn)
+Row2a<-(IceOut_isotherm/IceOut_FebT/IceOut_FebMarAprSnow)
 Row2a
 
 
 # ggsave("figures/Figure3.GamPredictions_IceOff.png", plot=Row2a, width=8, height=5,units="in", dpi=600)
-
+## For ASLO
+Row2a <- (IceOut_isotherm/IceOut_FebT/IceOut_FebMarAprSnow) & 
+  ggdark::dark_theme_bw(base_size=10)
+Row2a
+ggsave(
+  "figures/ASLO/Fig3B.IceOffPredictors.jpg",
+  width = 3,
+  height = 5,
+  units = "in",
+  dpi = 600
+)
 
 
 
@@ -2453,6 +2614,27 @@ FebWx %>%
   geom_line(data=FebTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
   geom_line(data=Feb_incr, aes(x=water_year, y=value_pred), color="red", linewidth=1.5)
 
+#For ASLO talk
+FebWx %>%
+  ggplot(aes(x=water_year, y=TempMean_degC))+
+  geom_point()+
+  geom_line(data=FebTempMeanPred, aes(x=water_year, y=fit)) +
+  geom_line(data=FebTempMeanPred, aes(x=water_year, y=upper), linetype="dashed") +
+  geom_line(data=FebTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
+  geom_line(data=Feb_incr, aes(x=water_year, y=value_pred), color="red", linewidth=1.5)+
+  # geom_hline(yintercept=0, linetype="longdash", color="grey50")+
+  ggdark::dark_theme_bw(base_size=10)+
+  labs(y="Feb. mean air temperatures (°C)",
+       x="Year")
+ggsave(
+  "figures/ASLO/Fig4a.FebGAMS.jpg",
+  width = 3,
+  height = 3,
+  units = "in",
+  dpi = 600
+)
+
+
 # Fitting GAMs for mean March temperature -------------------------------------------
 MarchWx<-MohonkDailyWeatherFull %>%
   filter(water_year >= 1932 & Month=="3") %>%
@@ -2981,7 +3163,7 @@ DecWx<-MohonkDailyWeatherFull %>%
 modDecTempMean <- gamm(TempMean_degC ~ s(water_year, k=20),
                        data = DecWx,
                        method = "REML")
-
+# summary(modDecTempMean)
 ###Since we're concerned with the response, include "response" in type of predict()
 ###Since we're concerned with the response, include "response" in type of predict()
 DecTempMeanPred <- with(DecWx, data.frame(water_year = seq(min(water_year, na.rm=TRUE),
@@ -3026,6 +3208,220 @@ DecWx %>%
   geom_line(data=DecTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
   geom_line(data=Dec_incr, aes(x=water_year, y=value_pred), color="red", linewidth=1.5)
 
+#For ASLO talk
+DecWx %>%
+  ggplot(aes(x=water_year, y=TempMean_degC))+
+  geom_point()+
+  geom_line(data=DecTempMeanPred, aes(x=water_year, y=fit)) +
+  geom_line(data=DecTempMeanPred, aes(x=water_year, y=upper), linetype="dashed") +
+  geom_line(data=DecTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
+  geom_line(data=Dec_incr, aes(x=water_year, y=value_pred), color="red", linewidth=1.5)+
+  ggdark::dark_theme_bw(base_size=10)+
+  labs(y="December mean air temperatures (°C)",
+       x="Year")
+ggsave(
+  "figures/ASLO/Fig4.DecGAMS.jpg",
+  width = 3,
+  height = 3,
+  units = "in",
+  dpi = 600
+)
+
+# Fitting GAMs for mean Fall isotherm temperature -------------------------------------------
+
+### Model
+modDecTempMean <- gamm(isotherm_TempMax_degC_17_days_0_degC_WaterYear_date ~ s(Year, k=20),
+                       data = MohonkIceWeather,
+                       method = "REML")
+# summary(modDecTempMean)
+###Since we're concerned with the response, include "response" in type of predict()
+###Since we're concerned with the response, include "response" in type of predict()
+DecTempMeanPred <- with(MohonkIceWeather, data.frame(Year = seq(1933,
+                                                           2023,
+                                                           length.out = 200)))
+DecTempMeanPred <- cbind(DecTempMeanPred, data.frame(predict(modDecTempMean$gam, DecTempMeanPred,
+                                                             type="response",
+                                                             se.fit = TRUE)))
+### this calculates on the link scale (i.e., log)
+DecTempMeanPred <- transform(DecTempMeanPred, upper = fit + (2 * se.fit),
+                             lower = fit - (2 * se.fit)) 
+
+
+m1.dsig <- signifD(DecTempMeanPred$fit,
+                   d = DecTempMeanPred$deriv,
+                   DecTempMeanPred$upper,
+                   DecTempMeanPred$lower)
+
+
+
+# Plots periods of change
+#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
+Term <- "Year"
+m1.d <- Deriv(modDecTempMean)
+
+m1.dci <- confint(m1.d, term = "Year")
+m1.dsig <- signifD(DecTempMeanPred$fit,
+                   d = m1.d[[Term]]$deriv,
+                   m1.dci[[Term]]$upper,
+                   m1.dci[[Term]]$lower)
+
+Dec_incr<-data.frame(value_pred=unlist(m1.dsig$incr), Year=DecTempMeanPred$Year) 
+
+
+#For ASLO talk
+labels_IsoMax_fed<-c(70,90,110)
+
+MohonkIceWeather %>%
+  filter(Year>=1932) %>%
+  ggplot(aes(x=Year, y=isotherm_TempMax_degC_17_days_0_degC_WaterYear_date))+
+  geom_point()+
+  geom_line(data=DecTempMeanPred, aes(x=Year, y=fit)) +
+  geom_line(data=DecTempMeanPred, aes(x=Year, y=upper), linetype="dashed") +
+  geom_line(data=DecTempMeanPred, aes(x=Year, y=lower), linetype="dashed") +
+  geom_line(data=Dec_incr, aes(x=Year, y=value_pred), color="red", linewidth=1.5)+
+  ggdark::dark_theme_bw(base_size=10)+
+  scale_y_continuous(breaks=labels_IsoMax_fed,labels=c("12-Dec","01-Jan","21-Jan"),limits=c(70,120))+
+  labs(y="Fall isotherm date",
+       x="Year")
+ggsave(
+  "figures/ASLO/Fig6.FallIosthermGAMS.jpg",
+  width = 3,
+  height = 3,
+  units = "in",
+  dpi = 600
+)
+
+
+
+# Fitting GAMs for mean Spring isotherm temperature -------------------------------------------
+
+### Model
+modDecTempMean <- gamm(isotherm_TempMean_degC_29_days_4_degC_WaterYear_date ~ s(Year, k=20),
+                       data = MohonkIceWeather,
+                       method = "REML")
+# summary(modDecTempMean)
+###Since we're concerned with the response, include "response" in type of predict()
+###Since we're concerned with the response, include "response" in type of predict()
+DecTempMeanPred <- with(MohonkIceWeather, data.frame(Year = seq(1933,
+                                                                2023,
+                                                                length.out = 200)))
+DecTempMeanPred <- cbind(DecTempMeanPred, data.frame(predict(modDecTempMean$gam, DecTempMeanPred,
+                                                             type="response",
+                                                             se.fit = TRUE)))
+### this calculates on the link scale (i.e., log)
+DecTempMeanPred <- transform(DecTempMeanPred, upper = fit + (2 * se.fit),
+                             lower = fit - (2 * se.fit)) 
+
+
+m1.dsig <- signifD(DecTempMeanPred$fit,
+                   d = DecTempMeanPred$deriv,
+                   DecTempMeanPred$upper,
+                   DecTempMeanPred$lower)
+
+
+
+# Plots periods of change
+#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
+Term <- "Year"
+m1.d <- Deriv(modDecTempMean)
+
+m1.dci <- confint(m1.d, term = "Year")
+m1.dsig <- signifD(DecTempMeanPred$fit,
+                   d = m1.d[[Term]]$deriv,
+                   m1.dci[[Term]]$upper,
+                   m1.dci[[Term]]$lower)
+
+Dec_incr<-data.frame(value_pred=unlist(m1.dsig$decr), Year=DecTempMeanPred$Year) 
+
+
+#For ASLO talk
+breaks_IsoAvg_fed<-c(170,190,210) 
+
+MohonkIceWeather %>%
+  filter(Year>=1932) %>%
+  ggplot(aes(x=Year, y=isotherm_TempMean_degC_29_days_4_degC_WaterYear_date))+
+  geom_point()+
+  geom_line(data=DecTempMeanPred, aes(x=Year, y=fit)) +
+  geom_line(data=DecTempMeanPred, aes(x=Year, y=upper), linetype="dashed") +
+  geom_line(data=DecTempMeanPred, aes(x=Year, y=lower), linetype="dashed") +
+  geom_line(data=Dec_incr, aes(x=Year, y=value_pred), color="red", linewidth=1.5)+
+  ggdark::dark_theme_bw(base_size=10)+
+  scale_y_continuous(breaks=breaks_IsoAvg_fed,labels=c("22-Mar","11-Apr","01-May"),limits=c(170,210))+
+  labs(y="Spring isotherm date",
+       x="Year")
+ggsave(
+  "figures/ASLO/Fig6.SpringIosthermGAMS.jpg",
+  width = 3,
+  height = 3,
+  units = "in",
+  dpi = 600
+)
+
+
+
+# Fitting GAMs for cumulative snow Feb-Apr -------------------------------------------
+
+### Model
+modDecTempMean <- gamm(cumSnow_FebMarApr ~ s(Year, k=20),
+                       data = MohonkIceWeather,
+                       method = "REML")
+# summary(modDecTempMean)
+###Since we're concerned with the response, include "response" in type of predict()
+###Since we're concerned with the response, include "response" in type of predict()
+DecTempMeanPred <- with(MohonkIceWeather, data.frame(Year = seq(1933,
+                                                                2023,
+                                                                length.out = 200)))
+DecTempMeanPred <- cbind(DecTempMeanPred, data.frame(predict(modDecTempMean$gam, DecTempMeanPred,
+                                                             type="response",
+                                                             se.fit = TRUE)))
+### this calculates on the link scale (i.e., log)
+DecTempMeanPred <- transform(DecTempMeanPred, upper = fit + (2 * se.fit),
+                             lower = fit - (2 * se.fit)) 
+
+
+m1.dsig <- signifD(DecTempMeanPred$fit,
+                   d = DecTempMeanPred$deriv,
+                   DecTempMeanPred$upper,
+                   DecTempMeanPred$lower)
+
+
+
+# Plots periods of change
+#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
+Term <- "Year"
+m1.d <- Deriv(modDecTempMean)
+
+m1.dci <- confint(m1.d, term = "Year")
+m1.dsig <- signifD(DecTempMeanPred$fit,
+                   d = m1.d[[Term]]$deriv,
+                   m1.dci[[Term]]$upper,
+                   m1.dci[[Term]]$lower)
+
+Dec_incr<-data.frame(value_pred=unlist(m1.dsig$decr), Year=DecTempMeanPred$Year) 
+
+
+#For ASLO talk
+breaks_IsoAvg_fed<-c(170,190,210) 
+
+MohonkIceWeather %>%
+  filter(Year>=1932) %>%
+  ggplot(aes(x=Year, y=cumSnow_FebMarApr))+
+  geom_point()+
+  # geom_line(data=DecTempMeanPred, aes(x=Year, y=fit)) +
+  # geom_line(data=DecTempMeanPred, aes(x=Year, y=upper), linetype="dashed") +
+  # geom_line(data=DecTempMeanPred, aes(x=Year, y=lower), linetype="dashed") +
+  # geom_line(data=Dec_incr, aes(x=Year, y=value_pred), color="red", linewidth=1.5)+
+  ggdark::dark_theme_bw(base_size=10)+
+  # scale_y_continuous(breaks=breaks_IsoAvg_fed,labels=c("22-Mar","11-Apr","01-May"),limits=c(170,210))+
+  labs(y="Spring isotherm date",
+       x="Year")
+ggsave(
+  "figures/ASLO/Fig6.SpringSnowCumul.jpg",
+  width = 3,
+  height = 3,
+  units = "in",
+  dpi = 600
+)
 # >> Combine -----------------------------------------------------------------
 theme_MS <- function () {
   theme_base(base_size=6) %+replace%
@@ -3743,7 +4139,24 @@ NovWx %>%
   geom_line(data=NovTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
   geom_line(data=Nov_incr, aes(x=water_year, y=value_pred), color="red", linewidth=1.5)
 
-
+#ASLO talk
+NovWx %>%
+  ggplot(aes(x=water_year, y=TempMean_degC))+
+  geom_point()+
+  geom_line(data=NovTempMeanPred, aes(x=water_year, y=fit)) +
+  geom_line(data=NovTempMeanPred, aes(x=water_year, y=upper), linetype="dashed") +
+  geom_line(data=NovTempMeanPred, aes(x=water_year, y=lower), linetype="dashed") +
+  geom_line(data=Nov_incr, aes(x=water_year, y=value_pred), color="red", linewidth=1.5) + 
+  ggdark::dark_theme_bw(base_size=10)+
+  labs(y="Cumulative mean air temperature (°C)",
+       x="Year")
+ggsave(
+  "figures/ASLO/Fig5.NovGAMS.jpg",
+  width = 3,
+  height = 3,
+  units = "in",
+  dpi = 600
+)
 
 
 # Fitting GAMs for mean Dec temperature -------------------------------------------
