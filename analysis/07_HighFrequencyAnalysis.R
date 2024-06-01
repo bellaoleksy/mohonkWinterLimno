@@ -491,12 +491,13 @@ gg.hf2016<-ggplot(data=SensorData_derivedFill_2016%>%dplyr::select(DateTime:Temp
   geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceOut_1_date)),size=1.0)+
   geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceIn_1_date_Pierson)),color="darkgrey",linetype=2,size=0.7)+
   geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceOut_1_date_Pierson)),color="darkgrey",linetype=2,size=0.7)+
-  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=IceCover_Percent/15),color="black",shape=21,fill=alpha("white",alpha=0.5),size=1)+
+  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=IceCover_Percent/15),color="black",shape=21,fill="white",alpha=0.5,size=1)+
   scale_y_continuous(limits=c(-0.1,8.2),expand = c(0, 0),breaks=c(0,2,4,6,8),sec.axis=sec_axis(~.*15,name="IceCover (%)",breaks=c(0,25,50,75,100)))+
   ylab(bquote(Water~Temp.~(degree*C)))+
   xlab("Date")+
   theme_bw()+
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+
 
 
 #*Pull data for only Winter2017####
@@ -516,7 +517,7 @@ gg.hf2017<-ggplot(data=SensorData_derivedFill_2017%>%dplyr::select(DateTime:Temp
   geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceOut_1_date)),size=1.0)+
   geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceIn_1_date_Pierson)),color="darkgrey",linetype=2,size=0.7)+
   geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceOut_1_date_Pierson)),color="darkgrey",linetype=2,size=0.7)+
-  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=IceCover_Percent/15),color="black",shape=21,fill=alpha("white",alpha=0.5),size=1)+
+  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=IceCover_Percent/15),color="black",shape=21,fill="white",alpha=0.5,size=1)+
   scale_y_continuous(limits=c(-0.1,8.2),expand = c(0, 0),breaks=c(0,2,4,6,8),sec.axis=sec_axis(~.*15,name="IceCover (%)",breaks=c(0,25,50,75,100)))+
   ylab(bquote(Water~Temp.~(degree*C)))+
   xlab("Date")+
