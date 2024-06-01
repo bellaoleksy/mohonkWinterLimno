@@ -291,9 +291,59 @@ variability_sequential<-do.call(bind_rows,datalist_sequential)
   #Could do a 3x3 with width 6, height = 5
   #ggsave(paste("figures/Fig2.Variability6panels.jpg",sep=""), plot=gg.3panel.variability, width=7, height=4,units="in", dpi=300)
   
+#For ASLO
+  List<-list(gg.iceIn_RW+
+               scale_x_continuous(limits=c(1931,2023),breaks = seq(1940, 2020, by = 20))+
+               scale_y_continuous(limits=c(60,130),breaks=c(62,93,124),labels=c("01-Dec","01-Jan","01-Feb"))+
+               theme(axis.text.x=element_blank(),axis.title.x=element_blank(),
+                     plot.margin=unit(c(1.5,0.5,0.5,0.5), "lines"))+
+               geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="a"))+
+               lab(x="Year"),
+             gg.iceOut_RW+
+               scale_x_continuous(limits=c(1931,2023),breaks = seq(1940, 2020, by = 20))+
+               scale_y_continuous(limits=c(150,214),breaks=c(152,183,213),labels=c("01-Mar","01-Apr","01-May"))+
+               theme(axis.text.x=element_blank(),axis.title.x=element_blank(),
+                     plot.margin=unit(c(1.5,0.5,0.5,0.5), "lines"))+
+               geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="b"))+
+               lab(x="Year"),
+             gg.duration_RW+
+                scale_x_continuous(limits=c(1931,2023),breaks = seq(1940, 2020, by = 20))+
+               theme(axis.text.x=element_blank(),axis.title.x=element_blank(),
+                     plot.margin=unit(c(1.5,0.5,0.5,0.5), "lines"))+
+               geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="c"))+
+               lab(x="Year"),
+             gg.iceIn_SD_sequential+
+               # scale_y_continuous(limits=c(5,20),breaks=c(5,10,15,20))+
+               scale_x_continuous(limits=c(1931,2023),breaks = seq(1940, 2020, by = 20))+
+               xlab("Year")+
+               geom_line(size=1, color="black")+
+               geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="d"))+
+               theme(plot.margin=unit(c(0.5,0.5,0.5,0.5), "lines")),
+             gg.iceOut_SD_sequential+
+               # scale_y_continuous(limits=c(5,28),breaks=c(5,15,25))+
+               scale_x_continuous(limits=c(1931,2023),breaks = seq(1940, 2020, by = 20))+
+               xlab("Year")+
+               geom_line(size=1, color="black")+
+               geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="e"))+
+               theme(plot.margin=unit(c(0.5,0.5,0.5,0.5), "lines")),
+             gg.duration_SD_sequential+
+               # scale_y_continuous(limits=c(5,28),breaks=c(5,15,25))+
+               scale_x_continuous(limits=c(1931,2023),breaks = seq(1940, 2020, by = 20))+
+               xlab("Year")+
+               geom_line(size=1, color="black")+
+               geom_text(aes(x=-Inf,y=Inf,hjust=-0.5,vjust=1.5,label="f"))+
+               theme(plot.margin=unit(c(0.5,0.5,0.5,0.5), "lines"))
+  )  
+  (gg.3panel.variability<-wrap_plots(List,ncol = 3,nrow = 2)&theme(plot.margin = unit(c(4,3,3,3),"pt")))
   
-  
-  
+  gg.3panel.variability & ggdark::dark_theme_bw(base_size=10)
+  ggsave(
+    "figures/ASLO/Fig2.IcePhenology_variability_ASLO.jpg",
+    width = 8,
+    height = 4,
+    units = "in",
+    dpi = 600
+  )
   
   
     
