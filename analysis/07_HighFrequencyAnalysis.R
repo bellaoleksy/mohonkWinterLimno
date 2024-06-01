@@ -525,6 +525,16 @@ gg.hf2017<-ggplot(data=SensorData_derivedFill_2017%>%dplyr::select(DateTime:Temp
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   guides(color = guide_legend(override.aes = list(linewidth=3)))
 
+#Export for ASLO dark theme
+# gg.hf2017 & dark_theme_bw(base_size = 8)
+# ggsave(
+#   "figures/ASLO/FigHF.part4.jpg",
+#   width = 7.2,
+#   height = 3.5,
+#   units = "in",
+#   dpi = 600
+# )
+
 #Work on the legend alone####
 leg<-get_legend(gg.hf2017) #extract the legend using ggpubr
 legend<-as_ggplot(leg)
