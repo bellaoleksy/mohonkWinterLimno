@@ -1,6 +1,6 @@
 #Run previous code to get in data####
 source('analysis/00_main.R')
-
+select <- dplyr::select
 library(ggpubr)
 library(rstatix)
 #Explore under ice temperature trends
@@ -351,6 +351,20 @@ test %>%
   dplyr::summarize(median=median(ice_cover_binomial)) %>%
   ggplot(aes(x=doy_fed, y=median))+
   geom_point()
+
+test %>%
+  # filter(doy_fed==200) %>%
+  ggplot(aes(x=doy_fed, y=ice_cover_binomial, color=water_year, group=water_year))+
+  geom_jitter(alpha=0.1, width = 0.1, height = 0.1)+
+  geom_smooth(se=F, alpha=0.1, linewidth=0.4)+
+  scale_color_continuous(high = "#1A85FF", low = "#FFC20A") 
+
+test2 <- test %>%
+  group_by(doy_fed) %>%
+  dplyr::summarize(median=median(ice_cover_binomial)) 
+
+hist(test2$median)
+
 # Composite thermocline depth and stability figure vs. day of year summarizing over all years
 tmp.composite<-aggregate(test$stability_Jperm2,
                          by=list(test$doy_fed),
