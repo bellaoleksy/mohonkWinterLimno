@@ -4307,9 +4307,3 @@ ggsave(
   units = "in",
   dpi = 600
 )
-
-
-install.packages("grateful")
-install.packages("MTS")
-library(grateful)
-cite_packages(out.dir = ".")            # save report to working directory
