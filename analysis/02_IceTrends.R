@@ -764,8 +764,6 @@ MohonkIce_vis <- MohonkIce.upload %>%
   mutate(IceCover_sum = sum(c_across(IceCover_1:IceCover_3), na.rm = TRUE),
          IceCover_sum = case_when(IceCover_sum==0 ~ NA,
                                   TRUE ~ IceCover_sum)) %>%
-  # mutate(IceCover_sum = sum(IceCover_1+IceCover_2+IceCover_3)) %>%
-  # mutate(across(ICEIN_1:ICEOUT_3, hydro.day)) %>%
   mutate(ICEIN_1_month=month(ICEIN_1),
          ICEIN_1_day=day(ICEIN_1),
          ICEIN_1_newdate=case_when(ICEIN_1_month %in% c("10","11","12") ~ ymd(paste("2014", ICEIN_1_month, ICEIN_1_day, sep = "-")),
@@ -2135,13 +2133,11 @@ plot.Deriv(m1.d)
 ggplot(IceDurationPred,aes(x=Year,y=fit))+
   geom_point(data=MohonkIceWeather,
              mapping=aes(x=Year, y=LengthOfIceCover_days), size=2.5, alpha=0.7) +
-  geom_line(size=1)+
+  geom_line(linewidth=1)+
   geom_ribbon(aes(ymin = (lower), ymax = (upper), x = Year), alpha = 0.5, inherit.aes = FALSE) +
   labs(x="Year",y="Ice Duration (days)")+
   coord_cartesian(xlim=c(1930,2020))+
   scale_x_continuous(breaks=seq(1930, 2020, 15))
-
-
 
 ## Create model that includes climate anomoly and some climate teleconnections
 # but first look at some of the relationships.
@@ -2257,6 +2253,199 @@ modIceDuration3_summary$dev.expl
 # Including NAO_Nov and NAO_Dec separately leads to more variance explained though still low!
 
 appraise(modIceDuration1)
+
+
+## Mod 4
+#Try the final model but with accurate duration of ice cover 
+#(e.g., not including the intermittant open water periods)
+
+MohonkIce_duration <- MohonkIce.upload %>%
+  mutate(IceCover_1 = as.numeric(difftime(ICEOUT_1,ICEIN_1,units="days")),
+         IceCover_2 = as.numeric(difftime(ICEOUT_2,ICEIN_2,units="days")),
+         IceCover_3 = as.numeric(difftime(ICEOUT_3,ICEIN_3,units="days")),
+         water_year = dataRetrieval::calcWaterYear(ICEIN_1)) %>%
+  rowwise() %>%
+  mutate(IceCover_sum = sum(c_across(IceCover_1:IceCover_3), na.rm = TRUE),
+         IceCover_sum = case_when(IceCover_sum==0 ~ NA,
+                                  TRUE ~ IceCover_sum)) %>%
+  select(Year, IceCover_sum) %>%
+  left_join(., MohonkIceWeather)
+
+set.seed(11)
+modIceDuration4 <- gam(IceCover_sum ~  s(GlobalTempanomaly_C, k=50) +
+                         s(NAO_index_Nov, k=10)+
+                         s(NAO_index_Dec, k=10),
+                       # family=Gamma(link="log"),
+                       family=scat(link="identity"), #for heavy tail
+                       data = MohonkIce_duration,
+                       # correlation = corCAR1(form = ~ Year),
+                       method = "REML")
+summary(modIceDuration4)
+#Worse fit than NAO_Nov and NAO_Dec separately. 
+
+gam.check(modIceDuration4)
+#Want to set k sufficiently high. At default, was getting low p-value for GlobalTempanomaly_C
+
+draw(modIceDuration4, residuals = TRUE)
+#Partial plots of estimated smooth functions with partial residuals
+
+plot(modIceDuration4,
+     shift = coef(modIceDuration4)[1],
+     pages =1)
+
+
+# Compare models
+compareML(modIceDuration3, modIceDuration4) # Basically indistinguishable?
+
+
+
+## Mod 5
+#Add ENSO fall
+set.seed(11)
+modIceDuration5 <- gam(IceCover_sum ~  s(GlobalTempanomaly_C, k=50) +
+                         s(NAO_index_Nov, k=10)+
+                         # s(NAO_index_Dec, k=10) +
+                         s(ENSO_index_fall, k=3),
+                       # family=Gamma(link="log"),
+                       family=scat(link="identity"), #for heavy tail
+                       data = MohonkIce_duration,
+                       # correlation = corCAR1(form = ~ Year),
+                       method = "REML")
+summary(modIceDuration5)
+#Worse fit than NAO_Nov and NAO_Dec separately. 
+
+gam.check(modIceDuration5)
+#Want to set k sufficiently high. At default, was getting low p-value for GlobalTempanomaly_C
+
+draw(modIceDuration5, residuals = TRUE)
+#Partial plots of estimated smooth functions with partial residuals
+
+plot(modIceDuration5,
+     shift = coef(modIceDuration5)[1],
+     pages =1)
+
+
+# Compare models
+compareML(modIceDuration1, modIceDuration4) # Basically indistinguishable?
+compareML(modIceDuration5, modIceDuration4) # Basically indistinguishable?
+
+
+par(bg = "black")
+mgcv::vis.gam(modIceDuration5, view=c("GlobalTempanomaly_C","ENSO_index_fall"),
+              plot.type="contour", color="cm", type="response",
+              # xlab="Cumulative snowfall Feb-Mar (cm)",
+              col.lab="white",
+              col.axis="white")
+              # ylab="Spring isotherm (days since Oct 1)") 
+axis(1,  col = "white", col.axis = "white")
+axis(2,  col = "white", col.axis = "white")
+dev.off()
+
+vis.gam(modIceDuration5, view=c("GlobalTempanomaly_C","ENSO_index_fall"),
+        theta= 60, type="response",
+        ticktype="detailed",
+        color="cm")
+        # zlab="\nIce Out DOY (Julian day)",
+        # xlab="\nCumulative snowfall Feb-Mar",
+        # ylab="\n29-day isotherm > 4 deg") #Adjust theta to get a different view
+
+
+
+#NOW MODEL THE ICE DURATION TREND
+#Excluding the days of open water
+
+
+#Distribution of y
+hist(MohonkIceWeather$LengthOfIceCover_days)
+
+### I added Family Gamma here for how errors should respond
+modIceDuration0 <- gam(IceCover_sum ~ s(Year),
+                       # family=Gamma(link="log"),
+                       data = MohonkIce_duration,
+                       correlation = corCAR1(form = ~ Year),
+                       method = "REML")
+summary(modIceDuration0)
+## summary object
+# modIceDuration0_S <- summary(modIceDuration0$gam)
+# modIceDuration0_S #Gives you the P values, degrees of freedom...
+
+#PLOT Autocorrelation function of residuals from the additive model with AR(1) errors
+ACF <- acf(resid(modIceDuration0, type = "response"), plot = FALSE)
+ACF <- setNames(data.frame(unclass(ACF)[c("acf", "lag")]), c("ACF","Lag"))
+ggplot(ACF, aes(x = Lag, y = ACF)) +
+  geom_hline(aes(yintercept = 0)) +
+  geom_segment(mapping = aes(xend = Lag, yend = 0))
+#Suggest that an AR(1) model isn't necessary
+
+
+###Since we're concerned with the response, include "response" in type of predict()
+IceDurationPred <- with(MohonkIce_duration, data.frame(Year = seq(min(Year, na.rm=TRUE),
+                                                         max(Year, na.rm=TRUE),
+                                                         length.out = 200)))
+IceDurationPred <- cbind(IceDurationPred, data.frame(predict(modIceDuration0, IceDurationPred,
+                                                             type="response",
+                                                             se.fit = TRUE)))
+### this calculates on the link scale (i.e., log)
+IceDurationPred <- transform(IceDurationPred, upper = fit + (2 * se.fit),
+                             lower = fit - (2 * se.fit))
+
+
+# Plots periods of change
+#https://www.fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
+Term <- "Year"
+m1.d <- Deriv(modIceDuration0)
+
+m1.dci <- confint(m1.d, term = "Year")
+m1.dsig <- signifD(IceDurationPred$fit,
+                   d = m1.d[[Term]]$deriv,
+                   m1.dci[[Term]]$upper,
+                   m1.dci[[Term]]$lower)
+
+ylim <- with(IceDurationPred, range(upper, lower, fit))
+ylab <- 'Ice duration (days)'
+
+plot(fit ~ Year, data = IceDurationPred, type = "n", ylab = ylab, ylim = ylim)
+lines(fit ~ Year, data = IceDurationPred)
+lines(upper ~ Year, data = IceDurationPred, lty = "dashed")
+lines(lower ~ Year, data = IceDurationPred, lty = "dashed")
+lines(unlist(m1.dsig$incr) ~ Year, data = IceDurationPred, col = "blue", lwd = 3)
+lines(unlist(m1.dsig$decr) ~ Year, data = IceDurationPred, col = "red", lwd = 3)
+
+#the first derivative didn't overlap the horizontal black line.
+plot.Deriv(m1.d)
+
+#Plot ice duration vs. year
+ggplot(IceDurationPred,aes(x=Year,y=fit))+
+  geom_point(data=MohonkIce_duration,
+             mapping=aes(x=Year, y=IceCover_sum), size=2.5, alpha=0.7) +
+  geom_line(linewidth=1)+
+  geom_smooth(method="lm", se=TRUE) +
+  geom_ribbon(aes(ymin = (lower), ymax = (upper), x = Year), alpha = 0.5, inherit.aes = FALSE) +
+  labs(x="Year",y="Ice Duration (days)")+
+  coord_cartesian(xlim=c(1930,2020))+
+  scale_x_continuous(breaks=seq(1930, 2020, 15))
+
+## Does the sens slope change?
+MohonkIce_duration %>%
+  filter(Year>=1932) %>%
+  select(Year, IceCover_sum, IceInDayofYear_fed, IceOutDayofYear) %>%
+  pivot_longer(-1) %>%
+  group_by(name) %>%
+  dplyr::summarize(Sens_Slope=MTCC.sensSlope(x=Year,y=value)$coefficients["Year"],
+                   Sens_Intercept=MTCC.sensSlope(x=Year,y=value)$coefficients["Intercept"],
+                   Sens_pval=MTCC.sensSlope(x=Year,y=value)$pval,
+                   Sens_z_stat=MTCC.sensSlope(x=Year,y=value)$z_stat,
+                   Sens_n=MTCC.sensSlope(x=Year,y=value)$n) %>%
+  mutate(Significance=case_when(Sens_pval>=0.05 ~ " ",
+                                Sens_pval<0.05 & Sens_pval >0.01 ~ "*",
+                                Sens_pval<=0.01 & Sens_pval >0.001 ~ "**",
+                                Sens_pval<=0.001 ~ "***")) %>%
+  mutate_if(is.numeric, round, 4) %>%
+  # mutate(Significance=ifelse(Sens_pval<0.05,"*",""),
+  mutate(P_value_new=paste(Sens_pval,Significance,sep="")) %>%
+  arrange(name, Significance) %>%
+  select(-Significance,-Sens_pval)
+
 
 
 # ~~FIGURE 4 ~ IceCoverDuration vs.  ABC ---------------------------------
