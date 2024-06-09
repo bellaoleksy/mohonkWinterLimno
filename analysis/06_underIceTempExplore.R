@@ -413,3 +413,19 @@ max(testing$NinetyFifth.stability_Jperm2,na.rm=T)
         panel.grid.minor = element_blank(),
         axis.line = element_line(colour = "black"))+
   ggdark::dark_theme_bw(base_size=16)
+
+  
+
+# Weekly profiles over time -----------------------------------------------
+
+MohonkWeeklyProfilesMetric %>%
+    mutate(week=week(Date)) %>%
+    pivot_longer(Temp_0m:Temp_12m) %>%
+    left_join(MohonkIce, by=c("year"="Year")) %>%
+    filter(dayofyear < 100) %>%
+    filter(name %in% c("Temp_1m","Temp_12m")) %>%
+    ggplot(aes(x=dayofyear, y=value, color=name))+
+    geom_point()+
+    # geom_vline(xintercept=MohonkIce$IceOutDayofYear, color="black", group=c("year"="Year"))+ #doesn't work how it should
+    facet_wrap(~year)
+  
