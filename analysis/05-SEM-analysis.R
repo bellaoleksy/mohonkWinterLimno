@@ -411,13 +411,13 @@ label_round = 2, name = "Correlation Scale", label_alpha = T, hjust = 0.75) +
       #Not sig
   ggplot(data=AnnualUnderIceSummary_SEM,aes(x=LengthOfIceCover_days,y=FinalHeatContent_MegaJoules))+geom_point()+geom_smooth(method="lm")
       summary(lm(AnnualUnderIceSummary_SEM$FinalHeatContent_MegaJoules~AnnualUnderIceSummary_SEM$LengthOfIceCover_days))  
-      #sig. p=0.0144,R2=0.1923
+      #sig. p=0.0146,R2=0.1847
   ggplot(data=AnnualUnderIceSummary_SEM,aes(x=LengthOfIceCover_days,y=SlopeHeatContent_MegaJoulesperDay))+geom_point()+geom_smooth(method="lm")
       summary(lm(AnnualUnderIceSummary_SEM$SlopeHeatContent_MegaJoulesperDay~AnnualUnderIceSummary_SEM$LengthOfIceCover_days))  
       #sig. p=0.0001,R2=0.44
   ggplot(data=AnnualUnderIceSummary_SEM,aes(x=IceOutDayofYear_fed,y=LengthSpringMixedPeriod_days))+geom_point()+geom_smooth(method="lm")
       summary(lm(AnnualUnderIceSummary_SEM$LengthSpringMixedPeriod_days~AnnualUnderIceSummary_SEM$IceOutDayofYear_fed))  
-      #sig. p=0.0013,R2=0.34
+      #sig. p=0.002,R2=0.31
   ggplot(data=AnnualUnderIceSummary_SEM,aes(x=IceOutDayofYear_fed,y=StartOfStratification_HydroDay))+geom_point()
       summary(lm(AnnualUnderIceSummary_SEM$StartOfStratification_HydroDay~AnnualUnderIceSummary_SEM$IceOutDayofYear_fed))  
       #NS
