@@ -418,14 +418,70 @@ max(testing$NinetyFifth.stability_Jperm2,na.rm=T)
 
 # Weekly profiles over time -----------------------------------------------
 
-MohonkWeeklyProfilesMetric %>%
+ggplotly(MohonkWeeklyProfilesMetric %>%
     mutate(week=week(Date)) %>%
     pivot_longer(Temp_0m:Temp_12m) %>%
     left_join(MohonkIce, by=c("year"="Year")) %>%
-    filter(dayofyear < 100) %>%
+    filter(dayofyear < 120) %>%
     filter(name %in% c("Temp_1m","Temp_12m")) %>%
-    ggplot(aes(x=dayofyear, y=value, color=name))+
+    ggplot(aes(x=dayofyear, y=value, color=name, group=year))+
     geom_point()+
     # geom_vline(xintercept=MohonkIce$IceOutDayofYear, color="black", group=c("year"="Year"))+ #doesn't work how it should
-    facet_wrap(~year)
+    facet_wrap(~year))
   
+  
+# Is there a trend in deep water temperatures during the spring mixed period??
+AnnualData %>%
+  ggplot(aes(x=Year, y=DeepWaterTemp_SpringMixed_degC))+
+  geom_point()+
+  geom_smooth(method="lm")
+
+lm <- lm(DeepWaterTemp_SpringMixed_degC~Year,AnnualData)
+summary(lm)  
+# Deep water temps are decreasing during mixed period
+
+#What's the relationship between spring mixed period length and stratified period hypo temps?
+library(plotly)
+ggplotly(AnnualData %>%
+  mutate(LengthSpringMixed_days=StartOfStratification_Day-IceOutDayofYear) %>%
+  ggplot(
+    aes(x=LengthSpringMixed_days, y=DeepWaterTemp_StratifiedPeriod_degC, label=Year)
+    )+
+  geom_point()+
+  geom_smooth(method="lm")+
+  geom_smooth(data=AnnualData %>%
+                mutate(LengthSpringMixed_days=StartOfStratification_Day-IceOutDayofYear) %>%
+                filter(LengthSpringMixed_days<100),
+              aes(x=LengthSpringMixed_days, y=DeepWaterTemp_StratifiedPeriod_degC), color="orange",
+              method="lm")+
+  theme_bw(base_size=18))
+
+#Whats the relationship between ice off date and the spring temps after ice off?
+ggplotly(AnnualData %>%
+           ggplot(
+             aes(x=IceOutDayofYear, y=AirTemp_SpringPostIce_degC, label=Year)
+           )+
+           geom_point()+
+           geom_smooth(method="lm")+
+           theme_bw(base_size=18))
+           
+
+#What predicts summer hypo temps?
+AnnualData2 <- AnnualData %>%
+  mutate(LengthSpringMixed_days=StartOfStratification_Day-IceOutDayofYear) 
+gam1 <- gam(DeepWaterTemp_StratifiedPeriod_degC ~ s(LengthSpringMixed_days, k=4) ,
+                   # family=Gamma(link="log"),
+                   data = AnnualData2,
+                   # correlation = corCAR1(form = ~ Year),
+                   method = "REML")
+summary(gam1)
+draw(gam1, residuals = TRUE)
+
+gam2 <- gam(DeepWaterTemp_StratifiedPeriod_degC ~ s(IceOutDayofYear, k=4) +
+              s(AirTemp_SpringPostIce_degC, k=4),
+            # family=Gamma(link="log"),
+            data = AnnualData2,
+            # correlation = corCAR1(form = ~ Year),
+            method = "REML")
+summary(gam2)
+draw(gam2, residuals = TRUE)
