@@ -8,6 +8,112 @@ library(rstatix)
 names(DailyInterpol)
 str(DailyInterpol)
 
+#Filter DailyInterpol by ice on and ice off dates
+DailyInterpol_trim <- DailyInterpol %>%
+  mutate(water_year = dataRetrieval::calcWaterYear(Date),
+         Date_fed = hydro.day(Date)) %>%
+  left_join(., MohonkIce %>%
+              mutate(water_year = dataRetrieval::calcWaterYear(IceOutDate)) %>%
+              select(water_year, IceInDayofYear_fed, IceOutDayofYear_fed, LengthOfIceCover_days),
+            by="water_year") %>%
+  group_by(water_year) %>%
+  filter(Date_fed >= IceInDayofYear_fed & Date_fed <= IceOutDayofYear_fed) %>%
+  mutate(temperatureDifferenceTop0mvsBottom9m=Temp_1m-Temp_9m,
+         limit0.1=ifelse(temperatureDifferenceTop0mvsBottom9m<(-0.1),"Low0.1","High0.1"))
+
+#Look at the time series
+colFun<-colorRampPalette(c("light blue", "dark blue"))
+legend_labels<-c("0m","1m","2m","3m","4m","5m","6m","7m","8m","9m")
+
+DailyInterpol_trim %>%
+  pivot_longer(Temp_0m:Temp_9m) %>%
+  ggplot(aes(x=Date_fed, y=value, color=name))+
+  geom_point()+
+  scale_color_manual(values = colFun(10), labels = legend_labels) +
+  labs(color = bquote("Water\ntemperature\ndepth"),
+       x="Days since Oct 1")+
+  geom_vline(aes(xintercept = IceInDayofYear_fed),
+             size = 0.5) +
+  geom_vline(aes(xintercept = IceOutDayofYear_fed),
+             size = 0.5) +
+  facet_wrap(.~water_year, scales="free_y")
+
+#This makes me realize there are some years with poor data coverage that we should remove before the trend analysis
+DailyInterpol_trim_summary <- DailyInterpol_trim %>%
+  filter(!water_year %in% c(1985, 1990, 2001, 2009, 2014, 2015, 2019, 2020)) %>%
+  group_by(water_year) %>%
+  summarize(EpiTemp_degC=median(EpiTemp_degC, na.rm=TRUE),
+            HypoTemp_degC=median(HypoTemp_degC, na.rm=TRUE),
+            VolumeWeightedMeanTemp_degC=median(VolumeWeightedMeanTemp_degC, na.rm=TRUE),
+            DeltaSurfaceDeep_degC=median(DeltaSurfaceDeep_degC, na.rm=TRUE),
+            buoyancyfrequency_1_s2=median(buoyancyfrequency_1_s2, na.rm=TRUE),
+            LengthOfIceCover_days=median(LengthOfIceCover_days, na.rm=TRUE))
+
+#Is the number of inversely stratified days decreasing?
+DailyInterpol_trim %>%
+  filter(!water_year %in% c(1985, 1990, 2001, 2009, 2014, 2015, 2019, 2020)) %>%
+  group_by(water_year,limit0.1) %>%
+  summarize(n_days_inverse=n()) %>%
+  filter(limit0.1=="Low0.1") %>%
+  ggplot(aes(x=water_year, y=n_days_inverse))+
+  geom_point()+
+  geom_smooth()
+
+#Is EpiTemp_degC changing?
+DailyInterpol_trim_summary %>%
+  ggplot(aes(x=water_year, y=EpiTemp_degC))+
+  geom_point()
+
+DailyInterpol_trim_summary %>%
+  ggplot(aes(x=LengthOfIceCover_days, y=EpiTemp_degC))+
+  geom_point()
+
+#Is HypoTemp_degC changing?
+DailyInterpol_trim_summary %>%
+  ggplot(aes(x=water_year, y=HypoTemp_degC))+
+  geom_point()+
+  geom_smooth()
+
+DailyInterpol_trim_summary %>%
+  ggplot(aes(x=LengthOfIceCover_days, y=HypoTemp_degC))+
+  geom_point()
+
+#Is VolumeWeightedMeanTemp_degC changing?
+DailyInterpol_trim_summary %>%
+  ggplot(aes(x=water_year, y=VolumeWeightedMeanTemp_degC))+
+  geom_point()+
+  geom_smooth()
+
+DailyInterpol_trim_summary %>%
+  ggplot(aes(x=LengthOfIceCover_days, y=VolumeWeightedMeanTemp_degC))+
+  geom_point()
+
+
+#Is DeltaSurfaceDeep_degC changing?
+DailyInterpol_trim_summary %>%
+  ggplot(aes(x=water_year, y=DeltaSurfaceDeep_degC))+
+  geom_point()+
+  geom_smooth()
+
+DailyInterpol_trim_summary %>%
+  ggplot(aes(x=LengthOfIceCover_days, y=DeltaSurfaceDeep_degC))+
+  geom_point()
+
+
+#Is buoyancyfrequency_1_s2 changing?
+DailyInterpol_trim_summary %>%
+  ggplot(aes(x=water_year, y=buoyancyfrequency_1_s2))+
+  geom_point()+
+  geom_smooth()
+
+DailyInterpol_trim_summary %>%
+  ggplot(aes(x=LengthOfIceCover_days, y=buoyancyfrequency_1_s2))+
+  geom_point()
+
+
+
+
+
 # How are different parameters on Dec 21st/22nd (DOY 356) changing over time? 
 
 DailyInterpol_winterstart <- DailyInterpol %>%
