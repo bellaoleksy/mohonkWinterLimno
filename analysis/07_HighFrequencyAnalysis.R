@@ -509,21 +509,56 @@ lims_2017 <- as.POSIXct(strptime(c("2017-11-24 19:00", "2018-04-19 20:00"),
 legend_labels<-c("0m","1m","2m","3m","4m","5m","6m","7m","8m","9m")
 
 #*Plot W2017####
-gg.hf2017<-ggplot(data=SensorData_derivedFill_2017%>%dplyr::select(DateTime:Temp_9m)%>%pivot_longer(-1),aes(x=DateTime,y=value,color=name))+geom_line()+
-  scale_x_datetime(limits=lims_2017)+
-  scale_color_manual(values=colFun(10),labels=legend_labels)+
-  labs(color=bquote("Water\ntemperature\ndepth"))+
-  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceIn_1_date)),size=1.0)+
-  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceOut_1_date)),size=1.0)+
-  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceIn_1_date_Pierson)),color="darkgrey",linetype=2,size=0.7)+
-  geom_vline(data=IceOnIceOff_hfYears,aes(xintercept=as.POSIXct(IceOut_1_date_Pierson)),color="darkgrey",linetype=2,size=0.7)+
-  geom_point(data=SensorData_derivedFill,aes(x=DateTime,y=IceCover_Percent/15),color="black",shape=21,fill="white",alpha=0.5,size=1)+
-  scale_y_continuous(limits=c(-0.1,8.2),expand = c(0, 0),breaks=c(0,2,4,6,8),sec.axis=sec_axis(~.*15,name="IceCover (%)",breaks=c(0,25,50,75,100)))+
-  ylab(bquote(Water~Temp.~(degree*C)))+
-  xlab("Date")+
-  theme_bw()+
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
-  guides(color = guide_legend(override.aes = list(linewidth=3)))
+gg.hf2017 <-
+  ggplot(
+    data = SensorData_derivedFill_2017 %>% dplyr::select(DateTime:Temp_9m) %>%
+      pivot_longer(-1),
+    aes(x = DateTime, y = value, color = name)
+  ) + geom_line() +
+  scale_x_datetime(limits = lims_2017) +
+  scale_color_manual(values = colFun(10), labels = legend_labels) +
+  labs(color = bquote("Water\ntemperature\ndepth")) +
+  geom_vline(data = IceOnIceOff_hfYears,
+             aes(xintercept = as.POSIXct(IceIn_1_date)),
+             size = 1.0) +
+  geom_vline(data = IceOnIceOff_hfYears,
+             aes(xintercept = as.POSIXct(IceOut_1_date)),
+             size = 1.0) +
+  geom_vline(
+    data = IceOnIceOff_hfYears,
+    aes(xintercept = as.POSIXct(IceIn_1_date_Pierson)),
+    color = "darkgrey",
+    linetype = 2,
+    size = 0.7
+  ) +
+  geom_vline(
+    data = IceOnIceOff_hfYears,
+    aes(xintercept = as.POSIXct(IceOut_1_date_Pierson)),
+    color = "darkgrey",
+    linetype = 2,
+    size = 0.7
+  ) +
+  geom_point(
+    data = SensorData_derivedFill,
+    aes(x = DateTime, y = IceCover_Percent / 15),
+    color = "black",
+    shape = 21,
+    fill = "white",
+    alpha = 0.5,
+    size = 1
+  ) +
+  scale_y_continuous(
+    limits = c(-0.1, 8.2),
+    expand = c(0, 0),
+    breaks = c(0, 2, 4, 6, 8),
+    sec.axis = sec_axis( ~ . * 15, name = "IceCover (%)", breaks = c(0, 25, 50, 75, 100))
+  ) +
+  ylab(bquote(Water ~ Temp. ~ (degree * C))) +
+  xlab("Date") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  guides(color = guide_legend(override.aes = list(linewidth = 3)))
 
 #Export for ASLO dark theme
 # gg.hf2017 & dark_theme_bw(base_size = 8)
