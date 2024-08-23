@@ -939,7 +939,7 @@ ggplot() +
     aes(x = Year, y = ICEIN_1_newdate, fill = IceCover_sum,
         shape = duration_complete),
     color = "white",
-    size = 3
+    size = 2
   ) +
   geom_smooth(
     data = MohonkIce.Predicted.test,
@@ -955,7 +955,7 @@ ggplot() +
         fill = IceCover_sum,
         shape = duration_complete),
     color = "white",
-    size = 3
+    size = 2
   ) +
   #Add in the intermittant years
   geom_segment(
@@ -973,7 +973,7 @@ ggplot() +
     aes(x = Year, y = ICEIN_2_newdate, fill = IceCover_sum,
         shape = duration_complete),
     color = "white",
-    size = 3
+    size = 2
   ) +
   geom_point(
     data = MohonkIce_vis,
@@ -982,7 +982,7 @@ ggplot() +
         fill = IceCover_sum,
         shape = duration_complete),
     color = "white",
-    size = 3
+    size = 2
   ) +
   geom_segment(
     data = MohonkIce_vis,
@@ -1009,7 +1009,7 @@ ggplot() +
         fill = IceCover_sum,
         shape = duration_complete),
     color = "white",
-    size = 3
+    size = 2
   ) +
   # scale_fill_grafify(palette = "blue_conti", name = "Ice duration\n(days)", reverse=TRUE)+ #yellow_conti scheme
   # scale_color_grafify(palette = "blue_conti", name = "Ice duration\n(days)", reverse=TRUE)+ #yellow_conti scheme
@@ -1019,7 +1019,7 @@ ggplot() +
                         name = "Ice duration\n(days)") +
   scale_shape_manual(values=c(25,21))+
   scale_x_continuous(limit = c(1932, 2023),
-                     breaks = seq(1940, 2020, by = 20)) +
+                     breaks = seq(1930, 2020, by = 18)) +
   scale_y_date(date_breaks = "28 days", date_minor_breaks = "14 days",
                date_labels = "%d-%b")+
   theme_MS() +
@@ -1041,6 +1041,7 @@ ggplot() +
   ) +
   xlab("Year") +
   ylab("Date of ice formation or clearance")+
+  ggtitle("Mohonk Lake, NY, USA Ice Record") +
   guides(shape=FALSE)+
   ggdark::dark_theme_bw(base_size=10)
 ggsave(
