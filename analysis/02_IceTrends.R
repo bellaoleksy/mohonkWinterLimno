@@ -794,7 +794,7 @@ MohonkIce_vis <- MohonkIce.upload %>%
 
 str(MohonkIce_vis)
 
-ggplot() +
+gg.MohonkIceTrends<-ggplot() +
   geom_segment(
     data = MohonkIce_vis,
     aes(
@@ -913,13 +913,16 @@ ggplot() +
   xlab("Year") +
   ylab("Date of ice formation or clearance")+
   guides(shape=FALSE)
-ggsave(
-  "figures/MS/Fig1.IcePhenology_withDates_intermittant.jpg",
+ggsave(gg.MohonkIceTrends,
+  file="figures/MS/Fig1.IcePhenology_withDates_intermittant.jpg",
   width = 5,
   height = 3,
   units = "in",
   dpi = 600
 )
+
+#Save the mohonk trends as a object####
+save(gg.MohonkIceTrends, file = "output/gg.MohonkIceTrends.rdata")
 
 
 ##Black background for ASLO talk
