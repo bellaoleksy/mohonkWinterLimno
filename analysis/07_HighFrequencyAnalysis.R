@@ -1164,7 +1164,7 @@ List_meteo<-list(gg.2016airTemp+
 (gg.hfmeteo<-wrap_plots(List_meteo,ncol=2,nrow=3)&theme(plot.margin = unit(c(3,3,3,3),"pt")))
 
 #Could do a 2x1 with width 6, height = 4
-ggsave(paste("figures/MohonkWinterLimno-FigureX-HighFrequencyMeteorology.jpg",sep=""), plot=gg.hfmeteo, width=6, height=6,units="in", dpi=300)
+ggsave(paste("figures/MS/FigS7.HighFrequencyMeteorology.jpg",sep=""), plot=gg.hfmeteo, width=6, height=6,units="in", dpi=300)
 
 
 
