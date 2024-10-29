@@ -106,7 +106,7 @@ style<-list(style1,style2,style3,style4,style5,style6,style7,style8,style9,style
 #Pull google map with the correct style
 skyLakes = get_googlemap(center = c(lon = Site_locations$long[Site_locations$Lake=="Mohonk"], lat = Site_locations$lat[Site_locations$Lake=="Mohonk"]), zoom = 15,
                          style =style)
-ggmap(skyLakes)
+# ggmap(skyLakes)
 
 # x<-get_googlemap(center = c(lon = Site_summary$mean_long*1.0006, lat = Site_summary$mean_lat*0.9998), zoom = 13,
 #                  style =c(feature = "water", element = "geometry.stroke", visibility = "on",weight=100,color="red"))
@@ -116,7 +116,7 @@ bb <- attr(skyLakes, "bb")
 bb2 <- data.frame(long = unlist(bb[c(2, 4)]), lat = unlist(bb[c(1,3)]))
 
 #Centers of the ponds
-Site_locations
+# Site_locations
 
 #Graph the map plus the scale bar
 SkyLakes_map<-ggmap(skyLakes)+
@@ -158,24 +158,24 @@ dev.off()
 #Create ggplot object with inset using cowplot####
 gg.composite.map<-ggdraw()+
   draw_plot(SkyLakes_map)+
-  draw_plot(base.map,width=0.22*1.7,height=0.22,x=0.12,y=0.735)
-
-save(gg.composite.map, file = "output/ggobject.compositeMap.rdata")
+  draw_plot(base.map,width=0.22*1.5,height=0.22,x=0.17,y=0.535)
+# x=0.12,y=0.735
+# save(gg.composite.map, file = "output/ggobject.compositeMap.rdata")
 
 #Merge map with Ice Phenology figure####
 #Load the gg.MohonkIceTrends object (it gets stored as gg.MohonkIceTrends)
 #Can start here so you don't have to recreate the map
-load("output/gg.MohonkIceTrends.rdata")
-load("output/ggobject.compositeMap.rdata")
+# load("output/gg.MohonkIceTrends.rdata")
+# load("output/ggobject.compositeMap.rdata")
   #print(gg.MohonkIceTrends)
 
 
 
-#Combine the plots and make teh top one a little bigger####
-temp<-plot_grid(gg.composite.map,NULL,gg.MohonkIceTrends,align="v",ncol=1,rel_heights=c(3.4/6.4,-0.02,3.0/6.4),labels=c("a","","b"))
-#Map: 4" wide x 3.4" tall to minimize margins and maintain aspect
-#The ice figure has to be 4x2.4 to maintain aspect ratio (down from 5"x3")
-ggsave(temp,file="figures/MS/Fig1.MapANDIcePhenology_withDates_intermittant.jpg",  width = 4,
-       height = 3.4+3.0,
-       units = "in",
-       dpi = 600)
+# #Combine the plots and make the top one a little bigger####
+# temp<-plot_grid(gg.composite.map,NULL,gg.MohonkIceTrends,align="v",ncol=1,rel_heights=c(3.4/6.4,-0.02,3.0/6.4),labels=c("a","","b"))
+# #Map: 4" wide x 3.4" tall to minimize margins and maintain aspect
+# #The ice figure has to be 4x2.4 to maintain aspect ratio (down from 5"x3")
+# ggsave(temp,file="figures/MS/Fig1.MapANDIcePhenology_withDates_intermittant.jpg",  width = 4,
+#        height = 3.4+3.0,
+#        units = "in",
+#        dpi = 600)
