@@ -1,15 +1,5 @@
-# Created 2022-07-07 by IAO with script copied over from DCR et al.'s Forecasting_MohonkLake github repository.
-
 #Run the main script to bring in all data and functions####
 source('analysis/00_main.R')
-
-
-## IAO was running out of memory on my machine so this is the solution I tried
-## https://stackoverflow.com/questions/51295402/r-on-macos-error-vector-memory-exhausted-limit-reached
-# if(!require(usethis)){install.packages("usethis")}
-# library(usethis) 
-# usethis::edit_r_environ()
-
 gc()
 
 # Set theme ---------------------------------------------------------------
