@@ -9,6 +9,7 @@
 ##stderr
 
 select <- dplyr::select
+summarize <- dplyr::summarize
 
 
 #Functions####
