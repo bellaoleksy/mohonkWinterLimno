@@ -2,25 +2,6 @@
 #Explore the high frequency winter water temperatures and associated metrics for Mohonk Lake
 #Created 18Jul2024, by David Richardson (DCR)
 
-
-#Libraries####
-if (!require(tidyverse)) {install.packages("tidyverse")}
-if (!require(zoo)) {install.packages("zoo")}
-if (!require(segmented)) {install.packages("segmented")}
-if (!require(strucchange)) {install.packages("strucchange")}
-if (!require(forecast)) {install.packages("forecast")}
-if (!require(patchwork)) {install.packages("patchwork")}
-if (!require(ggpubr)) {install.packages("ggpubr")}
-
-#Load libraries
-library(tidyverse)
-library(zoo) #for linearly interpolation
-library(segmented) #for segmented regression
-library(strucchange) #For breakpoints function
-library(forecast) #for auto.arima
-library(patchwork) #for multipanel plots
-library(ggpubr) #for extracting the legend
-
 #Run functions####
 source("script/01_functions.R")
 

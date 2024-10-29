@@ -5,21 +5,7 @@
 #Run the main script to bring in all data and functions####
 source('analysis/03-VariabilityRollingWindow.R')
 
-#Libraries
-if (!require(zoo)) {install.packages("zoo")}
-if(!require(patchwork)){install.packages("patchwork")}
-if(!require(forecast)){install.packages("forecast")}
-if(!require(corrplot)){install.packages("corrplot")}
-if(!require(MTS)){install.packages("MTS")}
-if(!require(ggpubr)){install.packages("ggpubr")}
 
-#Try using zoo package
-library(zoo)
-library(patchwork) #laying out multipanel plots with the same size
-library(forecast)
-library(corrplot)
-library(MTS)
-library(ggpubr)
 
 #consecutive ensemble analysis######
 
@@ -349,7 +335,7 @@ choice_segment_length<-9
 #Filter down to a single segment length###
 variability_sequential_fits_singleSegment<-variability_sequential_fits%>%filter(segment_length==choice_segment_length)
 #loop through to generate sens slope fits for each year, each segment_length, each fit location####
-for(model.index in 1:length(variability_sequential_fits_singleSegment$segment_length)){
+for(model.index in 1:length(variability_sequential_fits_singleSegment$segment_length
   year=seq(min(MohonkIce$Year),max(MohonkIce$Year))
   datalist_sensfits[[model.index]]<-tibble(year=year,
                                            duration_sensSlope_fit_interpolate=variability_sequential_fits_singleSegment$duration_sensSlope_slope[model.index]*year+variability_sequential_fits_singleSegment$duration_sensSlope_intercept[model.index],

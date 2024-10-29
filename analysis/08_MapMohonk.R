@@ -1,21 +1,6 @@
 ##Winter Limno manuscript: map of sites####
 ## Created 22Oct2024 by David Richardson (DCR), richardsond@newpaltz.edu
 
-#install.packages('ggsn')
-if (!require(ggmap)) {install.packages("ggmap")}
-#devtools::install_github("dkahle/ggmap")
-
-library(maps)
-library(ggplot2)
-library(ggmap)
-#library(ggsn)
-library(gridExtra)
-library(grid)
-library(tidyverse)
-library(ggspatial)
-library(ggrepel)
-library(cowplot)
-library(patchwork)
 
 
 #Google API for DCR####
@@ -156,7 +141,7 @@ SkyLakes_map<-ggmap(skyLakes)+
 
 SkyLakes_map
 #Test export the map
-ggsave("figures/MohonkWinterLimno_TestMap.jpg",SkyLakes_map,height=4,width=4,dpi=500,units=("in"))
+# ggsave("figures/MohonkWinterLimno_TestMap.jpg",SkyLakes_map,height=4,width=4,dpi=500,units=("in"))
 
 
 
@@ -169,20 +154,22 @@ print(SkyLakes_map,vp=v1)
 print(base.map,vp=v2)
 dev.off()
 
+
+#Create ggplot object with inset using cowplot####
+gg.composite.map<-ggdraw()+
+  draw_plot(SkyLakes_map)+
+  draw_plot(base.map,width=0.22*1.7,height=0.22,x=0.12,y=0.735)
+
 save(gg.composite.map, file = "output/ggobject.compositeMap.rdata")
 
 #Merge map with Ice Phenology figure####
 #Load the gg.MohonkIceTrends object (it gets stored as gg.MohonkIceTrends)
 #Can start here so you don't have to recreate the map
 load("output/gg.MohonkIceTrends.rdata")
-load("output/gg.composite.map.rdata")
+load("output/ggobject.compositeMap.rdata")
   #print(gg.MohonkIceTrends)
 
 
-#Create ggplot object with inset using cowplot####
-gg.composite.map<-ggdraw()+
-  draw_plot(SkyLakes_map)+
-  draw_plot(base.map,width=0.22*1.7,height=0.22,x=0.12,y=0.735)
 
 #Combine the plots and make teh top one a little bigger####
 temp<-plot_grid(gg.composite.map,NULL,gg.MohonkIceTrends,align="v",ncol=1,rel_heights=c(3.4/6.4,-0.02,3.0/6.4),labels=c("a","","b"))
