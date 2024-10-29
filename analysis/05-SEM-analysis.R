@@ -5,32 +5,6 @@
 #Run previous code to get in data####
 source('analysis/00_main.R')
 
-#Packages####
-if(!require(scales)){install.packages("scales")}
-if(!require(ggridges)){install.packages("ggridges")}
-if(!require(lavaan)){install.packages("lavaan")}
-if(!require(semPlot)){install.packages("semPlot")}
-if(!require(GGally)){install.packages("GGally")}
-if(!require(patchwork)){install.packages("patchwork")}
-if(!require(ggplotify)){install.packages("ggplotify")}
-if(!require(ggnetwork)){install.packages("ggnetwork")}
-if(!require(cowplot)){install.packages("cowplot")}
-if(!require(ggnewscale)){install.packages("ggnewscale")}
-if(!require(ggthemes)){install.packages("ggthemes")}
-
-
-#Load libraries
-library(scales) #for pretty_breaks()
-library(ggridges)
-library(lavaan) #for SEM fit
-library(semPlot) #for SEM visualization
-library(GGally) #for corr plot as gg objects
-library(patchwork) #laying out multipanel plots with the same size
-library(ggplotify) #create gg objects or grobs from other graphical systems
-library(ggnetwork) #Makes nice network plots in ggplot from lavaan object
-library(cowplot) #laying out multipanel plots with different sizes
-library(ggnewscale) #reset the scale for the gradient fill
-library(ggthemes)
 
 # Set theme ---------------------------------------------------------------
 
