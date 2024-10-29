@@ -58,3 +58,4 @@ vignettes/*.pdf
 
 #Ignore/archive old analyses
 /analysis/archive/
+/archive
