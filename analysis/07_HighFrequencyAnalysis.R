@@ -980,7 +980,7 @@ List<-list(gg.2016temp+
 (gg.hficeon<-wrap_plots(List,ncol=2,nrow=2)&theme(plot.margin = unit(c(3,3,3,3),"pt")))
 
 #Could do a 2x1 with width 6, height = 4
-ggsave(paste("figures/MohonkWinterLimno-FigureX-HighFrequencyIceOnSegmented.jpg",sep=""), plot=gg.hficeon, width=6, height=4,units="in", dpi=300)
+ggsave(paste("figures/MS/MohonkWinterLimno-Figure7-HighFrequencyIceOnSegmented.jpg",sep=""), plot=gg.hficeon, width=6, height=4,units="in", dpi=300)
 
 
 
