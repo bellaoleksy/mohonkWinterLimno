@@ -45,6 +45,9 @@ MohonkIceWeather <- MohonkIceWeather %>%
               select(WaterYear,isotherm_TempMean_degC_29_days_4_degC_WaterYear_date),
             by = c("Year"="WaterYear")) 
 
+#Export Ice duration####
+write_csv(MohonkIceWeather%>%dplyr::select(Year,LengthOfIceCover_days)%>%filter(Year>=1933)%>%print(n=Inf),file="output/MohonkLake_IceDurationData.csv")
+#####
 
 
 # ~~ Summary stats for manuscript --------------------------------------------
