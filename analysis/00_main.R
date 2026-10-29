@@ -1,5 +1,8 @@
 #R file to set working directories and load in data####
 
+#Loads in libraries/packages####
+source('script/00_libraries.R')
+
 #Loads all functions####
 source('script/01_functions.R')
 

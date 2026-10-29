@@ -1,23 +1,9 @@
 ##Winter Limno manuscript: map of sites####
 ## Created 22Oct2024 by David Richardson (DCR), richardsond@newpaltz.edu
 
-#install.packages('ggsn')
-if (!require(ggmap)) {install.packages("ggmap")}
-#devtools::install_github("dkahle/ggmap")
-
-library(maps)
-library(ggplot2)
-library(ggmap)
-#library(ggsn)
-library(gridExtra)
-library(grid)
-library(tidyverse)
-library(ggspatial)
-library(ggrepel)
 
 
 #Google API for DCR####
-register_google(key="") #insert your own API here
 has_google_key()
 
 ##DCR working directory
@@ -108,17 +94,18 @@ style2<-c("&style=",feature = "road", element = "all", visibility = "off")
 style3<-c("&style=",feature = "poi.park", element = "all", visibility = "off")
 #style9<-c("&style=",feature = "water", element = "all", visibility = "on")
 style4<-c("&style=",feature = "water", element = "geometry.fill", color = "blue")
-style9<-c("&style=",feature = "water", element = "geometry.stroke", weight = "20")
 style5<-c("&style=",feature = "water", element = "geometry.stroke", color = "red",weight="100")
 style6<-c("&style=",feature = "landscape", element = "geometry", color="0xc5f2d6")
 style7<-c("&style=",feature = "poi", element = "geometry", color="0xc5f2d6")
 style8<-c("&style=",feature = "administrative", element = "geometry", color="green")
+style9<-c("&style=",feature = "water", element = "geometry.stroke", weight = "20")
+style10<-c("&style=",feature = "all", element = "labels.text", visibility = "off")
 #Merge styles together for get_googlemap function
-style<-list(style1,style2,style3,style4,style5,style6,style7,style8,style=9)
+style<-list(style1,style2,style3,style4,style5,style6,style7,style8,style9,style10)
 #Pull google map with the correct style
 skyLakes = get_googlemap(center = c(lon = Site_locations$long[Site_locations$Lake=="Mohonk"], lat = Site_locations$lat[Site_locations$Lake=="Mohonk"]), zoom = 15,
                          style =style)
-ggmap(skyLakes)
+# ggmap(skyLakes)
 
 # x<-get_googlemap(center = c(lon = Site_summary$mean_long*1.0006, lat = Site_summary$mean_lat*0.9998), zoom = 13,
 #                  style =c(feature = "water", element = "geometry.stroke", visibility = "on",weight=100,color="red"))
@@ -128,7 +115,7 @@ bb <- attr(skyLakes, "bb")
 bb2 <- data.frame(long = unlist(bb[c(2, 4)]), lat = unlist(bb[c(1,3)]))
 
 #Centers of the ponds
-Site_locations
+# Site_locations
 
 #Graph the map plus the scale bar
 SkyLakes_map<-ggmap(skyLakes)+
@@ -153,16 +140,41 @@ SkyLakes_map<-ggmap(skyLakes)+
 
 SkyLakes_map
 #Test export the map
-ggsave("figures/MohonkWinterLimno_TestMap.jpg",SkyLakes_map,height=4,width=4,dpi=500,units=("in"))
+# ggsave("figures/MohonkWinterLimno_TestMap.jpg",SkyLakes_map,height=4,width=4,dpi=500,units=("in"))
 
 
 
 #Export as png with the NYS as inset####
-jpeg(file="figures/MohonkWinterLimno_MapWithInset.jpg",w=4,h=4,units="in",res=500)
+jpeg(file="figures/MohonkWinterLimno_MapWithInset.jpg",w=4,h=3.4,units="in",res=500)
 grid.newpage()
 v1<-viewport(width = 1, height = 1, x = 0.5, y = 0.5) #plot area for the main map
-v2<-viewport(width = 0.25*1.7, height = 0.25, x = 0.33, y = 0.77,just=c("center")) #plot area for the inset map
+v2<-viewport(width = 0.25*1.7, height = 0.25, x = 0.33, y = 0.84,just=c("center")) #plot area for the inset map
 print(SkyLakes_map,vp=v1) 
 print(base.map,vp=v2)
 dev.off()
 
+
+#Create ggplot object with inset using cowplot####
+gg.composite.map<-ggdraw()+
+  draw_plot(SkyLakes_map)+
+  draw_plot(base.map,width=0.22*1.5,height=0.22,x=0.17,y=0.535)
+# x=0.12,y=0.735
+# save(gg.composite.map, file = "output/ggobject.compositeMap.rdata")
+
+#Merge map with Ice Phenology figure####
+#Load the gg.MohonkIceTrends object (it gets stored as gg.MohonkIceTrends)
+#Can start here so you don't have to recreate the map
+# load("output/gg.MohonkIceTrends.rdata")
+# load("output/ggobject.compositeMap.rdata")
+  #print(gg.MohonkIceTrends)
+
+
+
+# #Combine the plots and make the top one a little bigger####
+# temp<-plot_grid(gg.composite.map,NULL,gg.MohonkIceTrends,align="v",ncol=1,rel_heights=c(3.4/6.4,-0.02,3.0/6.4),labels=c("a","","b"))
+# #Map: 4" wide x 3.4" tall to minimize margins and maintain aspect
+# #The ice figure has to be 4x2.4 to maintain aspect ratio (down from 5"x3")
+# ggsave(temp,file="figures/MS/Fig1.MapANDIcePhenology_withDates_intermittant.jpg",  width = 4,
+#        height = 3.4+3.0,
+#        units = "in",
+#        dpi = 600)

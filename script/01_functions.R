@@ -8,19 +8,8 @@
 ##stability.calc
 ##stderr
 
-#Libraries
-if (!require(rLakeAnalyzer)) {
-  install.packages("rLakeAnalyzer")
-}
-#if (!require(lfstat)) {
- # install.packages("lfstat")
-#}
-if (!require(purrr)) {
-  install.packages("purrr")
-}
-library(rLakeAnalyzer)
-#library(lfstat) #for water_year function
-library(purrr)
+select <- dplyr::select
+summarize <- dplyr::summarize
 
 
 #Functions####

@@ -1,15 +1,5 @@
-# Created 2022-07-07 by IAO with script copied over from DCR et al.'s Forecasting_MohonkLake github repository.
-
 #Run the main script to bring in all data and functions####
 source('analysis/00_main.R')
-
-
-## IAO was running out of memory on my machine so this is the solution I tried
-## https://stackoverflow.com/questions/51295402/r-on-macos-error-vector-memory-exhausted-limit-reached
-# if(!require(usethis)){install.packages("usethis")}
-# library(usethis) 
-# usethis::edit_r_environ()
-
 gc()
 
 # Set theme ---------------------------------------------------------------
@@ -88,13 +78,11 @@ Isotherm_WaterYear_dates_IceIn <- bind_rows(lapply(slices, function(slice) {
   reduce(slice, full_join, by = "WaterYear")
 }))
 
-#Something weird happens here, this might be a workaround to combine rows by group with differing NAs in each row
 Isotherm_WaterYear_dates_IceIn <- Isotherm_WaterYear_dates_IceIn %>%
   group_by(WaterYear) %>% 
   summarise_all(~first(na.omit(.)))
 
 
-# Isotherm_WaterYear_dates_IceIn <- reduce(icein_wateryear_dates, full_join, by = "WaterYear")
 Isotherm_WaterYear_dates_IceIn <- full_join(Isotherm_WaterYear_dates_IceIn, MohonkIce, by = c("WaterYear"="Year"))
 Isotherm_WaterYear_dates_IceIn <-
   Isotherm_WaterYear_dates_IceIn %>%
@@ -137,8 +125,6 @@ for(i.airTemp in 1:length(airTemp)){
 }
 
 #Join together datasets in list
-#IAO -- I was having memory issues so I had to do a little magic to subdivide things only to bind them together, do the full join, and THEN run the reduce function.
-#No idea why this worked but the original suddenly didn't. Maybe a chance with purrr?
 slices <- list()
 
 for (i in 1:54) {
@@ -384,15 +370,9 @@ ggplot(data = Isotherm_WaterYear_dates_IceOut, aes(x = IceOutDayofYear_fed, y = 
        y = "Ice Out Predicted Date",
        title = "Observed vs Predicted Ice Out Dates",
        subtitle = "Using Isotherm Formula: TempAvg in degC, 25 day window, 0 degC threshold") +
-  # scale_x_continuous(breaks = c(160, 180, 200, 220), labels = c("Mar 9", "Mar 29", "Apr 18", "May 8")) + 
-  # scale_y_continuous(breaks = c(160, 180, 200, 220), labels = c("Mar 9", "Mar 29", "Apr 18", "May 8"))  +
   geom_abline(intercept=0, slope=1)
 
 as.Date(160-91, origin="2014-01-02")
-
-save(Isotherm_WaterYear_dates_IceIn, Isotherm_WaterYear_dates_IceOut , file = "data/isotherm_dataframes.RData")
-# To load the data again
-# load("data/isotherm_dataframes.RData")
 
 
 #Remove dataframes, lists, and values that are no longer necessary
