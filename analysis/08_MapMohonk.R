@@ -17,7 +17,7 @@ library(ggrepel)
 
 
 #Google API for DCR####
-register_google(key="REMOVED_API_KEY")
+register_google(key="") #insert your own API here
 has_google_key()
 
 ##DCR working directory
