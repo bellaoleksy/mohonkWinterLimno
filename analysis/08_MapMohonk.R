@@ -4,7 +4,7 @@
 
 
 #Google API for DCR####
-register_google(key="REMOVED_API_KEY") #ask DCR for key
+register_google(key="") #insert your API key in quotes
 has_google_key()
 
 ##DCR working directory
